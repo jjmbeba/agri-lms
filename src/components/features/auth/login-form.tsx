@@ -31,11 +31,12 @@ export function LoginForm({
       onDynamic: loginSchema,
     },
     onSubmit: async ({ value }) => {
+      const safeRedirect = redirect.startsWith("/") ? redirect : `/${redirect}`;
       await signIn.email(
         {
           email: value.email,
           password: value.password,
-          callbackURL: redirect,
+          callbackURL: safeRedirect,
         },
         {
           onSuccess: () => {
