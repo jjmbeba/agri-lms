@@ -1,6 +1,11 @@
-import { createLoader, parseAsString, type SearchParams } from "nuqs";
+import type { Metadata } from "next";
+import { createLoader, parseAsString, type SearchParams } from "nuqs/server";
 import AuthPageContainer from "@/components/features/auth/auth-page-container";
 import { ResetPasswordForm } from "@/components/features/auth/reset-password-form";
+
+export const metadata: Metadata = {
+  title: "Reset Password",
+};
 
 type PageProps = {
   searchParams: Promise<SearchParams>;
@@ -12,7 +17,7 @@ const resetPasswordSearchParams = {
 
 const loadSearchParams = createLoader(resetPasswordSearchParams);
 
-const ResetPasswordPage = async ({ searchParams }: PageProps) => {
+export default async function ResetPasswordPage({ searchParams }: PageProps) {
   const { token } = await loadSearchParams(searchParams);
 
   return (
@@ -20,6 +25,4 @@ const ResetPasswordPage = async ({ searchParams }: PageProps) => {
       <ResetPasswordForm token={token} />
     </AuthPageContainer>
   );
-};
-
-export default ResetPasswordPage;
+}
