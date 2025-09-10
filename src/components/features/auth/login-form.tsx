@@ -1,8 +1,9 @@
 "use client";
 
 import { revalidateLogic, useForm } from "@tanstack/react-form";
-import { Loader2 } from "lucide-react";
+import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
@@ -17,6 +18,9 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form"> & { redirect: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const toggleVisibility = () => setIsVisible((prevState) => !prevState);
+
   const form = useForm({
     defaultValues: {
       email: "",
@@ -93,13 +97,30 @@ export function LoginForm({
                   Forgot your password?
                 </Link>
               </div>
-              <Input
-                aria-invalid={field.state.meta.errors.length > 0}
-                id="password"
-                onChange={(e) => field.handleChange(e.target.value)}
-                type="password"
-                value={field.state.value}
-              />
+              <div className="relative">
+                <Input
+                  aria-invalid={field.state.meta.errors.length > 0}
+                  id="password"
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Password"
+                  type={isVisible ? "text" : "password"}
+                  value={field.state.value}
+                />
+                <button
+                  aria-controls="password"
+                  aria-label={isVisible ? "Hide password" : "Show password"}
+                  aria-pressed={isVisible}
+                  className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 outline-none transition-[color,box-shadow] hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={toggleVisibility}
+                  type="button"
+                >
+                  {isVisible ? (
+                    <EyeOffIcon aria-hidden="true" size={16} />
+                  ) : (
+                    <EyeIcon aria-hidden="true" size={16} />
+                  )}
+                </button>
+              </div>
               {field.state.meta.errors.map((error) => (
                 <FormError
                   key={error?.message}
