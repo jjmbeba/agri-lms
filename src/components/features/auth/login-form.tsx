@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signIn } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { loginSchema } from "./schema";
 import SocialOptions from "./social-options";
@@ -25,8 +26,21 @@ export function LoginForm({
     validators: {
       onDynamic: loginSchema,
     },
-    onSubmit: () => {
-      toast.success("Login successful");
+    onSubmit: async ({ value }) => {
+      await signIn.email(
+        {
+          email: value.email,
+          password: value.password,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Login successful");
+          },
+          onError: (error) => {
+            toast.error(error.error.message);
+          },
+        }
+      );
     },
   });
 
@@ -51,6 +65,7 @@ export function LoginForm({
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
               <Input
+                aria-invalid={field.state.meta.errors.length > 0}
                 id="email"
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="m@example.com"
@@ -72,15 +87,15 @@ export function LoginForm({
                 <Label htmlFor="password">Password</Label>
                 <Link
                   className="ml-auto text-sm underline-offset-4 hover:underline"
-                  href="/"
+                  href="/forgot-password"
                 >
                   Forgot your password?
                 </Link>
               </div>
               <Input
+                aria-invalid={field.state.meta.errors.length > 0}
                 id="password"
                 onChange={(e) => field.handleChange(e.target.value)}
-                required
                 type="password"
                 value={field.state.value}
               />

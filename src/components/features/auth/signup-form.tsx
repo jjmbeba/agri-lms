@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signUp } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { signupSchema } from "./schema";
 import SocialOptions from "./social-options";
@@ -18,6 +19,7 @@ export function SignupForm({
 }: React.ComponentProps<"form">) {
   const form = useForm({
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -26,8 +28,22 @@ export function SignupForm({
     validators: {
       onDynamic: signupSchema,
     },
-    onSubmit: () => {
-      toast.success("Signup successful");
+    onSubmit: async ({ value }) => {
+      await signUp.email(
+        {
+          email: value.email,
+          name: value.name,
+          password: value.password,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Signup successful");
+          },
+          onError: (error) => {
+            toast.error(error.error.message);
+          },
+        }
+      );
     },
   });
 
@@ -47,11 +63,32 @@ export function SignupForm({
         </p>
       </div>
       <div className="grid gap-6">
+        <form.Field name="name">
+          {(field) => (
+            <div className="grid gap-3">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                aria-invalid={field.state.meta.errors.length > 0}
+                id="name"
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="John Doe"
+                value={field.state.value}
+              />
+              {field.state.meta.errors.map((error) => (
+                <FormError
+                  key={error?.message}
+                  message={error?.message ?? ""}
+                />
+              ))}
+            </div>
+          )}
+        </form.Field>
         <form.Field name="email">
           {(field) => (
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
               <Input
+                aria-invalid={field.state.meta.errors.length > 0}
                 id="email"
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="m@example.com"
@@ -71,6 +108,7 @@ export function SignupForm({
             <div className="grid gap-3">
               <Label htmlFor="password">Password</Label>
               <Input
+                aria-invalid={field.state.meta.errors.length > 0}
                 id="password"
                 onChange={(e) => field.handleChange(e.target.value)}
                 type="password"
@@ -90,6 +128,7 @@ export function SignupForm({
             <div className="grid gap-3">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
+                aria-invalid={field.state.meta.errors.length > 0}
                 id="confirmPassword"
                 onChange={(e) => field.handleChange(e.target.value)}
                 type="password"
