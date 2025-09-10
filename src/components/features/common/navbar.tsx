@@ -7,7 +7,12 @@ import UserButton from "../auth/user-button";
 const Navbar = () => {
   const pathname = usePathname();
 
-  if (pathname.includes("/login") || pathname.includes("/signup")) {
+  if (
+    pathname.includes("/login") ||
+    pathname.includes("/signup") ||
+    pathname.includes("/forgot-password") ||
+    pathname.includes("/reset-password")
+  ) {
     return null;
   }
 
