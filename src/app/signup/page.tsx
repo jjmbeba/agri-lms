@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import AuthPageContainer from "@/components/features/auth/auth-page-container";
-import { LoginForm } from "@/components/features/auth/login-form";
+import { SignupForm } from "@/components/features/auth/signup-form";
 
 export const metadata: Metadata = {
-  title: "Login",
+  title: "Signup",
 };
 
 export default function LoginPage() {
   return (
     <AuthPageContainer>
-      <LoginForm />
+      <SignupForm />
     </AuthPageContainer>
   );
 }

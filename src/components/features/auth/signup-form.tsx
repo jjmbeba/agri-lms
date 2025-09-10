@@ -5,16 +5,16 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import SocialOptions from "./social-options";
 
-export function LoginForm({
+export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="font-bold text-2xl">Login to your account</h1>
+        <h1 className="font-bold text-2xl">Create your account</h1>
         <p className="text-balance text-muted-foreground text-sm">
-          Enter your email below to login to your account
+          Enter your email below to create your account
         </p>
       </div>
       <div className="grid gap-6">
@@ -35,14 +35,14 @@ export function LoginForm({
           <Input id="password" required type="password" />
         </div>
         <Button className="w-full" type="submit">
-          Login
+          Create account
         </Button>
         <SocialOptions />
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
-        <Link className="underline underline-offset-4" href="/signup">
-          Sign up
+        <Link className="underline underline-offset-4" href="/login">
+          Login
         </Link>
       </div>
     </form>
