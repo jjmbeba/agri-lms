@@ -11,8 +11,8 @@ import {
 } from "@react-email/components";
 
 type ForgotPasswordEmailProps = {
-  userFirstname?: string;
-  resetPasswordLink?: string;
+  userFirstname: string;
+  resetPasswordLink: string;
 };
 
 export const ForgotPasswordEmail = ({

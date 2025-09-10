@@ -7,6 +7,7 @@ export const env = createEnv({
     RESEND_API_KEY: z.string(),
     BETTER_AUTH_URL: z.string(),
     BETTER_AUTH_SECRET: z.string(),
+    RESEND_FROM: z.string(),
   },
   client: {},
   // If you're using Next.js < 13.4.4, you'll need to specify the runtimeEnv manually
@@ -15,6 +16,7 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    RESEND_FROM: process.env.RESEND_FROM,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {

@@ -17,7 +17,7 @@ export const sendForgotPasswordEmail = async ({
 
   try {
     await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
+      from: env.RESEND_FROM,
       to: ["delivered@resend.dev"],
       subject,
       react: ForgotPasswordEmail({

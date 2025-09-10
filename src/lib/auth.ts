@@ -14,7 +14,7 @@ export const auth = betterAuth({
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
       await sendForgotPasswordEmail({
-        to: user.email,
+        to: user.name,
         subject: "Reset your password",
         resetPasswordLink: url,
       });

@@ -32,7 +32,7 @@ export function ResetPasswordForm({
       onDynamic: resetPasswordSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!token || token === "") {
+      if (!token?.trim() || token.trim() === "") {
         toast.error("Token is required");
         return;
       }
