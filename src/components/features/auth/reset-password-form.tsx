@@ -3,7 +3,6 @@
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,10 +15,10 @@ import { resetPasswordSchema } from "./schema";
 
 export function ResetPasswordForm({
   className,
+  token,
   ...props
-}: React.ComponentProps<"form">) {
+}: React.ComponentProps<"form"> & { token: string }) {
   const router = useRouter();
-  const [token] = useQueryState("token");
   const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible((prevState) => !prevState);
 
@@ -33,7 +32,7 @@ export function ResetPasswordForm({
       onDynamic: resetPasswordSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!token) {
+      if (!token || token === "") {
         toast.error("Token is required");
         return;
       }
