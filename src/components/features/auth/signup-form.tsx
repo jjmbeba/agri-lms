@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { signUp } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { signupSchema } from "./schema";
-import SocialOptions from "./social-options";
 
 export function SignupForm({
   className,
@@ -160,7 +159,7 @@ export function SignupForm({
             </Button>
           )}
         </form.Subscribe>
-        <SocialOptions />
+        {/* <SocialOptions /> */}
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}

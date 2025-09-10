@@ -8,7 +8,7 @@ const ProtectedPage = async () => {
   });
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?redirect=/protected");
   }
   return <div>ProtectedPage</div>;
 };

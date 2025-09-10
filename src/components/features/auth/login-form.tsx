@@ -11,12 +11,12 @@ import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { loginSchema } from "./schema";
-import SocialOptions from "./social-options";
 
 export function LoginForm({
+  redirect,
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: React.ComponentProps<"form"> & { redirect: string }) {
   const form = useForm({
     defaultValues: {
       email: "",
@@ -31,6 +31,7 @@ export function LoginForm({
         {
           email: value.email,
           password: value.password,
+          callbackURL: redirect,
         },
         {
           onSuccess: () => {
@@ -125,7 +126,7 @@ export function LoginForm({
             </Button>
           )}
         </form.Subscribe>
-        <SocialOptions />
+        {/* <SocialOptions /> */}
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}

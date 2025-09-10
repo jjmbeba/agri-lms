@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Navbar from "@/components/features/common/navbar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -28,7 +29,7 @@ export default function RootLayout({
       <body className={`${outfit.variable} antialiased`}>
         <TRPCProvider>
           <Navbar />
-          {children}
+          <NuqsAdapter>{children}</NuqsAdapter>
         </TRPCProvider>
         <Toaster richColors />
       </body>
