@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { PropsWithChildren } from "react";
 import AuthLogo from "./auth-logo";
 
@@ -11,11 +12,14 @@ const AuthPageContainer = ({ children }: PropsWithChildren) => {
         </div>
       </div>
       <div className="relative hidden bg-muted lg:block">
-        {/* <img
-          alt="Image"
+        <Image
+          alt="Auth Image"
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-          src="/placeholder.svg"
-        /> */}
+          fill
+          priority
+          quality={100}
+          src={"/auth-image.webp"}
+        />
       </div>
     </div>
   );
