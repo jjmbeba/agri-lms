@@ -38,10 +38,10 @@ const UserButton = () => {
   if (!session) {
     return (
       <>
-        <Button variant="outline">
+        <Button asChild variant="outline">
           <Link href="/login">Sign In</Link>
         </Button>
-        <Button>
+        <Button asChild>
           <Link href="/signup">Start for free</Link>
         </Button>
       </>

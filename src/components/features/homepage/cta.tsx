@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-type Cta10Props = {
+type CtaProps = {
   heading: string;
   description: string;
   buttons?: {
@@ -28,7 +28,7 @@ const CTA = ({
       url: "/market",
     },
   },
-}: Cta10Props) => {
+}: CtaProps) => {
   return (
     <section className="px-10 pt-32">
       <div className="container">

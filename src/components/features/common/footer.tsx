@@ -77,7 +77,7 @@ const Footer = () => {
   const copyright = `© ${new Date().getFullYear()} AgriLMS Kenya. All rights reserved.`;
   const legalLinks = defaultLegalLinks;
   return (
-    <section className="px-10 py-32">
+    <footer className="px-10 py-32">
       <div className="container">
         <div className="flex w-full flex-col justify-between gap-10 lg:flex-row lg:items-start lg:text-left">
           <div className="flex w-full flex-col justify-between gap-6 lg:items-start">
@@ -130,7 +130,7 @@ const Footer = () => {
           </ul>
         </div>
       </div>
-    </section>
+    </footer>
   );
 };
 

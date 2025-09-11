@@ -39,9 +39,9 @@ export default function RootLayout({
             <Navbar />
             <NuqsAdapter>{children}</NuqsAdapter>
             <Footer />
+            <Toaster richColors />
           </ThemeProvider>
         </TRPCProvider>
-        <Toaster richColors />
       </body>
     </html>
   );

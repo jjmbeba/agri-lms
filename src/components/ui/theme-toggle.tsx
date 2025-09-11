@@ -5,17 +5,17 @@ import { useTheme } from "next-themes";
 import { Toggle } from "@/components/ui/toggle";
 
 export default function ThemeToggle() {
-  const { setTheme, theme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
 
   return (
     <div>
       <Toggle
-        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
         className="group size-9 cursor-pointer data-[state=on]:bg-transparent data-[state=on]:hover:bg-muted"
         onPressedChange={() =>
           setTheme((prev) => (prev === "dark" ? "light" : "dark"))
         }
-        pressed={theme === "dark"}
+        pressed={resolvedTheme === "dark"}
         variant="outline"
       >
         {/* Note: After dark mode implementation, rely on dark: prefix rather than group-data-[state=on]: */}
