@@ -1,7 +1,7 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
 
-const AuthLogo = () => {
+const Logo = () => {
   return (
     <div className="flex justify-center gap-2 md:justify-start">
       <Link className="flex items-center gap-2 font-medium" href="/">
@@ -14,4 +14,4 @@ const AuthLogo = () => {
   );
 };
 
-export default AuthLogo;
+export default Logo;

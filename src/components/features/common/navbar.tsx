@@ -25,20 +25,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import AuthLogo from "../auth/auth-logo";
 import UserButton from "../auth/user-button";
+import { isAuthPage } from "../auth/utils";
+import AuthLogo from "./logo";
 
 const Navbar = () => {
   const pathname = usePathname();
-  const authPages = [
-    "/login",
-    "/signup",
-    "/forgot-password",
-    "/reset-password",
-  ];
-  const isAuthPage = authPages.includes(pathname);
 
-  if (isAuthPage) {
+  if (isAuthPage(pathname)) {
     return null;
   }
 

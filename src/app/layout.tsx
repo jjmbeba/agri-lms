@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import Footer from "@/components/features/common/footer";
 import Navbar from "@/components/features/common/navbar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
         <TRPCProvider>
           <Navbar />
           <NuqsAdapter>{children}</NuqsAdapter>
+          <Footer />
         </TRPCProvider>
         <Toaster richColors />
       </body>
