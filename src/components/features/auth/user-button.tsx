@@ -37,9 +37,14 @@ const UserButton = () => {
 
   if (!session) {
     return (
-      <Button variant="outline">
-        <Link href="/login">Sign In</Link>
-      </Button>
+      <>
+        <Button variant="outline">
+          <Link href="/login">Sign In</Link>
+        </Button>
+        <Button>
+          <Link href="/signup">Start for free</Link>
+        </Button>
+      </>
     );
   }
 
