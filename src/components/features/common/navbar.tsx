@@ -25,6 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import UserButton from "../auth/user-button";
 import { isAuthPage } from "../auth/utils";
 import AuthLogo from "./logo";
@@ -128,6 +129,7 @@ const Navbar = () => {
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
+            <ThemeToggle />
             <UserButton />
           </div>
           <Sheet>
@@ -186,6 +188,7 @@ const Navbar = () => {
                   </a>
                 </div>
                 <div className="mt-6 flex flex-col gap-4">
+                  <ThemeToggle />
                   <UserButton />
                 </div>
               </div>
