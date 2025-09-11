@@ -1,38 +1,18 @@
-import { HandHelping, Users, Zap } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { features } from "./constants";
 
 const HeroSection = () => {
-  const badge = "AgriLMS Kenya";
-  const heading = "Digital learning for Kenyan agriculture";
-  const features = [
-    {
-      icon: <HandHelping className="h-auto w-5" />,
-      title: "Soil & Climate-Smart Farming",
-      description:
-        "Practical modules on soil health, water harvesting, and sustainable inputs.",
-    },
-    {
-      icon: <Users className="h-auto w-5" />,
-      title: "Extension & Community",
-      description:
-        "Access county extension tips, peer groups, and Kiswahili support.",
-    },
-    {
-      icon: <Zap className="h-auto w-5" />,
-      title: "Market & Prices",
-      description:
-        "Stay updated on maize, tea, dairy, and horticulture prices across counties.",
-    },
-  ];
   return (
     <section className="py-32">
       <div className="container overflow-hidden">
         <div className="mb-20 flex flex-col items-center gap-6 text-center">
-          <Badge variant="outline">{badge}</Badge>
-          <h1 className="font-semibold text-4xl lg:text-5xl">{heading}</h1>
+          <Badge variant="outline">AgriLMS Kenya</Badge>
+          <h1 className="font-semibold text-4xl lg:text-5xl">
+            Digital learning for Kenyan agriculture
+          </h1>
         </div>
         <div className="relative mx-auto aspect-video max-w-5xl">
           <Image
