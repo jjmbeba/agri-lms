@@ -12,7 +12,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="sidebar" />
       <SidebarInset>
         <SiteHeader />
         {children}
