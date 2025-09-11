@@ -11,7 +11,7 @@ export default function ThemeToggle() {
     <div>
       <Toggle
         aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        className="group size-9 data-[state=on]:bg-transparent data-[state=on]:hover:bg-muted"
+        className="group size-9 cursor-pointer data-[state=on]:bg-transparent data-[state=on]:hover:bg-muted"
         onPressedChange={() =>
           setTheme((prev) => (prev === "dark" ? "light" : "dark"))
         }

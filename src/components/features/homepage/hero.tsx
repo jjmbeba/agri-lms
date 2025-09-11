@@ -7,8 +7,6 @@ import { Separator } from "@/components/ui/separator";
 const HeroSection = () => {
   const badge = "AgriLMS Kenya";
   const heading = "Digital learning for Kenyan agriculture";
-  // const imageSrc = "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-1.svg";
-  // const imageAlt = "farmers learning online";
   const features = [
     {
       icon: <HandHelping className="h-auto w-5" />,
