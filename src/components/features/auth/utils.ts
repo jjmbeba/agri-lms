@@ -4,7 +4,8 @@ export const authPages = [
   "/forgot-password",
   "/reset-password",
 ];
+export const publicPages = ["/"];
 
-export const isAuthPage = (pathname: string) => {
-  return authPages.includes(pathname);
+export const isPublicPage = (pathname: string) => {
+  return publicPages.includes(pathname);
 };

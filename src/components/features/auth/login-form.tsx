@@ -31,7 +31,7 @@ export function LoginForm({
       onDynamic: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      const safeRedirect = redirect.startsWith("/") ? redirect : `/${redirect}`;
+      const safeRedirect = redirect.startsWith("/") ? redirect : "/dashboard";
       await signIn.email(
         {
           email: value.email,

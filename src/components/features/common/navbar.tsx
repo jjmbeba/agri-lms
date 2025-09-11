@@ -27,13 +27,13 @@ import {
 } from "@/components/ui/sheet";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import UserButton from "../auth/user-button";
-import { isAuthPage } from "../auth/utils";
+import { isPublicPage } from "../auth/utils";
 import AuthLogo from "./logo";
 
 const Navbar = () => {
   const pathname = usePathname();
 
-  if (isAuthPage(pathname)) {
+  if (!isPublicPage(pathname)) {
     return null;
   }
 
