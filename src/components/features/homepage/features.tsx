@@ -16,13 +16,12 @@ import {
 
 const Features = () => {
   return (
-    <section className="px-10 py-32">
+    <section className="px-10 pt-32">
       <div className="container">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 text-center">
           <h1 className="mb-6 text-pretty font-semibold text-4xl lg:text-5xl">
             Why AgriLMS Kenya
           </h1>
-
           <div className="mt-10 grid grid-cols-1 place-items-center gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="pb-1">

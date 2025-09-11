@@ -8,7 +8,7 @@ import { faqItems } from "./constants";
 
 const FAQ = () => {
   return (
-    <section className="py-32">
+    <section className="px-10 pt-32">
       <div className="container space-y-16">
         <div className="mx-auto flex max-w-3xl flex-col text-left md:text-center">
           <h2 className="mb-3 font-semibold text-3xl md:mb-4 lg:mb-6 lg:text-4xl">

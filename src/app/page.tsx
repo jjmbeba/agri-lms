@@ -1,3 +1,4 @@
+import CourseCategories from "@/components/features/homepage/course-categories";
 import CTA from "@/components/features/homepage/cta";
 import FAQ from "@/components/features/homepage/faq";
 import Features from "@/components/features/homepage/features";
@@ -9,7 +10,7 @@ export default function Home() {
     <HydrateClient>
       <HeroSection />
       <Features />
-      {/* <CourseCategories /> */}
+      <CourseCategories />
       {/* <Testimonials /> */}
       {/* <Partners /> */}
       <CTA
