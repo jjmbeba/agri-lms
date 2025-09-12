@@ -37,6 +37,7 @@ export function SignupForm({
           email: value.email,
           name: value.name,
           password: value.password,
+          callbackURL: "/dashboard",
         },
         {
           onSuccess: () => {

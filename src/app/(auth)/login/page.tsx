@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
   });
 
   if (session) {
-    redirect("/");
+    redirect("/dashboard");
   }
 
   return (

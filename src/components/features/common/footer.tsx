@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
-import { isAuthPage } from "../auth/utils";
+import { isPublicPage } from "../auth/utils";
 import Logo from "./logo";
 
 const defaultSections = [
@@ -66,7 +66,7 @@ const defaultLegalLinks = [
 const Footer = () => {
   const pathname = usePathname();
 
-  if (isAuthPage(pathname)) {
+  if (!isPublicPage(pathname)) {
     return null;
   }
 

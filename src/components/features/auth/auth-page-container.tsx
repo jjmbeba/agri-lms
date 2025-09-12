@@ -14,7 +14,7 @@ const AuthPageContainer = ({ children }: PropsWithChildren) => {
       <div className="relative hidden bg-muted lg:block">
         <Image
           alt="Auth Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.5]"
           fill
           priority
           quality={100}

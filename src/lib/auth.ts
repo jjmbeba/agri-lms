@@ -10,6 +10,16 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "learner",
+        input: false,
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
@@ -26,5 +36,10 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: SESSION_MAX_AGE_IN_MINUTES * 60,
     },
+  },
+  rateLimit: {
+    enabled: true,
+    window: 10, // time window in seconds
+    max: 100, // max requests in the window
   },
 });
