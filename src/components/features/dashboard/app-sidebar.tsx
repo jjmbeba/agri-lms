@@ -6,7 +6,6 @@ import {
   IconDashboard,
   IconHelp,
   IconReport,
-  IconSearch,
   IconSettings,
   IconUsers,
   IconWorld,
@@ -70,11 +69,6 @@ const data = {
       title: "Get Help",
       url: "/admin/help",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "/admin/search",
-      icon: IconSearch,
     },
   ],
 };
