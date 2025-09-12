@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noMagicNumbers: Temporary file */
 "use client";
 
 import {
@@ -50,7 +51,6 @@ import {
 } from "@tanstack/react-table";
 import { useId, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
