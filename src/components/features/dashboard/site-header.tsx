@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import { capitalize } from "@/lib/utils";
 import { getRouteBreadcrumbs } from "./utils";
 
@@ -25,20 +26,23 @@ export function SiteHeader() {
           className="mx-2 data-[orientation=vertical]:h-4"
           orientation="vertical"
         />
-        <h1 className="font-medium text-base">
-          <Breadcrumb>
-            <BreadcrumbList>
-              {breadcrumbs.map((breadcrumb) => (
-                <BreadcrumbItem key={breadcrumb.label}>
-                  <BreadcrumbLink href={breadcrumb.href}>
-                    {capitalize(breadcrumb.label)}
-                  </BreadcrumbLink>
-                  <BreadcrumbSeparator className="last:hidden" />
-                </BreadcrumbItem>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-        </h1>
+        <div className="flex w-full items-center justify-between">
+          <h1 className="font-medium text-base">
+            <Breadcrumb>
+              <BreadcrumbList>
+                {breadcrumbs.map((breadcrumb) => (
+                  <BreadcrumbItem key={breadcrumb.label}>
+                    <BreadcrumbLink href={breadcrumb.href}>
+                      {capitalize(breadcrumb.label)}
+                    </BreadcrumbLink>
+                    <BreadcrumbSeparator className="last:hidden" />
+                  </BreadcrumbItem>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </h1>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

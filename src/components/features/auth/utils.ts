@@ -9,3 +9,13 @@ export const publicPages = ["/"];
 export const isPublicPage = (pathname: string) => {
   return publicPages.includes(pathname);
 };
+
+// export const checkUserRole = async () => {
+//   "use server";
+
+//   const session = await auth.api.getSession({
+//     headers: await headers(),
+//   });
+
+//   return session?.user.role ?? "learner";
+// };

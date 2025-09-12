@@ -1,0 +1,402 @@
+[
+  {
+    "id": 1,
+    "courseName": "Sustainable Farming Practices",
+    "instructor": "Dr. Sarah Johnson",
+    "category": "Sustainability",
+    "status": "Active",
+    "enrolledStudents": 245,
+    "completionRate": "87%",
+    "lastUpdated": "2024-01-15"
+  },
+  {
+    "id": 2,
+    "courseName": "Crop Rotation Techniques",
+    "instructor": "Prof. Michael Chen",
+    "category": "Crop Management",
+    "status": "Active",
+    "enrolledStudents": 189,
+    "completionRate": "92%",
+    "lastUpdated": "2024-01-12"
+  },
+  {
+    "id": 3,
+    "courseName": "Soil Health Assessment",
+    "instructor": "Dr. Emily Rodriguez",
+    "category": "Soil Science",
+    "status": "Active",
+    "enrolledStudents": 156,
+    "completionRate": "78%",
+    "lastUpdated": "2024-01-10"
+  },
+  {
+    "id": 4,
+    "courseName": "Organic Pest Management",
+    "instructor": "Dr. James Wilson",
+    "category": "Pest Control",
+    "status": "Active",
+    "enrolledStudents": 203,
+    "completionRate": "85%",
+    "lastUpdated": "2024-01-08"
+  },
+  {
+    "id": 5,
+    "courseName": "Irrigation Systems Design",
+    "instructor": "Prof. Lisa Anderson",
+    "category": "Water Management",
+    "status": "Active",
+    "enrolledStudents": 134,
+    "completionRate": "90%",
+    "lastUpdated": "2024-01-05"
+  },
+  {
+    "id": 6,
+    "courseName": "Livestock Nutrition Basics",
+    "instructor": "Dr. Robert Taylor",
+    "category": "Animal Husbandry",
+    "status": "Active",
+    "enrolledStudents": 178,
+    "completionRate": "83%",
+    "lastUpdated": "2024-01-03"
+  },
+  {
+    "id": 7,
+    "courseName": "Greenhouse Management",
+    "instructor": "Prof. Maria Garcia",
+    "category": "Controlled Environment",
+    "status": "Active",
+    "enrolledStudents": 167,
+    "completionRate": "88%",
+    "lastUpdated": "2024-01-01"
+  },
+  {
+    "id": 8,
+    "courseName": "Agricultural Economics",
+    "instructor": "Dr. David Kim",
+    "category": "Business",
+    "status": "Active",
+    "enrolledStudents": 145,
+    "completionRate": "75%",
+    "lastUpdated": "2023-12-28"
+  },
+  {
+    "id": 9,
+    "courseName": "Precision Agriculture Technology",
+    "instructor": "Prof. Alex Thompson",
+    "category": "Technology",
+    "status": "Active",
+    "enrolledStudents": 198,
+    "completionRate": "82%",
+    "lastUpdated": "2023-12-25"
+  },
+  {
+    "id": 10,
+    "courseName": "Farm Safety Protocols",
+    "instructor": "Dr. Jennifer Lee",
+    "category": "Safety",
+    "status": "Active",
+    "enrolledStudents": 223,
+    "completionRate": "95%",
+    "lastUpdated": "2023-12-22"
+  },
+  {
+    "id": 11,
+    "courseName": "Seed Selection and Storage",
+    "instructor": "Prof. Carlos Mendez",
+    "category": "Crop Management",
+    "status": "Active",
+    "enrolledStudents": 156,
+    "completionRate": "79%",
+    "lastUpdated": "2023-12-20"
+  },
+  {
+    "id": 12,
+    "courseName": "Composting Techniques",
+    "instructor": "Dr. Amanda Foster",
+    "category": "Sustainability",
+    "status": "Active",
+    "enrolledStudents": 189,
+    "completionRate": "86%",
+    "lastUpdated": "2023-12-18"
+  },
+  {
+    "id": 13,
+    "courseName": "Weather Monitoring Systems",
+    "instructor": "Prof. Kevin Park",
+    "category": "Technology",
+    "status": "Active",
+    "enrolledStudents": 134,
+    "completionRate": "81%",
+    "lastUpdated": "2023-12-15"
+  },
+  {
+    "id": 14,
+    "courseName": "Dairy Farm Management",
+    "instructor": "Dr. Rachel Green",
+    "category": "Animal Husbandry",
+    "status": "Active",
+    "enrolledStudents": 167,
+    "completionRate": "89%",
+    "lastUpdated": "2023-12-12"
+  },
+  {
+    "id": 15,
+    "courseName": "Aquaponics Fundamentals",
+    "instructor": "Prof. Thomas Brown",
+    "category": "Innovation",
+    "status": "Active",
+    "enrolledStudents": 145,
+    "completionRate": "77%",
+    "lastUpdated": "2023-12-10"
+  },
+  {
+    "id": 16,
+    "courseName": "Farm Marketing Strategies",
+    "instructor": "Dr. Nicole White",
+    "category": "Business",
+    "status": "Active",
+    "enrolledStudents": 178,
+    "completionRate": "84%",
+    "lastUpdated": "2023-12-08"
+  },
+  {
+    "id": 17,
+    "courseName": "Hydroponic Growing Systems",
+    "instructor": "Prof. Daniel Clark",
+    "category": "Innovation",
+    "status": "Active",
+    "enrolledStudents": 156,
+    "completionRate": "80%",
+    "lastUpdated": "2023-12-05"
+  },
+  {
+    "id": 18,
+    "courseName": "Poultry Health Management",
+    "instructor": "Dr. Stephanie Hall",
+    "category": "Animal Husbandry",
+    "status": "Active",
+    "enrolledStudents": 189,
+    "completionRate": "87%",
+    "lastUpdated": "2023-12-03"
+  },
+  {
+    "id": 19,
+    "courseName": "Farm Equipment Maintenance",
+    "instructor": "Prof. Mark Davis",
+    "category": "Mechanics",
+    "status": "Active",
+    "enrolledStudents": 134,
+    "completionRate": "92%",
+    "lastUpdated": "2023-12-01"
+  },
+  {
+    "id": 20,
+    "courseName": "Agroforestry Principles",
+    "instructor": "Dr. Patricia Miller",
+    "category": "Sustainability",
+    "status": "Active",
+    "enrolledStudents": 167,
+    "completionRate": "78%",
+    "lastUpdated": "2023-11-28"
+  },
+  {
+    "id": 21,
+    "courseName": "Beekeeping for Beginners",
+    "instructor": "Prof. Richard Jones",
+    "category": "Specialty",
+    "status": "Active",
+    "enrolledStudents": 145,
+    "completionRate": "85%",
+    "lastUpdated": "2023-11-25"
+  },
+  {
+    "id": 22,
+    "courseName": "Farm Financial Planning",
+    "instructor": "Dr. Susan Taylor",
+    "category": "Business",
+    "status": "Active",
+    "enrolledStudents": 178,
+    "completionRate": "83%",
+    "lastUpdated": "2023-11-22"
+  },
+  {
+    "id": 23,
+    "courseName": "Vertical Farming Systems",
+    "instructor": "Prof. Brian Wilson",
+    "category": "Innovation",
+    "status": "Active",
+    "enrolledStudents": 156,
+    "completionRate": "79%",
+    "lastUpdated": "2023-11-20"
+  },
+  {
+    "id": 24,
+    "courseName": "Cattle Breeding Programs",
+    "instructor": "Dr. Laura Martinez",
+    "category": "Animal Husbandry",
+    "status": "Active",
+    "enrolledStudents": 134,
+    "completionRate": "88%",
+    "lastUpdated": "2023-11-18"
+  },
+  {
+    "id": 25,
+    "courseName": "Farm Record Keeping",
+    "instructor": "Prof. Christopher Lee",
+    "category": "Management",
+    "status": "Active",
+    "enrolledStudents": 189,
+    "completionRate": "91%",
+    "lastUpdated": "2023-11-15"
+  },
+  {
+    "id": 26,
+    "courseName": "Integrated Pest Management",
+    "instructor": "Dr. Michelle Adams",
+    "category": "Pest Control",
+    "status": "Active",
+    "enrolledStudents": 167,
+    "completionRate": "86%",
+    "lastUpdated": "2023-11-12"
+  },
+  {
+    "id": 27,
+    "courseName": "Farm-to-Table Business",
+    "instructor": "Prof. Andrew Scott",
+    "category": "Business",
+    "status": "Active",
+    "enrolledStudents": 145,
+    "completionRate": "82%",
+    "lastUpdated": "2023-11-10"
+  },
+  {
+    "id": 28,
+    "courseName": "Soil Testing and Analysis",
+    "instructor": "Dr. Karen Johnson",
+    "category": "Soil Science",
+    "status": "Active",
+    "enrolledStudents": 178,
+    "completionRate": "89%",
+    "lastUpdated": "2023-11-08"
+  },
+  {
+    "id": 29,
+    "courseName": "Greenhouse Climate Control",
+    "instructor": "Prof. Ryan Murphy",
+    "category": "Controlled Environment",
+    "status": "Active",
+    "enrolledStudents": 156,
+    "completionRate": "84%",
+    "lastUpdated": "2023-11-05"
+  },
+  {
+    "id": 30,
+    "courseName": "Farm Insurance and Risk Management",
+    "instructor": "Dr. Elizabeth Turner",
+    "category": "Business",
+    "status": "Active",
+    "enrolledStudents": 134,
+    "completionRate": "77%",
+    "lastUpdated": "2023-11-03"
+  },
+  {
+    "id": 31,
+    "courseName": "Permaculture Design",
+    "instructor": "Prof. Jason Reed",
+    "category": "Sustainability",
+    "status": "Active",
+    "enrolledStudents": 189,
+    "completionRate": "80%",
+    "lastUpdated": "2023-11-01"
+  },
+  {
+    "id": 32,
+    "courseName": "Goat Farming Essentials",
+    "instructor": "Dr. Samantha Clark",
+    "category": "Animal Husbandry",
+    "status": "Active",
+    "enrolledStudents": 167,
+    "completionRate": "87%",
+    "lastUpdated": "2023-10-28"
+  },
+  {
+    "id": 33,
+    "courseName": "Farm Automation Systems",
+    "instructor": "Prof. Michael Torres",
+    "category": "Technology",
+    "status": "Active",
+    "enrolledStudents": 145,
+    "completionRate": "75%",
+    "lastUpdated": "2023-10-25"
+  },
+  {
+    "id": 34,
+    "courseName": "Organic Certification Process",
+    "instructor": "Dr. Jennifer Adams",
+    "category": "Certification",
+    "status": "Active",
+    "enrolledStudents": 178,
+    "completionRate": "93%",
+    "lastUpdated": "2023-10-22"
+  },
+  {
+    "id": 35,
+    "courseName": "Farm Labor Management",
+    "instructor": "Prof. Robert Garcia",
+    "category": "Management",
+    "status": "Active",
+    "enrolledStudents": 156,
+    "completionRate": "81%",
+    "lastUpdated": "2023-10-20"
+  },
+  {
+    "id": 36,
+    "courseName": "Mushroom Cultivation",
+    "instructor": "Dr. Ashley White",
+    "category": "Specialty",
+    "status": "Active",
+    "enrolledStudents": 134,
+    "completionRate": "88%",
+    "lastUpdated": "2023-10-18"
+  },
+  {
+    "id": 37,
+    "courseName": "Farm Energy Efficiency",
+    "instructor": "Prof. Kevin Brown",
+    "category": "Sustainability",
+    "status": "Active",
+    "enrolledStudents": 189,
+    "completionRate": "85%",
+    "lastUpdated": "2023-10-15"
+  },
+  {
+    "id": 38,
+    "courseName": "Sheep and Wool Production",
+    "instructor": "Dr. Lisa Rodriguez",
+    "category": "Animal Husbandry",
+    "status": "Active",
+    "enrolledStudents": 167,
+    "completionRate": "83%",
+    "lastUpdated": "2023-10-12"
+  },
+  {
+    "id": 39,
+    "courseName": "Farm Data Analytics",
+    "instructor": "Prof. David Kim",
+    "category": "Technology",
+    "status": "Active",
+    "enrolledStudents": 145,
+    "completionRate": "79%",
+    "lastUpdated": "2023-10-10"
+  },
+  {
+    "id": 40,
+    "courseName": "Community Supported Agriculture",
+    "instructor": "Dr. Maria Santos",
+    "category": "Business",
+    "status": "Active",
+    "enrolledStudents": 178,
+    "completionRate": "86%",
+    "lastUpdated": "2023-10-08"
+  }
+]

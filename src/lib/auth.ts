@@ -37,4 +37,9 @@ export const auth = betterAuth({
       maxAge: SESSION_MAX_AGE_IN_MINUTES * 60,
     },
   },
+  rateLimit: {
+    enabled: true,
+    window: 10, // time window in seconds
+    max: 100, // max requests in the window
+  },
 });

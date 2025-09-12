@@ -100,14 +100,22 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const COMPLETION_RATE_HIGH = 85;
+const COMPLETION_RATE_MEDIUM = 75;
+const PAGE_SIZES = [10, 20, 30, 40, 50] as const;
+const CHART_MARGIN_LEFT = 0;
+const CHART_MARGIN_RIGHT = 10;
+const CHART_TICK_MARGIN = 8;
+
 export const schema = z.object({
   id: z.number(),
-  header: z.string(),
-  type: z.string(),
+  courseName: z.string(),
+  instructor: z.string(),
+  category: z.string(),
   status: z.string(),
-  target: z.string(),
-  limit: z.string(),
-  reviewer: z.string(),
+  enrolledStudents: z.number(),
+  completionRate: z.string(),
+  lastUpdated: z.string(),
 });
 
 // Create a separate component for the drag handle
@@ -163,20 +171,27 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "header",
-    header: "Header",
+    accessorKey: "courseName",
+    header: "Course Name",
     cell: ({ row }) => {
       return <TableCellViewer item={row.original} />;
     },
     enableHiding: false,
   },
   {
-    accessorKey: "type",
-    header: "Section Type",
+    accessorKey: "instructor",
+    header: "Instructor",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.original.instructor}</div>
+    ),
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
     cell: ({ row }) => (
       <div className="w-32">
         <Badge className="px-1.5 text-muted-foreground" variant="outline">
-          {row.original.type}
+          {row.original.category}
         </Badge>
       </div>
     ),
@@ -186,7 +201,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: "Status",
     cell: ({ row }) => (
       <Badge className="px-1.5 text-muted-foreground" variant="outline">
-        {row.original.status === "Done" ? (
+        {row.original.status === "Active" ? (
           <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
         ) : (
           <IconLoader />
@@ -196,88 +211,45 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     ),
   },
   {
-    accessorKey: "target",
-    header: () => <div className="w-full text-right">Target</div>,
+    accessorKey: "enrolledStudents",
+    header: () => <div className="w-full text-right">Students</div>,
     cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          });
-        }}
-      >
-        <Label className="sr-only" htmlFor={`${row.original.id}-target`}>
-          Target
-        </Label>
-        <Input
-          className="h-8 w-16 border-transparent bg-transparent text-right shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background dark:bg-transparent dark:focus-visible:bg-input/30 dark:hover:bg-input/30"
-          defaultValue={row.original.target}
-          id={`${row.original.id}-target`}
-        />
-      </form>
+      <div className="text-right font-medium">
+        {row.original.enrolledStudents.toLocaleString()}
+      </div>
     ),
   },
   {
-    accessorKey: "limit",
-    header: () => <div className="w-full text-right">Limit</div>,
+    accessorKey: "completionRate",
+    header: () => <div className="w-full text-right">Completion</div>,
     cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          });
-        }}
-      >
-        <Label className="sr-only" htmlFor={`${row.original.id}-limit`}>
-          Limit
-        </Label>
-        <Input
-          className="h-8 w-16 border-transparent bg-transparent text-right shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background dark:bg-transparent dark:focus-visible:bg-input/30 dark:hover:bg-input/30"
-          defaultValue={row.original.limit}
-          id={`${row.original.id}-limit`}
-        />
-      </form>
+      <div className="text-right">
+        <Badge
+          className={(() => {
+            const rate = Number.parseFloat(row.original.completionRate);
+            if (rate >= COMPLETION_RATE_HIGH) {
+              return "border-green-200 text-green-700";
+            }
+            if (rate >= COMPLETION_RATE_MEDIUM) {
+              return "border-yellow-200 text-yellow-700";
+            }
+            return "border-red-200 text-red-700";
+          })()}
+          variant="outline"
+        >
+          {row.original.completionRate}
+        </Badge>
+      </div>
     ),
   },
   {
-    accessorKey: "reviewer",
-    header: "Reviewer",
-    cell: ({ row }) => {
-      const isAssigned = row.original.reviewer !== "Assign reviewer";
-
-      if (isAssigned) {
-        return row.original.reviewer;
-      }
-
-      return (
-        <>
-          <Label className="sr-only" htmlFor={`${row.original.id}-reviewer`}>
-            Reviewer
-          </Label>
-          <Select>
-            <SelectTrigger
-              className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
-              id={`${row.original.id}-reviewer`}
-              size="sm"
-            >
-              <SelectValue placeholder="Assign reviewer" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-              <SelectItem value="Jamik Tashpulatov">
-                Jamik Tashpulatov
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </>
-      );
-    },
+    accessorKey: "lastUpdated",
+    header: "Last Updated",
+    cell: ({ row }) => (
+      <div className="text-muted-foreground">
+        {new Date(row.original.lastUpdated).toLocaleDateString()}
+      </div>
+    ),
   },
   {
     id: "actions",
@@ -293,10 +265,10 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Make a copy</DropdownMenuItem>
-          <DropdownMenuItem>Favorite</DropdownMenuItem>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem>Edit Course</DropdownMenuItem>
+          <DropdownMenuItem>View Analytics</DropdownMenuItem>
+          <DropdownMenuItem>Manage Students</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
         </DropdownMenuContent>
@@ -543,7 +515,7 @@ export function DataTable({
                   />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                  {PAGE_SIZES.map((pageSize) => (
                     <SelectItem key={pageSize} value={`${pageSize}`}>
                       {pageSize}
                     </SelectItem>
@@ -645,14 +617,14 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
         <Button className="w-fit px-0 text-left text-foreground" variant="link">
-          {item.header}
+          {item.courseName}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.header}</DrawerTitle>
+          <DrawerTitle>{item.courseName}</DrawerTitle>
           <DrawerDescription>
-            Showing total visitors for the last 6 months
+            Course details and student engagement metrics
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
@@ -663,8 +635,8 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                   accessibilityLayer
                   data={chartData}
                   margin={{
-                    left: 0,
-                    right: 10,
+                    left: CHART_MARGIN_LEFT,
+                    right: CHART_MARGIN_RIGHT,
                   }}
                 >
                   <CartesianGrid vertical={false} />
@@ -672,9 +644,9 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                     axisLine={false}
                     dataKey="month"
                     hide
-                    tickFormatter={(value) => value.slice(0, 3)}
+                    tickFormatter={(value: string) => value.slice(0, 3)}
                     tickLine={false}
-                    tickMargin={8}
+                    tickMargin={CHART_TICK_MARGIN}
                   />
                   <ChartTooltip
                     content={<ChartTooltipContent indicator="dot" />}
@@ -715,72 +687,65 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
           )}
           <form className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
-              <Input defaultValue={item.header} id="header" />
+              <Label htmlFor="courseName">Course Name</Label>
+              <Input defaultValue={item.courseName} id="courseName" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.type}>
-                  <SelectTrigger className="w-full" id="type">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="instructor">Instructor</Label>
+                <Input defaultValue={item.instructor} id="instructor" />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="status">Status</Label>
-                <Select defaultValue={item.status}>
-                  <SelectTrigger className="w-full" id="status">
-                    <SelectValue placeholder="Select a status" />
+                <Label htmlFor="category">Category</Label>
+                <Select defaultValue={item.category}>
+                  <SelectTrigger className="w-full" id="category">
+                    <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Done">Done</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Not Started">Not Started</SelectItem>
+                    <SelectItem value="Sustainability">
+                      Sustainability
+                    </SelectItem>
+                    <SelectItem value="Crop Management">
+                      Crop Management
+                    </SelectItem>
+                    <SelectItem value="Soil Science">Soil Science</SelectItem>
+                    <SelectItem value="Pest Control">Pest Control</SelectItem>
+                    <SelectItem value="Water Management">
+                      Water Management
+                    </SelectItem>
+                    <SelectItem value="Animal Husbandry">
+                      Animal Husbandry
+                    </SelectItem>
+                    <SelectItem value="Technology">Technology</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="target">Target</Label>
-                <Input defaultValue={item.target} id="target" />
+                <Label htmlFor="enrolledStudents">Enrolled Students</Label>
+                <Input
+                  defaultValue={item.enrolledStudents.toString()}
+                  id="enrolledStudents"
+                />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="limit">Limit</Label>
-                <Input defaultValue={item.limit} id="limit" />
+                <Label htmlFor="completionRate">Completion Rate</Label>
+                <Input defaultValue={item.completionRate} id="completionRate" />
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.reviewer}>
-                <SelectTrigger className="w-full" id="reviewer">
-                  <SelectValue placeholder="Select a reviewer" />
+              <Label htmlFor="status">Status</Label>
+              <Select defaultValue={item.status}>
+                <SelectTrigger className="w-full" id="status">
+                  <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
-                  </SelectItem>
-                  <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="Archived">Archived</SelectItem>
                 </SelectContent>
               </Select>
             </div>
