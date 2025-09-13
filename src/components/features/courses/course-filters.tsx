@@ -42,15 +42,6 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [sortBy, setSortBy] = useState("title");
 
-  const handleFilterChange = () => {
-    onFiltersChange({
-      searchTerm,
-      selectedCategory,
-      selectedStatus,
-      sortBy,
-    });
-  };
-
   // Update filters when any value changes
   useEffect(() => {
     onFiltersChange({
@@ -75,21 +66,12 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
             <IconSearch className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
             <Input
               className="pl-10"
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                handleFilterChange();
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search courses or instructors..."
               value={searchTerm}
             />
           </div>
-          <Select
-            onValueChange={(value) => {
-              setSelectedCategory(value);
-              handleFilterChange();
-            }}
-            value={selectedCategory}
-          >
+          <Select onValueChange={setSelectedCategory} value={selectedCategory}>
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -101,13 +83,7 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
               ))}
             </SelectContent>
           </Select>
-          <Select
-            onValueChange={(value) => {
-              setSelectedStatus(value);
-              handleFilterChange();
-            }}
-            value={selectedStatus}
-          >
+          <Select onValueChange={setSelectedStatus} value={selectedStatus}>
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -119,13 +95,7 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
               ))}
             </SelectContent>
           </Select>
-          <Select
-            onValueChange={(value) => {
-              setSortBy(value);
-              handleFilterChange();
-            }}
-            value={sortBy}
-          >
+          <Select onValueChange={setSortBy} value={sortBy}>
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
