@@ -1,9 +1,10 @@
 import { IconBook } from "@tabler/icons-react";
 import { CourseManager } from "@/components/features/courses/course-manager";
 import CreateActionButton from "@/components/features/courses/create-action-btn";
-import { mockCourses } from "@/components/features/courses/dummy";
+import { trpc } from "@/trpc/server";
 
-const CoursesPage = () => {
+const CoursesPage = async () => {
+  const courses = await trpc.courses.getCourses();
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
@@ -29,7 +30,7 @@ const CoursesPage = () => {
           </div>
 
           {/* Course Management Components */}
-          <CourseManager courses={mockCourses} />
+          <CourseManager coursesWithCategory={courses} />
         </div>
       </div>
     </div>

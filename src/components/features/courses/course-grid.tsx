@@ -18,27 +18,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-type Course = {
-  id: number;
-  title: string;
-  instructor: string;
-  category: string;
-  status: string;
-  enrolledStudents: number;
-  completionRate: number;
-  duration: string;
-  lastUpdated: string;
-  thumbnail: string;
-  description: string;
-};
+import type { CourseWithCategory } from "./types";
 
 type CourseGridProps = {
-  courses: Course[];
+  courses: CourseWithCategory[];
 };
 
 export function CourseGrid({ courses }: CourseGridProps) {
-  if (courses.length === 0) {
+  const dummyStatus = "Active";
+  if (courses?.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -58,58 +46,56 @@ export function CourseGrid({ courses }: CourseGridProps) {
 
   return (
     <div className="grid @3xl/main:grid-cols-3 @xl/main:grid-cols-2 gap-6">
-      {courses.map((course) => (
+      {courses?.map((course) => (
         <Card
           className="group transition-shadow hover:shadow-lg"
-          key={course.id}
+          key={course.course.id}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
-                  {course.title}
+                  {course.course.title}
                 </CardTitle>
-                <CardDescription className="mt-1">
-                  by {course.instructor}
-                </CardDescription>
+                <CardDescription className="mt-1">by John Doe</CardDescription>
               </div>
               <Badge
                 className={
-                  course.status === "Active"
+                  dummyStatus === "Active"
                     ? "border-green-200 text-green-700"
                     : "border-gray-200 text-gray-700"
                 }
                 variant="outline"
               >
-                {course.status}
+                {dummyStatus}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="line-clamp-2 text-muted-foreground text-sm">
-              {course.description}
+              {course.course.description}
             </p>
 
             <div className="flex items-center gap-4 text-muted-foreground text-sm">
               <div className="flex items-center gap-1">
                 <IconUsers className="h-4 w-4" />
-                {course.enrolledStudents} students
+                10 students
               </div>
               <div className="flex items-center gap-1">
                 <IconClock className="h-4 w-4" />
-                {course.duration}
+                10 hours
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>Completion Rate</span>
-                <span className="font-medium">{course.completionRate}%</span>
+                <span className="font-medium">100%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-muted">
                 <div
                   className="h-2 rounded-full bg-primary transition-all"
-                  style={{ width: `${course.completionRate}%` }}
+                  style={{ width: "100%" }}
                 />
               </div>
             </div>
@@ -119,7 +105,7 @@ export function CourseGrid({ courses }: CourseGridProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 text-muted-foreground text-sm">
                 <IconCalendar className="h-4 w-4" />
-                Updated {new Date(course.lastUpdated).toLocaleDateString()}
+                Updated {new Date(course.course.updatedAt).toLocaleDateString()}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline">

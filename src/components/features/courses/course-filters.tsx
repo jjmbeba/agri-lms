@@ -1,8 +1,8 @@
 "use client";
 
 import { IconFilter, IconSearch } from "@tabler/icons-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,18 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const categories = [
-  "All Categories",
-  "Sustainability",
-  "Crop Management",
-  "Soil Science",
-  "Pest Control",
-  "Water Management",
-  "Animal Husbandry",
-  "Technology",
-  "Business",
-];
+import { trpc } from "@/trpc/client";
 
 const statuses = ["All Status", "Active", "Inactive", "Draft", "Archived"];
 
@@ -41,6 +30,8 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [sortBy, setSortBy] = useState("title");
+  const { data: categories, isLoading: isLoadingCategories } =
+    trpc.categories.getAll.useQuery();
 
   // Update filters when any value changes
   useEffect(() => {
@@ -72,15 +63,39 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
             />
           </div>
           <Select onValueChange={setSelectedCategory} value={selectedCategory}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Category" />
+            <SelectTrigger
+              disabled={isLoadingCategories || categories?.length === 0}
+            >
+              {isLoadingCategories ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Loading categories...</span>
+                </div>
+              ) : (
+                <SelectValue
+                  placeholder={
+                    categories?.length === 0
+                      ? "No categories found"
+                      : "Select a category"
+                  }
+                />
+              )}
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
+              {isLoadingCategories ? (
+                <SelectItem value="loading">Loading categories...</SelectItem>
+              ) : (
+                <>
+                  <SelectItem key="all" value="All Categories">
+                    All Categories
+                  </SelectItem>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.name}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
             </SelectContent>
           </Select>
           <Select onValueChange={setSelectedStatus} value={selectedStatus}>

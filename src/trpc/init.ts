@@ -1,6 +1,12 @@
-import { initTRPC } from "@trpc/server";
+import {
+  type inferRouterInputs,
+  type inferRouterOutputs,
+  initTRPC,
+} from "@trpc/server";
 import { cache } from "react";
+import superjson from "superjson";
 import db from "@/db";
+import type { AppRouter } from "./routers/_app";
 
 export const createTRPCContext = cache(() => {
   /**
@@ -16,9 +22,12 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   /**
    * @see https://trpc.io/docs/server/data-transformers
    */
-  // transformer: superjson,
+  transformer: superjson,
 });
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const publicProcedure = t.procedure;
+
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;
