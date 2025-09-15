@@ -1,7 +1,7 @@
 "use client";
 
 import { IconBook, IconClock, IconPlus, IconUsers } from "@tabler/icons-react";
-
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,9 +48,11 @@ export function CourseGrid({ courses }: CourseGridProps) {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
-                  {course.course.title}
-                </CardTitle>
+                <Link href={`/courses/${course.course.id}`}>
+                  <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
+                    {course.course.title}
+                  </CardTitle>
+                </Link>
                 <CardDescription className="mt-1">by John Doe</CardDescription>
               </div>
               <Badge

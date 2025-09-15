@@ -1,7 +1,12 @@
 import { IconBook } from "@tabler/icons-react";
+import type { Metadata } from "next";
 import { CourseManager } from "@/components/features/courses/course-manager";
 import CreateActionButton from "@/components/features/courses/create-action-btn";
 import { trpc } from "@/trpc/server";
+
+export const metadata: Metadata = {
+  title: "Courses",
+};
 
 const CoursesPage = async () => {
   const courses = await trpc.courses.getCourses();

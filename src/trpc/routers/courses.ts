@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
+import { z } from "zod";
 import { createCourseSchema } from "@/components/features/courses/schema";
 import { category, course } from "@/db/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../init";
@@ -27,5 +28,13 @@ export const coursesRouter = createTRPCRouter({
       .select()
       .from(course)
       .leftJoin(category, eq(course.categoryId, category.id));
+  }),
+  getCourse: publicProcedure.input(z.string()).query(({ ctx, input }) => {
+    return ctx.db
+      .select()
+      .from(course)
+      .leftJoin(category, eq(course.categoryId, category.id))
+      .where(eq(course.id, input))
+      .limit(1);
   }),
 });
