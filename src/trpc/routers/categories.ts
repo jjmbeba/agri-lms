@@ -1,11 +1,15 @@
+import { TRPCError } from "@trpc/server";
 import { createCategorySchema } from "@/components/features/courses/schema";
 import { category } from "@/db/schema";
-import { createTRPCRouter, publicProcedure } from "../init";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../init";
 
 export const categoriesRouter = createTRPCRouter({
-  create: publicProcedure
+  create: protectedProcedure
     .input(createCategorySchema)
     .mutation(({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
       return ctx.db.insert(category).values({
         name: input.name,
         slug: input.slug,

@@ -76,6 +76,7 @@ export const course = pgTable("course", {
   id: uuid().primaryKey().defaultRandom(),
   title: text("title").notNull(),
   tags: text("tags").notNull(),
+  status: text("status").default("draft"),
   categoryId: uuid("category_id")
     .references(() => category.id, {
       onDelete: "cascade",

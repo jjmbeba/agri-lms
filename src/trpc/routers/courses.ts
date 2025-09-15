@@ -1,12 +1,17 @@
+import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
 import { createCourseSchema } from "@/components/features/courses/schema";
 import { category, course } from "@/db/schema";
-import { createTRPCRouter, publicProcedure } from "../init";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../init";
 
 export const coursesRouter = createTRPCRouter({
-  create: publicProcedure
+  create: protectedProcedure
     .input(createCourseSchema)
     .mutation(({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
       return ctx.db.insert(course).values({
         title: input.title,
         description: input.description,
@@ -14,7 +19,7 @@ export const coursesRouter = createTRPCRouter({
         categoryId: input.categoryId,
       });
     }),
-  getCoursesCount: publicProcedure.query(({ ctx }) => {
+  getCoursesCount: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select({ count: count() }).from(course);
   }),
   getCourses: publicProcedure.query(({ ctx }) => {
