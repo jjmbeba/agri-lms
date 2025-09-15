@@ -1,6 +1,6 @@
 import { IconBook } from "@tabler/icons-react";
 import { CourseManager } from "@/components/features/courses/course-manager";
-import CreateCourseButton from "@/components/features/courses/create-course-btn";
+import CreateActionButton from "@/components/features/courses/create-action-btn";
 import { mockCourses } from "@/components/features/courses/dummy";
 
 const CoursesPage = () => {
@@ -24,7 +24,7 @@ const CoursesPage = () => {
                   </p>
                 </div>
               </div>
-              <CreateCourseButton />
+              <CreateActionButton />
             </div>
           </div>
 

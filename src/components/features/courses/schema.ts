@@ -21,3 +21,9 @@ export const createCourseSchema = z.object({
     message: "Category is required",
   }),
 });
+
+export const createCategorySchema = z.object({
+  name: z.string().min(1, {
+    message: "Name is required",
+  }),
+});
