@@ -11,4 +11,7 @@ export const categoriesRouter = createTRPCRouter({
         slug: input.slug,
       });
     }),
+  getAll: publicProcedure.query(({ ctx }) => {
+    return ctx.db.select().from(category);
+  }),
 });

@@ -63,8 +63,25 @@ export const verification = pgTable("verification", {
 
 export const category = pgTable("category", {
   id: uuid().primaryKey().defaultRandom(),
-  slug: text("slug").notNull(),
+  slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const course = pgTable("course", {
+  id: uuid().primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  tags: text("tags").notNull(),
+  categoryId: uuid("category_id")
+    .references(() => category.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

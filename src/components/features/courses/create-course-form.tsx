@@ -4,6 +4,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { type Tag, TagInput } from "emblor";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
@@ -16,11 +17,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { mockCategories } from "./dummy";
+import { trpc } from "@/trpc/client";
 import { createCourseSchema } from "./schema";
 
 const CreateCourseForm = () => {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
+  const { data: categories, isLoading: isLoadingCategories } =
+    trpc.categories.getAll.useQuery();
+  const { mutate: createCourse, isPending: isCreatingCourse } =
+    trpc.courses.create.useMutation({
+      onSuccess: () => {
+        toast.success("Course created successfully");
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
 
   const form = useForm({
     defaultValues: {
@@ -34,7 +47,12 @@ const CreateCourseForm = () => {
       onDynamic: createCourseSchema,
     },
     onSubmit: ({ value }) => {
-      console.log(value);
+      createCourse({
+        title: value.title,
+        description: value.description,
+        tags: value.tags,
+        categoryId: value.categoryId,
+      });
     },
   });
 
@@ -99,18 +117,41 @@ const CreateCourseForm = () => {
                     defaultValue={field.state.value}
                     onValueChange={(value) => field.handleChange(value)}
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a category" />
+                    <SelectTrigger
+                      className="w-full"
+                      disabled={isLoadingCategories || categories?.length === 0}
+                    >
+                      {isLoadingCategories ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="size-4 animate-spin" />
+                          <span>Loading categories...</span>
+                        </div>
+                      ) : (
+                        <SelectValue
+                          placeholder={
+                            categories?.length === 0
+                              ? "No categories found"
+                              : "Select a category"
+                          }
+                        />
+                      )}
                     </SelectTrigger>
                     <SelectContent>
-                      {mockCategories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
-                          {category.name}
+                      {categories && categories.length === 0 && (
+                        <SelectItem value="no-categories">
+                          No categories found
                         </SelectItem>
-                      ))}
+                      )}
+                      {categories &&
+                        categories.length > 0 &&
+                        categories.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   {field.state.meta.errors.map((error) => (
@@ -164,8 +205,16 @@ const CreateCourseForm = () => {
             selector={(state) => [state.canSubmit, state.isSubmitting]}
           >
             {([canSubmit, isSubmitting]) => (
-              <Button disabled={!canSubmit} type="submit">
-                {isSubmitting ? (
+              <Button
+                disabled={
+                  !canSubmit ||
+                  isCreatingCourse ||
+                  isSubmitting ||
+                  isLoadingCategories
+                }
+                type="submit"
+              >
+                {isSubmitting || isCreatingCourse || isLoadingCategories ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   "Create Course"

@@ -16,6 +16,7 @@ const CreateCategoryForm = () => {
     trpc.categories.create.useMutation({
       onSuccess: () => {
         toast.success("Category created successfully");
+        form.reset();
       },
       onError: (error) => {
         toast.error(error.message);
