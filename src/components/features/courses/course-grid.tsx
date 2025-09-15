@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  IconBook,
-  IconCalendar,
-  IconClock,
-  IconPlus,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconBook, IconClock, IconPlus, IconUsers } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { capitalize } from "@/lib/utils";
 import type { CourseWithCategory } from "./types";
 
 type CourseGridProps = {
@@ -25,7 +20,6 @@ type CourseGridProps = {
 };
 
 export function CourseGrid({ courses }: CourseGridProps) {
-  const dummyStatus = "Active";
   if (courses?.length === 0) {
     return (
       <Card>
@@ -61,13 +55,13 @@ export function CourseGrid({ courses }: CourseGridProps) {
               </div>
               <Badge
                 className={
-                  dummyStatus === "Active"
+                  course.course.status === "Active"
                     ? "border-green-200 text-green-700"
-                    : "border-gray-200 text-gray-700"
+                    : "border-neutral-700 text-neutral-200"
                 }
                 variant="outline"
               >
-                {dummyStatus}
+                {capitalize(course.course?.status ?? "")}
               </Badge>
             </div>
           </CardHeader>
@@ -103,10 +97,6 @@ export function CourseGrid({ courses }: CourseGridProps) {
             <Separator />
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                <IconCalendar className="h-4 w-4" />
-                Updated {new Date(course.course.updatedAt).toLocaleDateString()}
-              </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline">
                   Edit

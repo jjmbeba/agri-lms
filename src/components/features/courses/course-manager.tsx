@@ -41,9 +41,14 @@ export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
           .includes(filters.searchTerm.toLowerCase());
         const matchesCategory =
           filters.selectedCategory === "All Categories" ||
-          courseWithCategory.category?.name === filters.selectedCategory;
+          courseWithCategory.category?.name.toLowerCase() ===
+            filters.selectedCategory.toLowerCase();
+        const matchesStatus =
+          filters.selectedStatus === "All Status" ||
+          courseWithCategory.course?.status?.toLowerCase() ===
+            filters.selectedStatus.toLowerCase();
 
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesCategory && matchesStatus;
       });
 
       // Sort the filtered results
