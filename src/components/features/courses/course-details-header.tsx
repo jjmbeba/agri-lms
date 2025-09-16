@@ -1,16 +1,8 @@
-"use client";
-
-import {
-  IconEdit,
-  IconSettings,
-  IconShare,
-  IconTrash,
-} from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
+import CourseHeaderActions from "./course-header-actions";
 import type { CourseWithCategory } from "./types";
 
 type CourseDetailsHeaderProps = {
@@ -32,8 +24,8 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
                   <Badge
                     className={
                       course.course.status === "Active"
-                        ? "border-green-200 text-green-700"
-                        : "border-neutral-700 text-neutral-200"
+                        ? "border-green-200 text-secondary-foreground"
+                        : "border-neutral-700 text-muted-foreground"
                     }
                     variant="outline"
                   >
@@ -75,31 +67,13 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
                     key={`tag-${index}-${tag.trim()}`}
                     variant="secondary"
                   >
-                    {tag.trim()}
+                    {capitalize(tag.trim())}
                   </Badge>
                 ))}
               </div>
             )}
           </div>
-
-          <div className="flex flex-col gap-2 lg:flex-row">
-            <Button size="sm" variant="outline">
-              <IconShare className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-            <Button size="sm" variant="outline">
-              <IconEdit className="mr-2 h-4 w-4" />
-              Edit Course
-            </Button>
-            <Button size="sm" variant="outline">
-              <IconSettings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
-            <Button size="sm" variant="destructive">
-              <IconTrash className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </div>
+          <CourseHeaderActions courseId={course.course.id} />
         </div>
       </CardContent>
     </Card>

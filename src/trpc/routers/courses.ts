@@ -37,4 +37,13 @@ export const coursesRouter = createTRPCRouter({
       .where(eq(course.id, input))
       .limit(1);
   }),
+  deleteCourse: protectedProcedure
+    .input(z.string())
+    .mutation(({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      return ctx.db.delete(course).where(eq(course.id, input));
+    }),
 });

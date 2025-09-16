@@ -45,6 +45,7 @@ const CreateCategoryForm = () => {
         Create Category
       </h3>
       <form
+        className="mt-4"
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit();
