@@ -22,6 +22,12 @@ export const createCourseSchema = z.object({
   }),
 });
 
+export const editCourseSchema = createCourseSchema.extend({
+  id: z.string().min(1, {
+    message: "ID is required",
+  }),
+});
+
 export const createCategorySchema = z.object({
   name: z.string().min(1, {
     message: "Name is required",

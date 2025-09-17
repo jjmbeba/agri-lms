@@ -4,8 +4,18 @@ import { BookOpenIcon, FolderOpenIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import CreateCourseForm from "./course-form";
 import CreateCategoryForm from "./create-category-form";
-import CreateCourseForm from "./create-course-form";
 
 const CreateActionButton = () => {
   const [open, setOpen] = useState(false);
@@ -27,10 +37,15 @@ const CreateActionButton = () => {
     return (
       <Drawer onOpenChange={setOpen} open={open}>
         <CreateActionMenu setAction={setAction} setOpen={setOpen} />
+        <DrawerHeader>
+          <DrawerTitle>
+            Create {action === "category" ? "Category" : "Course"}
+          </DrawerTitle>
+        </DrawerHeader>
         <DrawerContent className="h-3/4 max-h-[85vh]">
           <div className="p-6">
             {action === "category" && <CreateCategoryForm />}
-            {action === "course" && <CreateCourseForm />}
+            {action === "course" && <CreateCourseForm type="create" />}
           </div>
         </DrawerContent>
       </Drawer>
@@ -40,9 +55,14 @@ const CreateActionButton = () => {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <CreateActionMenu setAction={setAction} setOpen={setOpen} />
+      <DialogHeader>
+        <DialogTitle>
+          Create {action === "category" ? "Category" : "Course"}
+        </DialogTitle>
+      </DialogHeader>
       <DialogContent>
         {action === "category" && <CreateCategoryForm />}
-        {action === "course" && <CreateCourseForm />}
+        {action === "course" && <CreateCourseForm type="create" />}
       </DialogContent>
     </Dialog>
   );

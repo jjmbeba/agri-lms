@@ -73,7 +73,7 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
               </div>
             )}
           </div>
-          <CourseHeaderActions courseId={course.course.id} />
+          <CourseHeaderActions courseDetails={course} />
         </div>
       </CardContent>
     </Card>

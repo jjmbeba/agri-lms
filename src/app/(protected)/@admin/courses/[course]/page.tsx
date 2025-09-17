@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CourseContentManagement } from "@/components/features/courses/course-content-management";
 import { CourseDetailsHeader } from "@/components/features/courses/course-details-header";
-import { CourseDetailsStats } from "@/components/features/courses/course-details-stats";
-import { CourseSettings } from "@/components/features/courses/course-settings";
-import { CourseStudentManagement } from "@/components/features/courses/course-student-management";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/trpc/server";
 
 type CourseDetailsPageProps = {
@@ -29,7 +25,8 @@ export async function generateMetadata({
 }
 
 const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
-  const courseData = await trpc.courses.getCourse(params.course);
+  const { course: courseId } = await params;
+  const courseData = await trpc.courses.getCourse(courseId);
 
   if (!courseData || courseData.length === 0) {
     notFound();
@@ -41,7 +38,7 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
     <div className="space-y-6 p-6">
       <CourseDetailsHeader course={course} />
 
-      <CourseDetailsStats course={course} />
+      {/* <CourseDetailsStats course={course} /> */}
 
       <Tabs className="space-y-6" defaultValue="content">
         <TabsList className="grid w-full grid-cols-4">
@@ -51,15 +48,15 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        <TabsContent className="space-y-6" value="content">
+        {/* <TabsContent className="space-y-6" value="content">
           <CourseContentManagement />
-        </TabsContent>
+        </TabsContent> */}
 
-        <TabsContent className="space-y-6" value="students">
+        {/* <TabsContent className="space-y-6" value="students">
           <CourseStudentManagement />
-        </TabsContent>
+        </TabsContent> */}
 
-        <TabsContent className="space-y-6" value="analytics">
+        {/* <TabsContent className="space-y-6" value="analytics">
           <div className="py-12 text-center">
             <h3 className="mb-2 font-semibold text-lg">
               Analytics Coming Soon
@@ -68,11 +65,10 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
               Detailed course analytics and insights will be available here.
             </p>
           </div>
-        </TabsContent>
-
-        <TabsContent className="space-y-6" value="settings">
+        </TabsContent> */}
+        {/* <TabsContent className="space-y-6" value="settings">
           <CourseSettings />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

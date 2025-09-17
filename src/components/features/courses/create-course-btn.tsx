@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CreateCourseForm from "./create-course-form";
+import CreateCourseForm from "./course-form";
 
 const CreateCourseButton = () => {
   return (
@@ -22,7 +22,7 @@ const CreateCourseButton = () => {
         <DialogHeader>
           <DialogTitle>Create Course</DialogTitle>
         </DialogHeader>
-        <CreateCourseForm />
+        <CreateCourseForm type="create" />
       </DialogContent>
     </Dialog>
   );
