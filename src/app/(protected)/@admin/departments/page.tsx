@@ -5,6 +5,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import type { Metadata } from "next";
+import CreateDepartmentButton from "@/components/features/departments/create-department-btn";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,10 +99,7 @@ const DepartmentsPage = () => {
                   </p>
                 </div>
               </div>
-              <Button className="gap-2">
-                <IconBuilding className="h-4 w-4" />
-                Create Department
-              </Button>
+              <CreateDepartmentButton />
             </div>
           </div>
 
