@@ -40,8 +40,8 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
 
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
               <div className="flex items-center gap-2">
-                <span className="font-medium">Category:</span>
-                <span>{course.category?.name || "Uncategorized"}</span>
+                <span className="font-medium">Department:</span>
+                <span>{course.department?.name || "Uncategorized"}</span>
               </div>
               <Separator className="h-4" orientation="vertical" />
               <div className="flex items-center gap-2">

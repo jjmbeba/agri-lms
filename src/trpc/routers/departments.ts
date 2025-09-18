@@ -58,4 +58,13 @@ export const departmentsRouter = createTRPCRouter({
         })
         .where(eq(department.id, input.id));
     }),
+  deleteDepartment: protectedProcedure
+    .input(z.string())
+    .mutation(({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      return ctx.db.delete(department).where(eq(department.id, input));
+    }),
 });
