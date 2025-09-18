@@ -5,7 +5,7 @@ import {
   createCourseSchema,
   editCourseSchema,
 } from "@/components/features/courses/schema";
-import { category, course } from "@/db/schema";
+import { course, department } from "@/db/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../init";
 
 export const coursesRouter = createTRPCRouter({
@@ -20,7 +20,7 @@ export const coursesRouter = createTRPCRouter({
         title: input.title,
         description: input.description,
         tags: input.tags.map((tag) => tag.text).join(","),
-        categoryId: input.categoryId,
+        departmentId: input.departmentId,
       });
     }),
   getCoursesCount: protectedProcedure.query(({ ctx }) => {
@@ -30,13 +30,13 @@ export const coursesRouter = createTRPCRouter({
     return ctx.db
       .select()
       .from(course)
-      .leftJoin(category, eq(course.categoryId, category.id));
+      .leftJoin(department, eq(course.departmentId, department.id));
   }),
   getCourse: publicProcedure.input(z.string()).query(({ ctx, input }) => {
     return ctx.db
       .select()
       .from(course)
-      .leftJoin(category, eq(course.categoryId, category.id))
+      .leftJoin(department, eq(course.departmentId, department.id))
       .where(eq(course.id, input))
       .limit(1);
   }),
@@ -62,7 +62,7 @@ export const coursesRouter = createTRPCRouter({
           title: input.title,
           description: input.description,
           tags: input.tags.map((tag) => tag.text).join(","),
-          categoryId: input.categoryId,
+          departmentId: input.departmentId,
         })
         .where(eq(course.id, input.id));
     }),

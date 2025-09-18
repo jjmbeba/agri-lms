@@ -17,7 +17,7 @@ export const createCourseSchema = z.object({
     .min(1, {
       message: "Tags are required",
     }),
-  categoryId: z.string().min(1, {
+  departmentId: z.string().min(1, {
     message: "Category is required",
   }),
 });

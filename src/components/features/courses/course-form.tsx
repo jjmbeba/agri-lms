@@ -39,8 +39,8 @@ const CourseForm = (props: CourseFormProps) => {
   const action = type === "create" ? "Create" : "Update";
 
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
-  const { data: categories, isLoading: isLoadingCategories } =
-    trpc.categories.getAll.useQuery();
+  const { data: departments, isLoading: isLoadingDepartments } =
+    trpc.departments.getAll.useQuery();
   const { mutate: createCourse, isPending: isCreatingCourse } =
     trpc.courses.create.useMutation({
       onSuccess: () => {
@@ -71,13 +71,13 @@ const CourseForm = (props: CourseFormProps) => {
               id: tag,
               text: tag,
             })),
-            categoryId: rest.courseDetails.course.categoryId,
+            departmentId: rest.courseDetails.course.departmentId,
           }
         : {
             title: "",
             description: "",
             tags: [] as Tag[],
-            categoryId: "",
+            departmentId: "",
           },
     validationLogic: revalidateLogic(),
     validators: {
@@ -89,7 +89,7 @@ const CourseForm = (props: CourseFormProps) => {
           title: value.title,
           description: value.description,
           tags: value.tags,
-          categoryId: value.categoryId,
+          departmentId: value.departmentId,
         });
       } else if (type === "edit" && "id" in rest) {
         editCourse({
@@ -97,7 +97,7 @@ const CourseForm = (props: CourseFormProps) => {
           title: value.title,
           description: value.description,
           tags: value.tags,
-          categoryId: value.categoryId,
+          departmentId: value.departmentId,
         });
       }
     },
@@ -152,47 +152,47 @@ const CourseForm = (props: CourseFormProps) => {
           )}
         </form.Field>
         <div className="flex w-full items-start gap-3 *:w-1/2">
-          <form.Field name="categoryId">
+          <form.Field name="departmentId">
             {(field) => (
               <div className="grid gap-3">
-                <Label htmlFor="categoryId">Category</Label>
+                <Label htmlFor="departmentId">Department</Label>
                 <Select
                   defaultValue={field.state.value}
                   onValueChange={(value) => field.handleChange(value)}
                 >
                   <SelectTrigger
                     className="w-full"
-                    disabled={isLoadingCategories || categories?.length === 0}
+                    disabled={isLoadingDepartments || departments?.length === 0}
                   >
-                    {isLoadingCategories ? (
+                    {isLoadingDepartments ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="size-4 animate-spin" />
-                        <span>Loading categories...</span>
+                        <span>Loading departments...</span>
                       </div>
                     ) : (
                       <SelectValue
                         placeholder={
-                          categories?.length === 0
-                            ? "No categories found"
-                            : "Select a category"
+                          departments?.length === 0
+                            ? "No departments found"
+                            : "Select a department"
                         }
                       />
                     )}
                   </SelectTrigger>
                   <SelectContent>
-                    {categories && categories.length === 0 && (
-                      <SelectItem value="no-categories">
-                        No categories found
+                    {departments && departments.length === 0 && (
+                      <SelectItem value="no-departments">
+                        No departments found
                       </SelectItem>
                     )}
-                    {categories &&
-                      categories.length > 0 &&
-                      categories.map((category) => (
+                    {departments &&
+                      departments.length > 0 &&
+                      departments.map((department) => (
                         <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
+                          key={department.id}
+                          value={department.id.toString()}
                         >
-                          {category.name}
+                          {department.name}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -253,14 +253,14 @@ const CourseForm = (props: CourseFormProps) => {
                 !canSubmit ||
                 isCreatingCourse ||
                 isSubmitting ||
-                isLoadingCategories ||
+                isLoadingDepartments ||
                 isEditingCourse
               }
               type="submit"
             >
               {isSubmitting ||
               isCreatingCourse ||
-              isLoadingCategories ||
+              isLoadingDepartments ||
               isEditingCourse ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (

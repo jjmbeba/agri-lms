@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CourseContentManagement } from "@/components/features/courses/course-content-management";
 import { CourseDetailsHeader } from "@/components/features/courses/course-details-header";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CourseDetailsStats } from "@/components/features/courses/course-details-stats";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/trpc/server";
 
 type CourseDetailsPageProps = {
@@ -38,7 +40,7 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
     <div className="space-y-6 p-6">
       <CourseDetailsHeader course={course} />
 
-      {/* <CourseDetailsStats course={course} /> */}
+      <CourseDetailsStats course={course} />
 
       <Tabs className="space-y-6" defaultValue="content">
         <TabsList className="grid w-full grid-cols-4">
@@ -48,9 +50,9 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        {/* <TabsContent className="space-y-6" value="content">
+        <TabsContent className="space-y-6" value="content">
           <CourseContentManagement />
-        </TabsContent> */}
+        </TabsContent>
 
         {/* <TabsContent className="space-y-6" value="students">
           <CourseStudentManagement />

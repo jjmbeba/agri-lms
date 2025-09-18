@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  IconEdit,
-  IconSettings,
-  IconShare,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconEdit, IconShare, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,10 +58,6 @@ const CourseHeaderActions = ({
         Share
       </Button>
       <EditCourseButton courseDetails={courseDetails} />
-      <Button size="sm" variant="outline">
-        <IconSettings className="mr-2 h-4 w-4" />
-        Settings
-      </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button size="sm" variant="destructive">

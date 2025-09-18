@@ -1,9 +1,9 @@
 import { createTRPCRouter } from "../init";
-import { categoriesRouter } from "./categories";
 import { coursesRouter } from "./courses";
+import { departmentsRouter } from "./departments";
 
 export const appRouter = createTRPCRouter({
-  categories: categoriesRouter,
+  departments: departmentsRouter,
   courses: coursesRouter,
 });
 // export type definition of API

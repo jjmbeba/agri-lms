@@ -1,5 +1,3 @@
-"use client";
-
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -9,13 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { generateSlug } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
-import { createCategorySchema } from "./schema";
+import type { RouterOutputs } from "@/trpc/init";
+import { createDepartmentSchema } from "./schema";
 
-const CreateCategoryForm = () => {
-  const { mutate: createCategory, isPending: isCreatingCategory } =
-    trpc.categories.create.useMutation({
+type Department = RouterOutputs["departments"]["getById"][number];
+
+type CreateDepartmentFormProps = {
+  type: "create";
+};
+
+type EditDepartmentFormProps = {
+  type: "edit";
+  id: string;
+  departmentDetails: Department;
+};
+
+type DepartmentFormProps = CreateDepartmentFormProps | EditDepartmentFormProps;
+
+const DepartmentForm = (props: DepartmentFormProps) => {
+  const { type, ...rest } = props;
+  const action = type === "create" ? "Create" : "Update";
+  const { mutate: createDepartment, isPending: isCreatingDepartment } =
+    trpc.departments.create.useMutation({
       onSuccess: () => {
-        toast.success("Category created successfully");
+        toast.success("Department created successfully");
         form.reset();
       },
       onError: (error) => {
@@ -23,22 +38,47 @@ const CreateCategoryForm = () => {
       },
     });
 
+  const { mutate: editDepartment, isPending: isEditingDepartment } =
+    trpc.departments.editDepartment.useMutation({
+      onSuccess: () => {
+        toast.success("Department updated successfully");
+      },
+    });
   const form = useForm({
-    defaultValues: {
-      name: "",
-      slug: "",
-    },
+    defaultValues:
+      type === "edit" && "departmentDetails" in rest
+        ? {
+            name: rest.departmentDetails.name,
+            description: rest.departmentDetails.description,
+            slug: rest.departmentDetails.slug,
+          }
+        : {
+            name: "",
+            description: "",
+            slug: "",
+          },
     validationLogic: revalidateLogic(),
     validators: {
-      onDynamic: createCategorySchema,
+      onDynamic: createDepartmentSchema,
     },
     onSubmit: ({ value }) => {
-      createCategory({
-        name: value.name,
-        slug: value.slug,
-      });
+      if (type === "create") {
+        createDepartment({
+          name: value.name,
+          description: value.description,
+          slug: value.slug,
+        });
+      } else if (type === "edit" && "id" in rest) {
+        editDepartment({
+          id: rest.id,
+          name: value.name,
+          description: value.description,
+          slug: value.slug,
+        });
+      }
     },
   });
+
   return (
     <form
       onSubmit={(e) => {
@@ -101,13 +141,18 @@ const CreateCategoryForm = () => {
         >
           {([canSubmit, isSubmitting]) => (
             <Button
-              disabled={!canSubmit || isSubmitting || isCreatingCategory}
+              disabled={
+                !canSubmit ||
+                isSubmitting ||
+                isCreatingDepartment ||
+                isEditingDepartment
+              }
               type="submit"
             >
-              {isSubmitting || isCreatingCategory ? (
+              {isSubmitting || isCreatingDepartment || isEditingDepartment ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                "Create Category"
+                `${action} Department`
               )}
             </Button>
           )}
@@ -117,4 +162,4 @@ const CreateCategoryForm = () => {
   );
 };
 
-export default CreateCategoryForm;
+export default DepartmentForm;

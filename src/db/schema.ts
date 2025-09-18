@@ -61,10 +61,11 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
-export const category = pgTable("category", {
+export const department = pgTable("department", {
   id: uuid().primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -77,8 +78,8 @@ export const course = pgTable("course", {
   title: text("title").notNull(),
   tags: text("tags").notNull(),
   status: text("status").default("draft"),
-  categoryId: uuid("category_id")
-    .references(() => category.id, {
+  departmentId: uuid("department_id")
+    .references(() => department.id, {
       onDelete: "cascade",
     })
     .notNull(),
