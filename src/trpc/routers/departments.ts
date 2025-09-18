@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import z from "zod";
 import {
   createDepartmentSchema,
   editDepartmentSchema,
 } from "@/components/features/departments/schema";
-import { department } from "@/db/schema";
+import { course, department } from "@/db/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../init";
 
 export const departmentsRouter = createTRPCRouter({
@@ -22,7 +22,19 @@ export const departmentsRouter = createTRPCRouter({
       });
     }),
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(department);
+    return ctx.db
+      .select({
+        id: department.id,
+        name: department.name,
+        slug: department.slug,
+        description: department.description,
+        createdAt: department.createdAt,
+        updatedAt: department.updatedAt,
+        courseCount: count(course.id),
+      })
+      .from(department)
+      .leftJoin(course, eq(department.id, course.departmentId))
+      .groupBy(department.id);
   }),
   getById: publicProcedure.input(z.string()).query(({ ctx, input }) => {
     return ctx.db
@@ -31,7 +43,6 @@ export const departmentsRouter = createTRPCRouter({
       .where(eq(department.id, input))
       .limit(1);
   }),
-
   editDepartment: protectedProcedure
     .input(editDepartmentSchema)
     .mutation(({ ctx, input }) => {

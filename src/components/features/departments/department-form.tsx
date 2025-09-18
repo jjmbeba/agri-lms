@@ -8,10 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generateSlug } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
-import type { RouterOutputs } from "@/trpc/init";
 import { createDepartmentSchema } from "./schema";
-
-type Department = RouterOutputs["departments"]["getById"][number];
+import type { Department } from "./types";
 
 type CreateDepartmentFormProps = {
   type: "create";

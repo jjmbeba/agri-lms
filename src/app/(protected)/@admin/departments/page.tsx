@@ -6,77 +6,24 @@ import {
 } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import CreateDepartmentButton from "@/components/features/departments/create-department-btn";
-import { Badge } from "@/components/ui/badge";
+import EditDepartmentButton from "@/components/features/departments/edit-department-btn";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/trpc/server";
 
 export const metadata: Metadata = {
   title: "Departments",
 };
 
-const DepartmentsPage = () => {
-  // Mock data for departments - in a real app, this would come from your database
-  const departments = [
-    {
-      id: "1",
-      name: "Crop Science",
-      description:
-        "Advanced crop production techniques and sustainable farming practices",
-      studentCount: 245,
-      courseCount: 12,
-      status: "active" as const,
-      lastUpdated: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "Livestock Management",
-      description:
-        "Comprehensive animal husbandry and veterinary care programs",
-      studentCount: 189,
-      courseCount: 8,
-      status: "active" as const,
-      lastUpdated: "2024-01-12",
-    },
-    {
-      id: "3",
-      name: "Soil & Water Conservation",
-      description: "Environmental stewardship and resource management",
-      studentCount: 156,
-      courseCount: 6,
-      status: "active" as const,
-      lastUpdated: "2024-01-10",
-    },
-    {
-      id: "4",
-      name: "Agricultural Economics",
-      description: "Farm business management and market analysis",
-      studentCount: 98,
-      courseCount: 5,
-      status: "active" as const,
-      lastUpdated: "2024-01-08",
-    },
-    {
-      id: "5",
-      name: "Extension Services",
-      description: "Community outreach and farmer education programs",
-      studentCount: 67,
-      courseCount: 4,
-      status: "active" as const,
-      lastUpdated: "2024-01-05",
-    },
-  ];
+const DepartmentsPage = async () => {
+  const departments = await trpc.departments.getAll();
 
-  const totalStudents = departments.reduce(
-    (sum, dept) => sum + dept.studentCount,
-    0
-  );
+  const totalStudents = 0; // TODO: Calculate from student enrollments
   const totalCourses = departments.reduce(
     (sum, dept) => sum + dept.courseCount,
     0
   );
-  const activeDepartments = departments.filter(
-    (dept) => dept.status === "active"
-  ).length;
+  const activeDepartments = departments.length;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -188,15 +135,6 @@ const DepartmentsPage = () => {
                           {department.description}
                         </p>
                       </div>
-                      <Badge
-                        variant={
-                          department.status === "active"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {department.status}
-                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -206,9 +144,7 @@ const DepartmentsPage = () => {
                           <p className="font-medium text-muted-foreground text-sm">
                             Students
                           </p>
-                          <p className="font-bold text-2xl">
-                            {department.studentCount}
-                          </p>
+                          <p className="font-bold text-2xl">{0}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="font-medium text-muted-foreground text-sm">
@@ -223,17 +159,16 @@ const DepartmentsPage = () => {
                       <div className="flex items-center justify-between pt-2">
                         <p className="text-muted-foreground text-xs">
                           Updated{" "}
-                          {new Date(
-                            department.lastUpdated
-                          ).toLocaleDateString()}
+                          {new Date(department.updatedAt).toLocaleDateString()}
                         </p>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
+                          {/* <Button size="sm" variant="outline">
                             View Details
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            Edit
-                          </Button>
+                          </Button> */}
+                          <EditDepartmentButton
+                            departmentDetails={department}
+                            id={department.id}
+                          />
                         </div>
                       </div>
                     </div>
