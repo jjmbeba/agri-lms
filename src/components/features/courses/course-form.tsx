@@ -151,10 +151,10 @@ const CourseForm = (props: CourseFormProps) => {
             </div>
           )}
         </form.Field>
-        <div className="flex w-full items-start gap-3 *:w-1/2">
+        <div className="flex w-full flex-col items-start gap-3 md:flex-row">
           <form.Field name="departmentId">
             {(field) => (
-              <div className="grid gap-3">
+              <div className="grid w-full gap-3 md:w-1/2">
                 <Label htmlFor="departmentId">Department</Label>
                 <Select
                   defaultValue={field.state.value}
@@ -208,7 +208,7 @@ const CourseForm = (props: CourseFormProps) => {
           </form.Field>
           <form.Field name="tags">
             {(field) => (
-              <div className="grid gap-3">
+              <div className="grid w-full gap-3 md:w-1/2">
                 <Label htmlFor="tags">Tags</Label>
                 <TagInput
                   activeTagIndex={activeTagIndex}

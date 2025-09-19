@@ -33,7 +33,7 @@ const DepartmentsPage = async () => {
           <div className="px-4 lg:px-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/20">
+                <div className="hidden h-12 w-12 items-center justify-center rounded-lg bg-green-100 md:flex dark:bg-green-900/20">
                   <IconBuilding className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>

@@ -41,7 +41,7 @@ export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
           .includes(filters.searchTerm.toLowerCase());
         const matchesCategory =
           filters.selectedCategory === "All Categories" ||
-          courseWithCategory.category?.name.toLowerCase() ===
+          courseWithCategory.department?.name.toLowerCase() ===
             filters.selectedCategory.toLowerCase();
         const matchesStatus =
           filters.selectedStatus === "All Status" ||

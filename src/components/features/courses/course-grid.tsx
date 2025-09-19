@@ -58,8 +58,8 @@ export function CourseGrid({ courses }: CourseGridProps) {
               <Badge
                 className={
                   course.course.status === "Active"
-                    ? "border-green-200 text-green-700"
-                    : "border-neutral-700 text-neutral-200"
+                    ? "border-green-200 text-secondary-foreground"
+                    : "border-neutral-700 text-muted-foreground"
                 }
                 variant="outline"
               >
@@ -95,15 +95,17 @@ export function CourseGrid({ courses }: CourseGridProps) {
                 />
               </div>
             </div>
-
             <Separator />
-
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
                 <Button size="sm" variant="outline">
                   Edit
                 </Button>
-                <Button size="sm">View Details</Button>
+                <Button asChild size="sm">
+                  <Link href={`/courses/${course.course.id}`}>
+                    View Details
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardContent>

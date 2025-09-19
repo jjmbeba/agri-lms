@@ -38,15 +38,17 @@ const EditDepartmentButton = ({
             Edit
           </Button>
         </DrawerTrigger>
-        <DrawerContent>
+        <DrawerContent className="h-3/4 max-h-[85vh]">
           <DrawerHeader>
             <DrawerTitle>Edit Department</DrawerTitle>
           </DrawerHeader>
-          <DepartmentForm
-            departmentDetails={departmentDetails}
-            id={id}
-            type="edit"
-          />
+          <div className="p-6">
+            <DepartmentForm
+              departmentDetails={departmentDetails}
+              id={id}
+              type="edit"
+            />
+          </div>
         </DrawerContent>
       </Drawer>
     );

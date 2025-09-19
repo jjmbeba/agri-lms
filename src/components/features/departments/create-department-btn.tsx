@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBuilding } from "@tabler/icons-react";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,15 +27,17 @@ const CreateDepartmentButton = () => {
       <Drawer>
         <DrawerTrigger asChild>
           <Button className="gap-2">
-            <IconBuilding className="h-4 w-4" />
-            Create Department
+            <PlusIcon className="size-4" />
+            <span className="hidden md:block">Create Department</span>
           </Button>
         </DrawerTrigger>
-        <DrawerContent>
+        <DrawerContent className="h-3/4 max-h-[85vh]">
           <DrawerHeader>
             <DrawerTitle>Create Department</DrawerTitle>
           </DrawerHeader>
-          <DepartmentForm type="create" />
+          <div className="p-6">
+            <DepartmentForm type="create" />
+          </div>
         </DrawerContent>
       </Drawer>
     );
@@ -44,8 +46,8 @@ const CreateDepartmentButton = () => {
     <Dialog>
       <DialogTrigger asChild>
         <Button className="gap-2">
-          <IconBuilding className="h-4 w-4" />
-          Create Department
+          <PlusIcon className="size-4" />
+          <span className="hidden md:block">Create Department</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

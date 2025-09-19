@@ -1,7 +1,7 @@
 import { IconBook } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { CourseManager } from "@/components/features/courses/course-manager";
-import CreateCourseButton from "@/components/features/courses/create-action-btn";
+import CreateCourseButton from "@/components/features/courses/create-course-btn";
 import { trpc } from "@/trpc/server";
 
 export const metadata: Metadata = {
