@@ -1,10 +1,12 @@
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useModuleFormContext } from "./module-form-context";
 import { basicInformationSchema } from "./schema";
 
 const BasicModuleInfoForm = ({
@@ -16,20 +18,33 @@ const BasicModuleInfoForm = ({
   handleBackStep: () => void;
   disableBackStep?: boolean;
 }) => {
+  const { setBasicInfo, formData } = useModuleFormContext();
+
   const form = useForm({
     defaultValues: {
-      title: "",
-      description: "",
+      title: formData.basicInfo?.title || "",
+      description: formData.basicInfo?.description || "",
     },
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: basicInformationSchema,
     },
-    onSubmit: () => {
-      // console.log(value);
+    onSubmit: ({ value }) => {
+      setBasicInfo({
+        title: value.title,
+        description: value.description,
+      });
       handleNextStep();
     },
   });
+
+  // Sync form with context data when it changes
+  useEffect(() => {
+    if (formData.basicInfo) {
+      form.setFieldValue("title", formData.basicInfo.title);
+      form.setFieldValue("description", formData.basicInfo.description);
+    }
+  }, [formData.basicInfo, form]);
 
   return (
     <form

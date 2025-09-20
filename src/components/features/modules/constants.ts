@@ -1,6 +1,7 @@
 export const moduleTypes = [
   { id: "text", name: "Text" },
   { id: "video", name: "Video" },
+  { id: "file", name: "File" },
   { id: "quiz", name: "Quiz" },
   { id: "assignment", name: "Assignment" },
   { id: "project", name: "Project" },

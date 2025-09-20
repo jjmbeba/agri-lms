@@ -10,9 +10,14 @@ export const basicInformationSchema = z.object({
 });
 
 const contentItemSchema = z.object({
-  type: z.string().min(1, {
-    message: "Content type is required",
-  }),
+  type: z.enum([
+    "text",
+    "video",
+    "file",
+    "quiz",
+    "assignment",
+    "project",
+  ] as const),
   content: z.string().min(1, {
     message: "Content is required",
   }),
