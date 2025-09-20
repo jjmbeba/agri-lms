@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -63,7 +64,6 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
@@ -75,7 +75,6 @@ export const department = pgTable("department", {
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
@@ -93,7 +92,6 @@ export const course = pgTable("course", {
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
@@ -107,11 +105,11 @@ export const courseVersion = pgTable("course_version", {
   changeLog: text("change_log").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
 
+// Updated modules table - removed type and content fields
 export const modules = pgTable("module", {
   id: uuid().primaryKey().defaultRandom(),
   courseVersionId: uuid("course_version_id")
@@ -119,29 +117,58 @@ export const modules = pgTable("module", {
     .notNull(),
   title: text("title").notNull(),
   position: integer("position").notNull(),
-  type: text("type").notNull(),
   description: text("description").notNull(),
-  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
 
+// New module content table for multiple content items per module
+export const moduleContent = pgTable("module_content", {
+  id: uuid().primaryKey().defaultRandom(),
+  moduleId: uuid("module_id")
+    .references(() => modules.id, { onDelete: "cascade" })
+    .notNull(),
+  type: text("type").notNull(), // 'text', 'video', 'pdf', 'quiz', 'assignment', 'link'
+  title: text("title").notNull(),
+  content: text("content").notNull(), // URL, text, or file path
+  metadata: jsonb("metadata"), // Flexible metadata storage
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// Updated draft modules table - removed type and content fields
 export const draftModules = pgTable("draft_module", {
   id: uuid().primaryKey().defaultRandom(),
   courseId: uuid("course_id")
     .references(() => course.id, { onDelete: "cascade" })
     .notNull(),
   title: text("title").notNull(),
-  type: text("type").notNull(),
   position: integer("position").notNull(),
   description: text("description").notNull(),
-  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// New draft module content table for multiple content items per draft module
+export const draftModuleContent = pgTable("draft_module_content", {
+  id: uuid().primaryKey().defaultRandom(),
+  draftModuleId: uuid("draft_module_id")
+    .references(() => draftModules.id, { onDelete: "cascade" })
+    .notNull(),
+  type: text("type").notNull(), // 'text', 'video', 'pdf', 'quiz', 'assignment', 'link'
+  title: text("title").notNull(),
+  content: text("content").notNull(), // URL, text, or file path
+  metadata: jsonb("metadata"), // Flexible metadata storage
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
