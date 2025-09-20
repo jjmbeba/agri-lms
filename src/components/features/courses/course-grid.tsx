@@ -4,15 +4,10 @@ import { IconBook, IconClock, IconPlus, IconUsers } from "@tabler/icons-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
+import EditCourseButton from "./edit-course-btn";
 import type { CourseWithCategory } from "./types";
 
 type CourseGridProps = {
@@ -53,7 +48,6 @@ export function CourseGrid({ courses }: CourseGridProps) {
                     {course.course.title}
                   </CardTitle>
                 </Link>
-                <CardDescription className="mt-1">by John Doe</CardDescription>
               </div>
               <Badge
                 className={
@@ -98,9 +92,7 @@ export function CourseGrid({ courses }: CourseGridProps) {
             <Separator />
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                  Edit
-                </Button>
+                <EditCourseButton courseDetails={course} text="Edit" />
                 <Button asChild size="sm">
                   <Link href={`/courses/${course.course.id}`}>
                     View Details

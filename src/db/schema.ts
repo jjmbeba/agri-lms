@@ -1,4 +1,11 @@
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -84,6 +91,54 @@ export const course = pgTable("course", {
     })
     .notNull(),
   description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const courseVersion = pgTable("course_version", {
+  id: uuid().primaryKey().defaultRandom(),
+  courseId: uuid("course_id")
+    .references(() => course.id, { onDelete: "cascade" })
+    .notNull(),
+  versionNumber: integer("version").notNull(),
+  changeLog: text("change_log").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const modules = pgTable("module", {
+  id: uuid().primaryKey().defaultRandom(),
+  courseVersionId: uuid("course_version_id")
+    .references(() => courseVersion.id, { onDelete: "cascade" })
+    .notNull(),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+  type: text("type").notNull(),
+  description: text("description").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const draftModules = pgTable("draft_module", {
+  id: uuid().primaryKey().defaultRandom(),
+  courseId: uuid("course_id")
+    .references(() => course.id, { onDelete: "cascade" })
+    .notNull(),
+  title: text("title").notNull(),
+  type: text("type").notNull(),
+  position: integer("position").notNull(),
+  description: text("description").notNull(),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

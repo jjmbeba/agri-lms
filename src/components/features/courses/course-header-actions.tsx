@@ -1,8 +1,7 @@
 "use client";
 
-import { IconEdit, IconShare, IconTrash } from "@tabler/icons-react";
+import { IconShare, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -16,24 +15,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
-import CourseForm from "./course-form";
+import EditCourseButton from "./edit-course-btn";
 import type { CourseWithCategory } from "./types";
 
 const CourseHeaderActions = ({
@@ -57,7 +41,11 @@ const CourseHeaderActions = ({
         <IconShare className="mr-2 h-4 w-4" />
         Share
       </Button>
-      <EditCourseButton courseDetails={courseDetails} />
+      <EditCourseButton
+        courseDetails={courseDetails}
+        showIcon
+        text="Edit Course"
+      />
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button size="sm" variant="destructive">
@@ -87,60 +75,4 @@ const CourseHeaderActions = ({
     </div>
   );
 };
-
-const EditCourseButton = ({
-  courseDetails,
-}: {
-  courseDetails: CourseWithCategory;
-}) => {
-  const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
-
-  if (isMobile) {
-    return (
-      <Drawer onOpenChange={setOpen} open={open}>
-        <DrawerTrigger asChild>
-          <Button size="sm" variant="outline">
-            <IconEdit className="mr-2 h-4 w-4" />
-            Edit Course
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Edit Course</DrawerTitle>
-          </DrawerHeader>
-          <div className="p-6">
-            <CourseForm
-              courseDetails={courseDetails}
-              id={courseDetails.course.id}
-              type="edit"
-            />
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  return (
-    <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <IconEdit className="mr-2 h-4 w-4" />
-          Edit Course
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Course</DialogTitle>
-        </DialogHeader>
-        <CourseForm
-          courseDetails={courseDetails}
-          id={courseDetails.course.id}
-          type="edit"
-        />
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 export default CourseHeaderActions;

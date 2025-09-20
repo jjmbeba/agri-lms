@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CourseContentManagement } from "@/components/features/courses/course-content-management";
+import CourseContentTabs from "@/components/features/courses/course-content-tabs";
 import { CourseDetailsHeader } from "@/components/features/courses/course-details-header";
 import { CourseDetailsStats } from "@/components/features/courses/course-details-stats";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,11 +49,9 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
-
         <TabsContent className="space-y-6" value="content">
-          <CourseContentManagement />
+          <CourseContentTabs courseId={courseId} />
         </TabsContent>
-
         {/* <TabsContent className="space-y-6" value="students">
           <CourseStudentManagement />
         </TabsContent> */}
