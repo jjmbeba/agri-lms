@@ -16,10 +16,13 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
         <TabsTrigger value="draft">Draft</TabsTrigger>
       </TabsList>
       <TabsContent value="published">
-        <CourseContentManagement data={publishedData ?? []} type="published" />
+        <CourseContentManagement
+          courseId={courseId}
+          data={publishedData ?? []}
+        />
       </TabsContent>
       <TabsContent value="draft">
-        <CourseContentManagement data={draftData ?? []} type="draft" />
+        <CourseContentManagement courseId={courseId} data={draftData ?? []} />
       </TabsContent>
     </Tabs>
   );

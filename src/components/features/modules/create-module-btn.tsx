@@ -3,6 +3,7 @@
 
 import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +19,7 @@ import {
   StepperSeparator,
   StepperTrigger,
 } from "@/components/ui/stepper";
+import { trpc } from "@/trpc/client";
 import BasicModuleInfoForm from "./basic-info-form";
 import { moduleSteps, moduleStepTitles } from "./constants";
 import ContentForm from "./content-form";
@@ -26,9 +28,11 @@ import {
   useModuleFormContext,
 } from "./module-form-context";
 import ReviewForm from "./review-form";
+import type { ModuleFormData } from "./types";
 
 type CreateModuleBtnProps = {
   showText?: boolean;
+  courseId: string;
 };
 
 // Component that clears form data when dialog closes
@@ -57,10 +61,22 @@ const FormDialog = ({
   );
 };
 
-const CreateModuleBtn = ({ showText = true }: CreateModuleBtnProps) => {
+const CreateModuleBtn = ({
+  showText = true,
+  courseId,
+}: CreateModuleBtnProps) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { mutate: createDraftModule, isPending: isCreatingDraftModule } =
+    trpc.modules.createDraftModule.useMutation({
+      onSuccess: () => {
+        setIsOpen(false);
+        toast.success("Draft module created successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
 
   const handleNextStep = () => {
     setCurrentStep((prev) => prev + 1);
@@ -73,16 +89,17 @@ const CreateModuleBtn = ({ showText = true }: CreateModuleBtnProps) => {
     setCurrentStep((prev) => prev - 1);
   };
 
-  const handleSubmit = () => {
-    // Here you would typically submit the form data to your API
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsOpen(false);
-      setCurrentStep(1);
-      // Close dialog or show success message
-    }, 2000);
+  const handleSubmit = (values: ModuleFormData) => {
+    if (!values.basicInfo || values.content.length === 0) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    createDraftModule({
+      basicInfo: values.basicInfo,
+      content: { content: values.content },
+      courseId,
+    });
   };
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -114,7 +131,7 @@ const CreateModuleBtn = ({ showText = true }: CreateModuleBtnProps) => {
                   <StepperItem
                     className="not-last:flex-1"
                     key={step.id}
-                    loading={isLoading}
+                    loading={isCreatingDraftModule}
                     step={step.id}
                   >
                     <StepperTrigger asChild>
@@ -147,7 +164,7 @@ const CreateModuleBtn = ({ showText = true }: CreateModuleBtnProps) => {
           {currentStep === 3 && (
             <ReviewForm
               handleBackStep={handleBackStep}
-              isSubmitting={isLoading}
+              isSubmitting={isCreatingDraftModule}
               onSubmit={handleSubmit}
             />
           )}

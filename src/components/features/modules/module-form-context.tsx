@@ -1,15 +1,5 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
-import type { ContentItem } from "./types";
-
-type BasicInfoData = {
-  title: string;
-  description: string;
-};
-
-type ModuleFormData = {
-  basicInfo: BasicInfoData | null;
-  content: ContentItem[];
-};
+import type { BasicInfoData, ContentItem, ModuleFormData } from "./types";
 
 type ModuleFormContextType = {
   formData: ModuleFormData;

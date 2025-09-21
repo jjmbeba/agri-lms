@@ -1,13 +1,15 @@
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { moduleTypes } from "./constants";
 import { useModuleFormContext } from "./module-form-context";
+import type { ModuleFormData } from "./types";
 
 type ReviewFormProps = {
   handleBackStep: () => void;
-  onSubmit: () => void;
+  onSubmit: (values: ModuleFormData) => void;
   isSubmitting?: boolean;
 };
 
@@ -104,8 +106,19 @@ const ReviewForm = ({
         <Button onClick={handleBackStep} type="button" variant="outline">
           Back
         </Button>
-        <Button disabled={isSubmitting} onClick={onSubmit} type="button">
-          {isSubmitting ? "Creating Module..." : "Create Module"}
+        <Button
+          disabled={isSubmitting}
+          onClick={() => onSubmit(formData)}
+          type="button"
+        >
+          {isSubmitting ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin" />
+              Creating Module...
+            </div>
+          ) : (
+            "Create Module"
+          )}
         </Button>
       </div>
     </div>

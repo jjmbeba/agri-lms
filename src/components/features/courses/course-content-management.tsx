@@ -90,10 +90,12 @@ const getLessonTypeColor = (type: string) => {
 
 type CourseContentManagementProps = {
   data: DraftModule[] | Module[];
+  courseId: string;
 };
 
 export function CourseContentManagement({
   data,
+  courseId,
 }: CourseContentManagementProps) {
   return (
     <Card>
@@ -105,7 +107,7 @@ export function CourseContentManagement({
               Manage lessons, quizzes, and course materials
             </CardDescription>
           </div>
-          <CreateModuleBtn />
+          <CreateModuleBtn courseId={courseId} />
         </div>
       </CardHeader>
       <CardContent>

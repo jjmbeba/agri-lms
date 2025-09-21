@@ -42,3 +42,13 @@ export type FileUploadProps = {
   accept: string;
   maxSize: number;
 };
+
+export type BasicInfoData = {
+  title: string;
+  description: string;
+};
+
+export type ModuleFormData = {
+  basicInfo: BasicInfoData | null;
+  content: ContentItem[];
+};

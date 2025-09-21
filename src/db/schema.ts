@@ -131,8 +131,8 @@ export const moduleContent = pgTable("module_content", {
     .references(() => modules.id, { onDelete: "cascade" })
     .notNull(),
   type: text("type").notNull(), // 'text', 'video', 'pdf', 'quiz', 'assignment', 'link'
-  title: text("title").notNull(),
-  content: text("content").notNull(), // URL, text, or file path
+  position: integer("position").notNull(),
+  t: text("content").notNull(), // URL, text, or file path
   metadata: jsonb("metadata"), // Flexible metadata storage
   orderIndex: integer("order_index").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
