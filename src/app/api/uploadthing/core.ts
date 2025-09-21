@@ -14,9 +14,10 @@ export const ourFileRouter = {
        * @see https://docs.uploadthing.com/file-routes#route-config
        */
       maxFileSize: "4MB",
-      maxFileCount: 5,
+      maxFileCount: 1,
     },
   })
+
     // Set permissions and file types for this FileRoute
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
@@ -32,13 +33,32 @@ export const ourFileRouter = {
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user.user.id };
     })
-    .onUploadComplete(async ({ metadata, file }) => {
-      // This code RUNS ON YOUR SERVER after upload
-      console.log("Upload complete for userId:", metadata.userId);
+    .onUploadComplete(({ metadata }) => {
+      return { uploadedBy: metadata.userId };
+    }),
+  videoUploader: f({
+    video: {
+      maxFileSize: "64MB",
+      maxFileCount: 1,
+    },
+  })
 
-      console.log("file url", file.ufsUrl);
+    // Set permissions and file types for this FileRoute
+    .middleware(async ({ req }) => {
+      // This code runs on your server before upload
+      const user = await auth.api.getSession({
+        headers: req.headers,
+      });
 
-      // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
+      // If you throw, the user will not be able to upload
+      if (!user) {
+        throw new UploadThingError("Unauthorized");
+      }
+
+      // Whatever is returned here is accessible in onUploadComplete as `metadata`
+      return { userId: user.user.id };
+    })
+    .onUploadComplete(({ metadata }) => {
       return { uploadedBy: metadata.userId };
     }),
 } satisfies FileRouter;

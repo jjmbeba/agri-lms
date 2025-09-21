@@ -32,11 +32,11 @@ import type {
 
 // Constants
 const MAX_FILE_SIZE_MB = 4;
+const MAX_VIDEO_SIZE_MB = 64;
 const BYTES_PER_KB = 1024;
 const MB_TO_BYTES = BYTES_PER_KB * BYTES_PER_KB;
 const DEFAULT_ROWS = 4;
 const QUIZ_ROWS = 6;
-const FILE_SIZE_LIMIT = MAX_FILE_SIZE_MB * MB_TO_BYTES;
 
 // Handle type change with content clearing
 const handleTypeChange = (
@@ -86,6 +86,11 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
         onChange(res?.[0].ufsUrl);
       },
       onUploadError: (error) => {
+        if (error.message.includes("FileSizeMismatch")) {
+          toast.error("File size exceeds the maximum allowed size");
+          return;
+        }
+
         toast.error(error.message);
       },
     }
@@ -135,7 +140,9 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
         />
       ) : (
         <FileUploadInput
-          accept={generatePermittedFileTypes(routeConfig).fileTypes.join(",")}
+          accept={generatePermittedFileTypes(routeConfig)
+            .fileTypes.map((type) => `.${type}`)
+            .join(",")}
           isUploading={isUploading}
           maxSize={MAX_FILE_SIZE_MB}
           onFileRemove={handleFileRemove}
@@ -272,20 +279,31 @@ const VideoContentInput: React.FC<ContentFieldProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("url");
+  const { startUpload, isUploading } = useUploadThing("videoUploader", {
+    onClientUploadComplete: (res) => {
+      onChange(res?.[0].ufsUrl);
+    },
+    onUploadError: (error) => {
+      if (error.message.includes("FileSizeMismatch")) {
+        toast.error("File size exceeds the maximum allowed size");
+        return;
+      }
+      toast.error(error.message);
+    },
+  });
 
   const handleFileSelect = (file: File) => {
-    if (file.size > FILE_SIZE_LIMIT) {
-      alert(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
-      return;
-    }
-
     if (!file.type.startsWith("video/")) {
       alert("Please select a video file");
       return;
     }
 
     setSelectedFile(file);
-    onChange(file.name);
+    toast.promise(startUpload([file]), {
+      loading: "Uploading file...",
+      success: "File uploaded successfully",
+      error: "Failed to upload file",
+    });
   };
 
   const handleFileRemove = () => {
@@ -323,9 +341,9 @@ const VideoContentInput: React.FC<ContentFieldProps> = ({
         />
       ) : (
         <FileUploadInput
-          accept="video/*"
-          isUploading={false}
-          maxSize={MAX_FILE_SIZE_MB}
+          accept={"video/*"}
+          isUploading={isUploading}
+          maxSize={MAX_VIDEO_SIZE_MB}
           onFileRemove={handleFileRemove}
           onFileSelect={handleFileSelect}
           selectedFile={selectedFile || undefined}
