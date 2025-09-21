@@ -3,10 +3,23 @@
 import {
   IconFileText,
   IconMessageCircle,
+  IconTrash,
   IconVideo,
 } from "@tabler/icons-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,6 +28,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { capitalize, cn } from "@/lib/utils";
+import { trpc } from "@/trpc/client";
 import CreateModuleBtn from "../modules/create-module-btn";
 import type { DraftModule, Module } from "./types";
 
@@ -106,6 +121,26 @@ export function CourseContentManagement({
   data,
   courseId,
 }: CourseContentManagementProps) {
+  const { mutate: deleteDraftModule } =
+    trpc.modules.deleteDraftModule.useMutation({
+      onSuccess: () => {
+        toast.success("Module deleted successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: deleteDraftModuleContent } =
+    trpc.modules.deleteDraftModuleContent.useMutation({
+      onSuccess: () => {
+        toast.success("Content item deleted successfully");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
   return (
     <Card>
       <CardHeader>
@@ -148,6 +183,39 @@ export function CourseContentManagement({
                   <Button size="sm" variant="outline">
                     Preview
                   </Button>
+                  {/* Only show delete button for draft modules */}
+                  {module.content && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="destructive">
+                          <IconTrash className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Module</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{module.title}"?
+                            This action cannot be undone. All content items in
+                            this module will also be deleted.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className={cn(
+                              buttonVariants({
+                                variant: "destructive",
+                              })
+                            )}
+                            onClick={() => deleteDraftModule(module.id)}
+                          >
+                            Delete Module
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </div>
 
@@ -156,14 +224,14 @@ export function CourseContentManagement({
                 <div className="ml-8 space-y-2">
                   {module.content.map((contentItem) => (
                     <div
-                      className="flex items-center gap-3 rounded-md border-muted border-l-2 bg-muted/30 p-3"
+                      className="flex items-center justify-between rounded-md border-muted border-l-2 bg-muted/30 p-3"
                       key={contentItem.id}
                     >
                       <div className="flex items-center gap-2">
                         {getLessonIcon(contentItem.type)}
                         <div>
                           <h5 className="font-medium text-sm">
-                            {contentItem.title}
+                            {capitalize(contentItem.title)}
                           </h5>
                           <div className="flex items-center gap-2 text-muted-foreground text-xs">
                             <Badge
@@ -176,6 +244,40 @@ export function CourseContentManagement({
                           </div>
                         </div>
                       </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <IconTrash className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Delete Content Item
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "
+                              {contentItem.title}"? This action cannot be
+                              undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className={cn(
+                                buttonVariants({
+                                  variant: "destructive",
+                                })
+                              )}
+                              onClick={() =>
+                                deleteDraftModuleContent(contentItem.id)
+                              }
+                            >
+                              Delete Content
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   ))}
                 </div>

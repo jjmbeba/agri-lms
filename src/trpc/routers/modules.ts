@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -91,6 +92,10 @@ export const modulesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
       try {
         // Verify the course exists
         const courseData = await ctx.db
@@ -139,5 +144,26 @@ export const modulesRouter = createTRPCRouter({
           `Failed to create draft module: ${error instanceof Error ? error.message : "Unknown error"}`
         );
       }
+    }),
+  deleteDraftModule: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      return await ctx.db
+        .delete(draftModules)
+        .where(eq(draftModules.id, input));
+    }),
+  deleteDraftModuleContent: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+      return await ctx.db
+        .delete(draftModuleContent)
+        .where(eq(draftModuleContent.id, input));
     }),
 });
