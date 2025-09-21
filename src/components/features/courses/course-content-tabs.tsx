@@ -5,10 +5,11 @@ import { trpc } from "@/trpc/client";
 import { CourseContentManagement } from "./course-content-management";
 
 const CourseContentTabs = ({ courseId }: { courseId: string }) => {
-  const { data: publishedData } =
+  const { data: publishedData, isLoading: isLoadingPublished } =
     trpc.modules.getModulesByLatestVersionId.useQuery(courseId);
-  const { data: draftData } =
+  const { data: draftData, isLoading: isLoadingDraft } =
     trpc.modules.getDraftModulesByCourseId.useQuery(courseId);
+
   return (
     <Tabs defaultValue="published">
       <TabsList>
@@ -16,13 +17,21 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
         <TabsTrigger value="draft">Draft</TabsTrigger>
       </TabsList>
       <TabsContent value="published">
-        <CourseContentManagement
-          courseId={courseId}
-          data={publishedData ?? []}
-        />
+        {isLoadingPublished ? (
+          <div>Loading...</div>
+        ) : (
+          <CourseContentManagement
+            courseId={courseId}
+            data={publishedData ?? []}
+          />
+        )}
       </TabsContent>
       <TabsContent value="draft">
-        <CourseContentManagement courseId={courseId} data={draftData ?? []} />
+        {isLoadingDraft ? (
+          <div>Loading...</div>
+        ) : (
+          <CourseContentManagement courseId={courseId} data={draftData ?? []} />
+        )}
       </TabsContent>
     </Tabs>
   );

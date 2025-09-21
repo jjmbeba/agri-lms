@@ -68,7 +68,11 @@ const getLessonIcon = (type: string) => {
       return <IconVideo className="h-4 w-4" />;
     case "quiz":
       return <IconMessageCircle className="h-4 w-4" />;
-    case "reading":
+    case "text":
+    case "file":
+      return <IconFileText className="h-4 w-4" />;
+    case "assignment":
+    case "project":
       return <IconFileText className="h-4 w-4" />;
     default:
       return <IconFileText className="h-4 w-4" />;
@@ -81,8 +85,13 @@ const getLessonTypeColor = (type: string) => {
       return "bg-blue-100 text-blue-800";
     case "quiz":
       return "bg-green-100 text-green-800";
-    case "reading":
+    case "text":
+    case "file":
       return "bg-purple-100 text-purple-800";
+    case "assignment":
+      return "bg-orange-100 text-orange-800";
+    case "project":
+      return "bg-indigo-100 text-indigo-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
@@ -112,36 +121,23 @@ export function CourseContentManagement({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {data.map((lesson, index) => (
-            <div key={lesson.id}>
+          {data.map((module, moduleIndex) => (
+            <div className="space-y-2" key={module.id}>
+              {/* Module Header */}
               <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
                 <div className="flex items-center gap-4">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted font-medium text-sm">
-                    {lesson.position}
+                    {module.position}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getLessonIcon(lesson.type)}
-                    <div>
-                      <h4 className="font-medium">{lesson.title}</h4>
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        {/* <span>{lesson.duration}</span> */}
-                        <Badge
-                          className={`${getLessonTypeColor(lesson.type)} text-xs`}
-                          variant="secondary"
-                        >
-                          {lesson.type}
-                        </Badge>
-                        {/* <Badge
-                          className={
-                            lesson.status === "published"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }
-                          variant="secondary"
-                        >
-                          {lesson.isPublished ? "Published" : "Draft"}
-                        </Badge> */}
-                      </div>
+                  <div>
+                    <h4 className="font-medium">{module.title}</h4>
+                    <p className="text-muted-foreground text-sm">
+                      {module.description}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Badge className="text-xs" variant="outline">
+                        {module.content?.length || 0} content item(s)
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -154,7 +150,38 @@ export function CourseContentManagement({
                   </Button>
                 </div>
               </div>
-              {index < data.length - 1 && <Separator className="my-2" />}
+
+              {/* Content Items */}
+              {module.content && module.content.length > 0 && (
+                <div className="ml-8 space-y-2">
+                  {module.content.map((contentItem) => (
+                    <div
+                      className="flex items-center gap-3 rounded-md border-muted border-l-2 bg-muted/30 p-3"
+                      key={contentItem.id}
+                    >
+                      <div className="flex items-center gap-2">
+                        {getLessonIcon(contentItem.type)}
+                        <div>
+                          <h5 className="font-medium text-sm">
+                            {contentItem.title}
+                          </h5>
+                          <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                            <Badge
+                              className={`${getLessonTypeColor(contentItem.type)} text-xs`}
+                              variant="secondary"
+                            >
+                              {contentItem.type}
+                            </Badge>
+                            <span>Order: {contentItem.orderIndex + 1}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {moduleIndex < data.length - 1 && <Separator className="my-4" />}
             </div>
           ))}
         </div>

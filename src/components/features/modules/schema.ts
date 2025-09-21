@@ -21,6 +21,9 @@ const contentItemSchema = z.object({
   content: z.string().min(1, {
     message: "Content is required",
   }),
+  title: z.string().min(1, {
+    message: "Title is required",
+  }),
   //   orderIndex: z.number().min(0),
 });
 

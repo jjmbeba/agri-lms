@@ -386,7 +386,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
       content:
         formData.content.length > 0
           ? formData.content
-          : [{ type: "text" as ContentType, content: "" }],
+          : [{ type: "text" as ContentType, content: "", title: "" }],
     },
     validationLogic: revalidateLogic(),
     validators: {
@@ -465,6 +465,28 @@ const ContentForm: React.FC<ContentFormProps> = ({
                             Remove
                           </Button>
                         </div>
+                        <form.Field name={`content[${i}].title`}>
+                          {(subField) => (
+                            <div className="flex flex-col gap-2">
+                              <Label>Content Title</Label>
+                              <Input
+                                onChange={(e) =>
+                                  subField.handleChange(e.target.value)
+                                }
+                                placeholder="Enter content title..."
+                                value={subField.state.value}
+                              />
+                              {subField.state.meta.errors.map(
+                                (error, index) => (
+                                  <FormError
+                                    key={index}
+                                    message={error?.message ?? ""}
+                                  />
+                                )
+                              )}
+                            </div>
+                          )}
+                        </form.Field>
                         <form.Field name={`content[${i}].type`}>
                           {(subField) => (
                             <div className="flex flex-col gap-2">

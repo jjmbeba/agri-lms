@@ -9,6 +9,7 @@ import {
   courseVersion,
   draftModuleContent,
   draftModules,
+  moduleContent,
   modules,
 } from "@/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../init";
@@ -16,11 +17,30 @@ import { createTRPCRouter, protectedProcedure } from "../init";
 export const modulesRouter = createTRPCRouter({
   getDraftModulesByCourseId: protectedProcedure
     .input(z.string())
-    .query(({ ctx, input }) => {
-      return ctx.db
+    .query(async ({ ctx, input }) => {
+      const draftModulesData = await ctx.db
         .select()
         .from(draftModules)
-        .where(eq(draftModules.courseId, input));
+        .where(eq(draftModules.courseId, input))
+        .orderBy(draftModules.position);
+
+      // Fetch content for each draft module
+      const modulesWithContent = await Promise.all(
+        draftModulesData.map(async (module) => {
+          const content = await ctx.db
+            .select()
+            .from(draftModuleContent)
+            .where(eq(draftModuleContent.draftModuleId, module.id))
+            .orderBy(draftModuleContent.orderIndex);
+
+          return {
+            ...module,
+            content,
+          };
+        })
+      );
+
+      return modulesWithContent;
     }),
 
   getModulesByLatestVersionId: protectedProcedure
@@ -33,10 +53,33 @@ export const modulesRouter = createTRPCRouter({
         .orderBy(desc(courseVersion.versionNumber))
         .limit(1);
 
-      return ctx.db
+      if (!latestVersion) {
+        return [];
+      }
+
+      const modulesData = await ctx.db
         .select()
         .from(modules)
-        .where(eq(modules.courseVersionId, latestVersion.id));
+        .where(eq(modules.courseVersionId, latestVersion.id))
+        .orderBy(modules.position);
+
+      // Fetch content for each module
+      const modulesWithContent = await Promise.all(
+        modulesData.map(async (module) => {
+          const content = await ctx.db
+            .select()
+            .from(moduleContent)
+            .where(eq(moduleContent.moduleId, module.id))
+            .orderBy(moduleContent.orderIndex);
+
+          return {
+            ...module,
+            content,
+          };
+        })
+      );
+
+      return modulesWithContent;
     }),
 
   createDraftModule: protectedProcedure
@@ -82,7 +125,7 @@ export const modulesRouter = createTRPCRouter({
           const contentItems = input.content.content.map((item, index) => ({
             draftModuleId: draftModule.id,
             type: item.type,
-            title: item.type, // Using type as title for now
+            title: item.title,
             content: item.content,
             orderIndex: index,
           }));
