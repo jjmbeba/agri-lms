@@ -37,6 +37,7 @@ export type FileUploadProps = {
   selectedFile?: File;
   accept: string;
   maxSize: number;
+  isUploading: boolean;
 };
 
 export type BasicInfoData = {

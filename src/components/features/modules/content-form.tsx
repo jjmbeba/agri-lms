@@ -3,6 +3,8 @@
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { Loader2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { generatePermittedFileTypes } from "uploadthing/client";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
@@ -16,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUploadThing } from "@/lib/uploadthing";
 import { moduleTypes } from "./constants";
 import { useModuleFormContext } from "./module-form-context";
 import { contentSchema } from "./schema";
@@ -28,7 +31,7 @@ import type {
 } from "./types";
 
 // Constants
-const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 4;
 const BYTES_PER_KB = 1024;
 const MB_TO_BYTES = BYTES_PER_KB * BYTES_PER_KB;
 const DEFAULT_ROWS = 4;
@@ -76,15 +79,25 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("file");
+  const { startUpload, isUploading, routeConfig } = useUploadThing(
+    "pdfUploader",
+    {
+      onClientUploadComplete: (res) => {
+        onChange(res?.[0].ufsUrl);
+      },
+      onUploadError: (error) => {
+        toast.error(error.message);
+      },
+    }
+  );
 
   const handleFileSelect = (file: File) => {
-    if (file.size > FILE_SIZE_LIMIT) {
-      alert(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
-      return;
-    }
-
     setSelectedFile(file);
-    onChange(file.name);
+    toast.promise(startUpload([file]), {
+      loading: "Uploading file...",
+      success: "File uploaded successfully",
+      error: "Failed to upload file",
+    });
   };
 
   const handleFileRemove = () => {
@@ -122,7 +135,8 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
         />
       ) : (
         <FileUploadInput
-          accept="*/*"
+          accept={generatePermittedFileTypes(routeConfig).fileTypes.join(",")}
+          isUploading={isUploading}
           maxSize={MAX_FILE_SIZE_MB}
           onFileRemove={handleFileRemove}
           onFileSelect={handleFileSelect}
@@ -310,6 +324,7 @@ const VideoContentInput: React.FC<ContentFieldProps> = ({
       ) : (
         <FileUploadInput
           accept="video/*"
+          isUploading={false}
           maxSize={MAX_FILE_SIZE_MB}
           onFileRemove={handleFileRemove}
           onFileSelect={handleFileSelect}
@@ -331,7 +346,8 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
   selectedFile,
   accept,
   maxSize,
-}) => {
+  isUploading,
+}: FileUploadProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -361,9 +377,11 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
         </div>
       ) : (
         <div className="flex items-center gap-2">
+          {isUploading && <Loader2 className="size-4 animate-spin" />}
           <Input
             accept={accept}
             className="flex-1"
+            disabled={isUploading}
             onChange={handleFileChange}
             type="file"
           />
