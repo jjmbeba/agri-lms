@@ -193,9 +193,19 @@ export function CourseContentManagement({
                       <div className="flex items-center gap-2">
                         {getLessonIcon(contentItem.type)}
                         <div>
-                          <h5 className="font-medium text-sm">
-                            {capitalize(contentItem.title)}
-                          </h5>
+                          {contentItem.type === "file" ? (
+                            <a
+                              className="font-medium text-sm hover:underline"
+                              href={contentItem.content as string}
+                              target="_blank"
+                            >
+                              {capitalize(contentItem.title)}
+                            </a>
+                          ) : (
+                            <h5 className="font-medium text-sm">
+                              {capitalize(contentItem.title)}
+                            </h5>
+                          )}
                           <div className="flex items-center gap-2 text-muted-foreground text-xs">
                             <Badge
                               className={`${getLessonTypeColor(contentItem.type)} text-xs`}
