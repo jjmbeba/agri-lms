@@ -31,51 +31,8 @@ import { Separator } from "@/components/ui/separator";
 import { capitalize, cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 import CreateModuleBtn from "../modules/create-module-btn";
+import EditModuleBtn from "../modules/edit-module-btn";
 import type { DraftModule, Module } from "./types";
-
-// // Mock data - in real app, this would come from the database
-// const mockLessons = [
-//   {
-//     id: "1",
-//     title: "Introduction to Sustainable Farming",
-//     type: "video",
-//     duration: "15:30",
-//     isPublished: true,
-//     order: 1,
-//   },
-//   {
-//     id: "2",
-//     title: "Understanding Soil Health",
-//     type: "video",
-//     duration: "22:45",
-//     isPublished: true,
-//     order: 2,
-//   },
-//   {
-//     id: "3",
-//     title: "Quiz: Soil Health Basics",
-//     type: "quiz",
-//     duration: "10:00",
-//     isPublished: true,
-//     order: 3,
-//   },
-//   {
-//     id: "4",
-//     title: "Crop Rotation Strategies",
-//     type: "video",
-//     duration: "18:20",
-//     isPublished: false,
-//     order: 4,
-//   },
-//   {
-//     id: "5",
-//     title: "Reading: Organic Pest Control",
-//     type: "reading",
-//     duration: "12:00",
-//     isPublished: false,
-//     order: 5,
-//   },
-// ];
 
 const getLessonIcon = (type: string) => {
   switch (type) {
@@ -115,16 +72,19 @@ const getLessonTypeColor = (type: string) => {
 type CourseContentManagementProps = {
   data: DraftModule[] | Module[];
   courseId: string;
+  onRefresh?: () => void;
 };
 
 export function CourseContentManagement({
   data,
   courseId,
+  onRefresh,
 }: CourseContentManagementProps) {
   const { mutate: deleteDraftModule } =
     trpc.modules.deleteDraftModule.useMutation({
       onSuccess: () => {
         toast.success("Module deleted successfully");
+        onRefresh?.();
       },
       onError: (error) => {
         toast.error(error.message);
@@ -135,6 +95,7 @@ export function CourseContentManagement({
     trpc.modules.deleteDraftModuleContent.useMutation({
       onSuccess: () => {
         toast.success("Content item deleted successfully");
+        onRefresh?.();
       },
       onError: (error) => {
         toast.error(error.message);
@@ -177,9 +138,11 @@ export function CourseContentManagement({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline">
-                    Edit
-                  </Button>
+                  <EditModuleBtn
+                    moduleData={module}
+                    moduleId={module.id}
+                    onSuccess={onRefresh}
+                  />
                   <Button size="sm" variant="outline">
                     Preview
                   </Button>
@@ -269,9 +232,15 @@ export function CourseContentManagement({
                                   variant: "destructive",
                                 })
                               )}
-                              onClick={() =>
-                                deleteDraftModuleContent(contentItem.id)
-                              }
+                              onClick={() => {
+                                if (module.content.length === 1) {
+                                  toast.error(
+                                    "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
+                                  );
+                                  return;
+                                }
+                                deleteDraftModuleContent(contentItem.id);
+                              }}
                             >
                               Delete Content
                             </AlertDialogAction>

@@ -430,6 +430,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
                       field.pushValue({
                         type: "text" as ContentType,
                         content: "",
+                        title: "",
                       })
                     }
                     type="button"

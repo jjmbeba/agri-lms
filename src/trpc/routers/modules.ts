@@ -166,4 +166,79 @@ export const modulesRouter = createTRPCRouter({
         .delete(draftModuleContent)
         .where(eq(draftModuleContent.id, input));
     }),
+
+  getDraftModuleById: protectedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      const [module] = await ctx.db
+        .select()
+        .from(draftModules)
+        .where(eq(draftModules.id, input))
+        .limit(1);
+
+      if (!module) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      }
+
+      const content = await ctx.db
+        .select()
+        .from(draftModuleContent)
+        .where(eq(draftModuleContent.draftModuleId, module.id))
+        .orderBy(draftModuleContent.orderIndex);
+
+      return {
+        ...module,
+        content,
+      };
+    }),
+
+  updateDraftModule: protectedProcedure
+    .input(
+      z.object({
+        moduleId: z.string(),
+        basicInfo: basicInformationSchema,
+        content: contentSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      try {
+        // Update the draft module
+        const [updatedModule] = await ctx.db
+          .update(draftModules)
+          .set({
+            title: input.basicInfo.title,
+            description: input.basicInfo.description,
+          })
+          .where(eq(draftModules.id, input.moduleId))
+          .returning();
+
+        // Delete existing content items
+        await ctx.db
+          .delete(draftModuleContent)
+          .where(eq(draftModuleContent.draftModuleId, input.moduleId));
+
+        // Insert new content items if they exist
+        if (input.content.content && input.content.content.length > 0) {
+          const contentItems = input.content.content.map((item, index) => ({
+            draftModuleId: input.moduleId,
+            type: item.type,
+            title: item.title,
+            content: item.content,
+            orderIndex: index,
+          }));
+
+          await ctx.db.insert(draftModuleContent).values(contentItems);
+        }
+
+        return updatedModule;
+      } catch (error) {
+        throw new Error(
+          `Failed to update draft module: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    }),
 });

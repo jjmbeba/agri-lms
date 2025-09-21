@@ -18,7 +18,7 @@ const ReviewForm = ({
   onSubmit,
   isSubmitting = false,
 }: ReviewFormProps) => {
-  const { formData } = useModuleFormContext();
+  const { formData, isEditMode } = useModuleFormContext();
   const CONTENT_PREVIEW_LENGTH = 200;
 
   const getContentTypeName = (type: string) => {
@@ -114,8 +114,10 @@ const ReviewForm = ({
           {isSubmitting ? (
             <div className="flex items-center gap-2">
               <Loader2 className="size-4 animate-spin" />
-              Creating Module...
+              {isEditMode ? "Updating Module..." : "Creating Module..."}
             </div>
+          ) : isEditMode ? (
+            "Update Module"
           ) : (
             "Create Module"
           )}

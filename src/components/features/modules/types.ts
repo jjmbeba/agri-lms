@@ -8,14 +8,10 @@ export type ContentType =
 
 export type ContentItem = {
   type: ContentType;
+  title: string;
   content: string;
   file?: File;
-  metadata?: {
-    fileName?: string;
-    fileSize?: number;
-    duration?: string;
-    pageCount?: number;
-  };
+  metadata?: Record<string, unknown>;
 };
 
 export type ContentFormData = {
