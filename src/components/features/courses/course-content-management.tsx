@@ -157,12 +157,14 @@ type CourseContentManagementProps = {
   data: DraftModule[] | Module[];
   courseId: string;
   onRefresh?: () => void;
+  variant: "published" | "draft";
 };
 
 export function CourseContentManagement({
   data,
   courseId,
   onRefresh,
+  variant,
 }: CourseContentManagementProps) {
   const [modules, setModules] = useState<(DraftModule | Module)[]>(data);
   const { mutateAsync: updateDraftModulePositions } =
@@ -197,7 +199,7 @@ export function CourseContentManagement({
     setModules(next);
 
     // Persist order for draft modules (by courseId)
-    const payload = next.map((m, idx) => ({ id: m.id, position: idx }));
+    const payload = next.map((m, idx) => ({ id: m.id, position: idx + 1 }));
     updateDraftModulePositions({ courseId, items: payload })
       .then(() => {
         onRefresh?.();
@@ -241,32 +243,35 @@ export function CourseContentManagement({
               Manage lessons, quizzes, and course materials
             </CardDescription>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm">Publish</Button>
-            <CreateModuleBtn courseId={courseId} />
-          </div>
+          {variant === "draft" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <CreateModuleBtn courseId={courseId} />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
         <DndContext
           collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-          sensors={sensors}
+          onDragEnd={variant === "draft" ? handleDragEnd : undefined}
+          sensors={variant === "draft" ? sensors : []}
         >
           <SortableContext
-            items={moduleIds}
+            items={variant === "draft" ? moduleIds : []}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3 sm:space-y-4">
-              {modules.map((module, moduleIndex) => (
-                <SortableModule id={module.id} key={module.id}>
-                  <div className="space-y-2">
+              {modules.map((module, moduleIndex) => {
+                const moduleContent = (
+                  <div className="space-y-2" key={module.id}>
                     {/* Module Header */}
                     <div className="flex flex-col items-start justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:p-4">
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <DragHandle
-                          aria-label={`Drag to reorder module ${module.title}`}
-                        />
+                        {variant === "draft" && (
+                          <DragHandle
+                            aria-label={`Drag to reorder module ${module.title}`}
+                          />
+                        )}
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted font-medium text-xs sm:h-8 sm:w-8 sm:text-sm">
                           {moduleIndex + 1}
                         </div>
@@ -288,16 +293,18 @@ export function CourseContentManagement({
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <EditModuleBtn
-                          moduleData={module}
-                          moduleId={module.id}
-                          onSuccess={onRefresh}
-                        />
+                        {variant === "draft" && (
+                          <EditModuleBtn
+                            moduleData={module}
+                            moduleId={module.id}
+                            onSuccess={onRefresh}
+                          />
+                        )}
                         <Button size="sm" variant="outline">
                           Preview
                         </Button>
                         {/* Only show delete button for draft modules */}
-                        {module.content && (
+                        {variant === "draft" && module.content && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="destructive">
@@ -374,46 +381,52 @@ export function CourseContentManagement({
                               </div>
                             </div>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive">
-                                  <IconTrash className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Delete Content Item
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "
-                                    {contentItem.title}"? This action cannot be
-                                    undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    className={cn(
-                                      buttonVariants({
-                                        variant: "destructive",
-                                      })
-                                    )}
-                                    onClick={() => {
-                                      if (module.content.length === 1) {
-                                        toast.error(
-                                          "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
+                            {variant === "draft" && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive">
+                                    <IconTrash className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Delete Content Item
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "
+                                      {contentItem.title}"? This action cannot
+                                      be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className={cn(
+                                        buttonVariants({
+                                          variant: "destructive",
+                                        })
+                                      )}
+                                      onClick={() => {
+                                        if (module.content.length === 1) {
+                                          toast.error(
+                                            "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
+                                          );
+                                          return;
+                                        }
+                                        deleteDraftModuleContent(
+                                          contentItem.id
                                         );
-                                        return;
-                                      }
-                                      deleteDraftModuleContent(contentItem.id);
-                                    }}
-                                  >
-                                    Delete Content
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                                      }}
+                                    >
+                                      Delete Content
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -423,8 +436,16 @@ export function CourseContentManagement({
                       <Separator className="my-4" />
                     )}
                   </div>
-                </SortableModule>
-              ))}
+                );
+
+                return variant === "draft" ? (
+                  <SortableModule id={module.id} key={module.id}>
+                    {moduleContent}
+                  </SortableModule>
+                ) : (
+                  moduleContent
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
