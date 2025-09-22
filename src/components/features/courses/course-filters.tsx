@@ -19,7 +19,7 @@ const statuses = ["All Status", "Active", "Inactive", "Draft", "Archived"];
 type CourseFiltersProps = {
   onFiltersChange: (filters: {
     searchTerm: string;
-    selectedCategory: string;
+    selectedDepartment: string;
     selectedStatus: string;
     sortBy: string;
   }) => void;
@@ -27,21 +27,22 @@ type CourseFiltersProps = {
 
 export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedDepartment, setSelectedDepartment] =
+    useState("All Departments");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [sortBy, setSortBy] = useState("title");
-  const { data: categories, isLoading: isLoadingCategories } =
-    trpc.categories.getAll.useQuery();
+  const { data: departments, isLoading: isLoadingDepartments } =
+    trpc.departments.getAll.useQuery();
 
   // Update filters when any value changes
   useEffect(() => {
     onFiltersChange({
       searchTerm,
-      selectedCategory,
+      selectedDepartment,
       selectedStatus,
       sortBy,
     });
-  }, [searchTerm, selectedCategory, selectedStatus, sortBy, onFiltersChange]);
+  }, [searchTerm, selectedDepartment, selectedStatus, sortBy, onFiltersChange]);
 
   return (
     <Card>
@@ -62,36 +63,39 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
               value={searchTerm}
             />
           </div>
-          <Select onValueChange={setSelectedCategory} value={selectedCategory}>
+          <Select
+            onValueChange={setSelectedDepartment}
+            value={selectedDepartment}
+          >
             <SelectTrigger
-              disabled={isLoadingCategories || categories?.length === 0}
+              disabled={isLoadingDepartments || departments?.length === 0}
             >
-              {isLoadingCategories ? (
+              {isLoadingDepartments ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="size-4 animate-spin" />
-                  <span>Loading categories...</span>
+                  <span>Loading departments...</span>
                 </div>
               ) : (
                 <SelectValue
                   placeholder={
-                    categories?.length === 0
-                      ? "No categories found"
-                      : "Select a category"
+                    departments?.length === 0
+                      ? "No departments found"
+                      : "Select a department"
                   }
                 />
               )}
             </SelectTrigger>
             <SelectContent>
-              {isLoadingCategories ? (
-                <SelectItem value="loading">Loading categories...</SelectItem>
+              {isLoadingDepartments ? (
+                <SelectItem value="loading">Loading departments...</SelectItem>
               ) : (
                 <>
-                  <SelectItem key="all" value="All Categories">
-                    All Categories
+                  <SelectItem key="all" value="All Departments">
+                    All Departments
                   </SelectItem>
-                  {categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.name}>
-                      {category.name}
+                  {departments?.map((department) => (
+                    <SelectItem key={department.id} value={department.name}>
+                      {department.name}
                     </SelectItem>
                   ))}
                 </>

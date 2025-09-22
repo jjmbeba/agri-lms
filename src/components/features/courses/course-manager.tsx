@@ -31,7 +31,7 @@ export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
   const handleFiltersChange = useCallback(
     (filters: {
       searchTerm: string;
-      selectedCategory: string;
+      selectedDepartment: string;
       selectedStatus: string;
       sortBy: string;
     }) => {
@@ -39,16 +39,16 @@ export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
         const matchesSearch = courseWithCategory.course.title
           .toLowerCase()
           .includes(filters.searchTerm.toLowerCase());
-        const matchesCategory =
-          filters.selectedCategory === "All Categories" ||
+        const matchesDepartment =
+          filters.selectedDepartment === "All Departments" ||
           courseWithCategory.department?.name.toLowerCase() ===
-            filters.selectedCategory.toLowerCase();
+            filters.selectedDepartment.toLowerCase();
         const matchesStatus =
           filters.selectedStatus === "All Status" ||
           courseWithCategory.course?.status?.toLowerCase() ===
             filters.selectedStatus.toLowerCase();
 
-        return matchesSearch && matchesCategory && matchesStatus;
+        return matchesSearch && matchesDepartment && matchesStatus;
       });
 
       // Sort the filtered results
