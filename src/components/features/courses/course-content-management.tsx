@@ -165,6 +165,8 @@ export function CourseContentManagement({
   onRefresh,
 }: CourseContentManagementProps) {
   const [modules, setModules] = useState<(DraftModule | Module)[]>(data);
+  const { mutateAsync: updateDraftModulePositions } =
+    trpc.modules.updateDraftModulePositions.useMutation();
 
   useEffect(() => {
     setModules(data);
@@ -190,7 +192,22 @@ export function CourseContentManagement({
       return;
     }
 
-    setModules((current) => arrayMove(current, oldIndex, newIndex));
+    const previous = modules;
+    const next = arrayMove(previous, oldIndex, newIndex);
+    setModules(next);
+
+    // Persist order for draft modules (by courseId)
+    const payload = next.map((m, idx) => ({ id: m.id, position: idx }));
+    updateDraftModulePositions({ courseId, items: payload })
+      .then(() => {
+        onRefresh?.();
+      })
+      .catch((error: unknown) => {
+        setModules(previous);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to save order"
+        );
+      });
   };
   const { mutate: deleteDraftModule } =
     trpc.modules.deleteDraftModule.useMutation({
@@ -217,15 +234,15 @@ export function CourseContentManagement({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <CardTitle>Course Content</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Course Content</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
               Manage lessons, quizzes, and course materials
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button>Publish</Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm">Publish</Button>
             <CreateModuleBtn courseId={courseId} />
           </div>
         </div>
@@ -240,32 +257,37 @@ export function CourseContentManagement({
             items={moduleIds}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {modules.map((module, moduleIndex) => (
                 <SortableModule id={module.id} key={module.id}>
                   <div className="space-y-2">
                     {/* Module Header */}
-                    <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-start justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:p-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <DragHandle
                           aria-label={`Drag to reorder module ${module.title}`}
                         />
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted font-medium text-sm">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted font-medium text-xs sm:h-8 sm:w-8 sm:text-sm">
                           {moduleIndex + 1}
                         </div>
                         <div>
-                          <h4 className="font-medium">{module.title}</h4>
-                          <p className="text-muted-foreground text-sm">
+                          <h4 className="font-medium text-base sm:text-lg">
+                            {module.title}
+                          </h4>
+                          <p className="text-muted-foreground text-xs sm:text-sm">
                             {module.description}
                           </p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <Badge className="text-xs" variant="outline">
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <Badge
+                              className="text-[10px] sm:text-xs"
+                              variant="outline"
+                            >
                               {module.content?.length || 0} content item(s)
                             </Badge>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <EditModuleBtn
                           moduleData={module}
                           moduleId={module.id}
@@ -315,32 +337,32 @@ export function CourseContentManagement({
 
                     {/* Content Items */}
                     {module.content && module.content.length > 0 && (
-                      <div className="ml-8 space-y-2">
+                      <div className="ml-4 space-y-2 sm:ml-8">
                         {module.content.map((contentItem) => (
                           <div
-                            className="flex items-center justify-between rounded-md border-muted border-l-2 bg-muted/30 p-3"
+                            className="flex w-full flex-col items-start justify-between gap-2 rounded-md border-muted border-l-2 bg-muted/30 p-3 sm:flex-row sm:items-center"
                             key={contentItem.id}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex min-w-0 flex-1 items-center gap-2">
                               {getLessonIcon(contentItem.type)}
-                              <div>
+                              <div className="min-w-0 flex-1">
                                 {contentItem.type === "file" ||
                                 contentItem.type === "video" ? (
                                   <a
-                                    className="font-medium text-sm hover:underline"
+                                    className="block max-w-[240px] truncate font-medium text-sm hover:underline sm:max-w-[420px] sm:text-base md:max-w-[560px]"
                                     href={contentItem.content as string}
                                     target="_blank"
                                   >
                                     {capitalize(contentItem.title)}
                                   </a>
                                 ) : (
-                                  <h5 className="font-medium text-sm">
+                                  <h5 className="block max-w-[240px] truncate font-medium text-sm sm:max-w-[420px] sm:text-base md:max-w-[560px]">
                                     {capitalize(contentItem.title)}
                                   </h5>
                                 )}
-                                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                                <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs sm:text-xs">
                                   <Badge
-                                    className={`${getLessonTypeColor(contentItem.type)} text-xs`}
+                                    className={`${getLessonTypeColor(contentItem.type)} text-[10px] sm:text-xs`}
                                     variant="secondary"
                                   >
                                     {contentItem.type}
@@ -351,6 +373,7 @@ export function CourseContentManagement({
                                 </div>
                               </div>
                             </div>
+
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button size="sm" variant="destructive">

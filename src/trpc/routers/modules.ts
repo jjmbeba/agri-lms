@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   basicInformationSchema,
@@ -240,5 +240,104 @@ export const modulesRouter = createTRPCRouter({
           `Failed to update draft module: ${error instanceof Error ? error.message : "Unknown error"}`
         );
       }
+    }),
+  updateDraftModulePositions: protectedProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        items: z
+          .array(
+            z.object({
+              id: z.string(),
+              position: z.number().int().nonnegative(),
+            })
+          )
+          .min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      // Validate all ids belong to the course
+      const ids = input.items.map((i) => i.id);
+      const rows = await ctx.db
+        .select({ id: draftModules.id })
+        .from(draftModules)
+        .where(
+          and(
+            eq(draftModules.courseId, input.courseId),
+            inArray(draftModules.id, ids)
+          )
+        );
+
+      const validIds = new Set(rows.map((r) => r.id));
+      const hasInvalid = ids.some((id) => !validIds.has(id));
+      if (hasInvalid) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One or more modules do not belong to the course",
+        });
+      }
+
+      // Neon HTTP driver does not support transactions. Perform validated batch updates.
+      for (const item of input.items) {
+        await ctx.db
+          .update(draftModules)
+          .set({ position: item.position })
+          .where(eq(draftModules.id, item.id));
+      }
+
+      return { success: true } as const;
+    }),
+  updateModulePositions: protectedProcedure
+    .input(
+      z.object({
+        courseVersionId: z.string(),
+        items: z
+          .array(
+            z.object({
+              id: z.string(),
+              position: z.number().int().nonnegative(),
+            })
+          )
+          .min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      const ids = input.items.map((i) => i.id);
+      const rows = await ctx.db
+        .select({ id: modules.id })
+        .from(modules)
+        .where(
+          and(
+            eq(modules.courseVersionId, input.courseVersionId),
+            inArray(modules.id, ids)
+          )
+        );
+
+      const validIds = new Set(rows.map((r) => r.id));
+      const hasInvalid = ids.some((id) => !validIds.has(id));
+      if (hasInvalid) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One or more modules do not belong to the course version",
+        });
+      }
+
+      // Neon HTTP driver does not support transactions. Perform validated batch updates.
+      for (const item of input.items) {
+        await ctx.db
+          .update(modules)
+          .set({ position: item.position })
+          .where(eq(modules.id, item.id));
+      }
+
+      return { success: true } as const;
     }),
 });

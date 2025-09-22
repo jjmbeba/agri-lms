@@ -13,12 +13,20 @@ import {
   DialogContent as UIDialogContent,
 } from "@/components/ui/dialog";
 import {
+  Drawer,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+  DrawerContent as UIDrawerContent,
+} from "@/components/ui/drawer";
+import {
   Stepper,
   StepperIndicator,
   StepperItem,
   StepperSeparator,
   StepperTrigger,
 } from "@/components/ui/stepper";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { trpc } from "@/trpc/client";
 import BasicModuleInfoForm from "./basic-info-form";
 import { moduleSteps, moduleStepTitles } from "./constants";
@@ -60,10 +68,12 @@ const FormDialog = ({
   isOpen,
   onOpenChange,
   children,
+  isMobile,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
+  isMobile: boolean;
 }) => {
   const { clearForm } = useModuleFormContext();
 
@@ -73,6 +83,14 @@ const FormDialog = ({
     }
     onOpenChange(open);
   };
+
+  if (isMobile) {
+    return (
+      <Drawer onOpenChange={handleOpenChange} open={isOpen}>
+        {children}
+      </Drawer>
+    );
+  }
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={isOpen}>
@@ -93,6 +111,7 @@ const EditModuleContent = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { initializeForm, clearForm } = useModuleFormContext();
 
   // Fallback to fetch module data if not provided
@@ -169,63 +188,149 @@ const EditModuleContent = ({
   }
 
   return (
-    <FormDialog isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
-      <DialogTrigger asChild>
-        <Button onClick={handleEditClick} size="sm" variant="outline">
-          <IconEdit className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
-      </DialogTrigger>
-      <UIDialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            <Stepper
-              className="mt-5"
-              onValueChange={setCurrentStep}
-              value={currentStep}
+    <FormDialog
+      isMobile={isMobile}
+      isOpen={isOpen}
+      onOpenChange={handleDialogOpenChange}
+    >
+      {isMobile ? (
+        <>
+          <DrawerTrigger asChild>
+            <Button
+              onClick={handleEditClick}
+              size="sm"
+              type="button"
+              variant="outline"
             >
-              {moduleSteps.map((step) => (
-                <StepperItem
-                  className="not-last:flex-1"
-                  key={step.id}
-                  loading={isUpdatingModule}
-                  step={step.id}
+              <IconEdit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </DrawerTrigger>
+          <UIDrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>
+                <Stepper
+                  className="mt-5"
+                  onValueChange={setCurrentStep}
+                  value={currentStep}
                 >
-                  <StepperTrigger asChild>
-                    <StepperIndicator />
-                  </StepperTrigger>
-                  {step.id < moduleSteps.length && <StepperSeparator />}
-                </StepperItem>
-              ))}
-            </Stepper>
-            <div className="mt-4">
-              Edit Module:{" "}
-              {moduleStepTitles[currentStep as keyof typeof moduleStepTitles]}
+                  {moduleSteps.map((step) => (
+                    <StepperItem
+                      className="not-last:flex-1"
+                      key={step.id}
+                      loading={isUpdatingModule}
+                      step={step.id}
+                    >
+                      <StepperTrigger asChild>
+                        <StepperIndicator />
+                      </StepperTrigger>
+                      {step.id < moduleSteps.length && <StepperSeparator />}
+                    </StepperItem>
+                  ))}
+                </Stepper>
+                <div className="mt-4">
+                  Edit Module:{" "}
+                  {
+                    moduleStepTitles[
+                      currentStep as keyof typeof moduleStepTitles
+                    ]
+                  }
+                </div>
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="p-6">
+              {currentStep === 1 && (
+                <BasicModuleInfoForm
+                  disableBackStep
+                  handleBackStep={handleBackStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {currentStep === 2 && (
+                <ContentForm
+                  handleBackStep={handleBackStep}
+                  handleNextStep={handleNextStep}
+                />
+              )}
+              {currentStep === 3 && (
+                <ReviewForm
+                  handleBackStep={handleBackStep}
+                  isSubmitting={isUpdatingModule}
+                  onSubmit={handleSubmit}
+                />
+              )}
             </div>
-          </DialogTitle>
-        </DialogHeader>
+          </UIDrawerContent>
+        </>
+      ) : (
+        <>
+          <DialogTrigger asChild>
+            <Button
+              onClick={handleEditClick}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <IconEdit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </DialogTrigger>
+          <UIDialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                <Stepper
+                  className="mt-5"
+                  onValueChange={setCurrentStep}
+                  value={currentStep}
+                >
+                  {moduleSteps.map((step) => (
+                    <StepperItem
+                      className="not-last:flex-1"
+                      key={step.id}
+                      loading={isUpdatingModule}
+                      step={step.id}
+                    >
+                      <StepperTrigger asChild>
+                        <StepperIndicator />
+                      </StepperTrigger>
+                      {step.id < moduleSteps.length && <StepperSeparator />}
+                    </StepperItem>
+                  ))}
+                </Stepper>
+                <div className="mt-4">
+                  Edit Module:{" "}
+                  {
+                    moduleStepTitles[
+                      currentStep as keyof typeof moduleStepTitles
+                    ]
+                  }
+                </div>
+              </DialogTitle>
+            </DialogHeader>
 
-        {currentStep === 1 && (
-          <BasicModuleInfoForm
-            disableBackStep
-            handleBackStep={handleBackStep}
-            handleNextStep={handleNextStep}
-          />
-        )}
-        {currentStep === 2 && (
-          <ContentForm
-            handleBackStep={handleBackStep}
-            handleNextStep={handleNextStep}
-          />
-        )}
-        {currentStep === 3 && (
-          <ReviewForm
-            handleBackStep={handleBackStep}
-            isSubmitting={isUpdatingModule}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </UIDialogContent>
+            {currentStep === 1 && (
+              <BasicModuleInfoForm
+                disableBackStep
+                handleBackStep={handleBackStep}
+                handleNextStep={handleNextStep}
+              />
+            )}
+            {currentStep === 2 && (
+              <ContentForm
+                handleBackStep={handleBackStep}
+                handleNextStep={handleNextStep}
+              />
+            )}
+            {currentStep === 3 && (
+              <ReviewForm
+                handleBackStep={handleBackStep}
+                isSubmitting={isUpdatingModule}
+                onSubmit={handleSubmit}
+              />
+            )}
+          </UIDialogContent>
+        </>
+      )}
     </FormDialog>
   );
 };
