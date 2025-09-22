@@ -25,16 +25,22 @@ const ReviewForm = ({
     return moduleTypes.find((t) => t.id === type)?.name || "Unknown";
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-bold text-2xl">Review Module</h2>
-        <p className="text-muted-foreground">
-          Please review your module information before submitting.
-        </p>
-      </div>
+  const getButtonText = () => {
+    if (isSubmitting) {
+      return isEditMode ? "Updating Module..." : "Creating Module...";
+    }
+    return isEditMode ? "Update Module" : "Create Module";
+  };
 
-      <ScrollArea className="h-[400px] pb-4">
+  return (
+    <div>
+      <ScrollArea className="h-[200px] pb-4 md:h-[400px]">
+        <div className="mb-4">
+          <h2 className="font-bold text-2xl">Review Module</h2>
+          <p className="text-muted-foreground">
+            Please review your module information before submitting.
+          </p>
+        </div>
         {/* Basic Information Review */}
         {formData.basicInfo && (
           <Card>
@@ -114,12 +120,10 @@ const ReviewForm = ({
           {isSubmitting ? (
             <div className="flex items-center gap-2">
               <Loader2 className="size-4 animate-spin" />
-              {isEditMode ? "Updating Module..." : "Creating Module..."}
+              {getButtonText()}
             </div>
-          ) : isEditMode ? (
-            "Update Module"
           ) : (
-            "Create Module"
+            getButtonText()
           )}
         </Button>
       </div>

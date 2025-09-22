@@ -443,12 +443,13 @@ const ContentForm: React.FC<ContentFormProps> = ({
 
   return (
     <form
+      className="h-full"
       onSubmit={(e) => {
         e.preventDefault();
         form.handleSubmit();
       }}
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex h-full flex-col gap-6">
         <form.Field mode="array" name="content">
           {(field) => {
             return (
@@ -475,11 +476,11 @@ const ContentForm: React.FC<ContentFormProps> = ({
                     Add Content
                   </Button>
                 </div>
-                <ScrollArea className="h-[400px] space-y-4 pb-2">
+                <ScrollArea className="h-[200px] space-y-4 pb-2 md:h-[400px]">
                   {field.state.value.map((item: ContentItem, i: number) => {
                     return (
                       <div
-                        className="mt-4 flex flex-col gap-4 rounded-lg border p-4 :first:mt-0"
+                        className="flex flex-col gap-4 rounded-lg border p-4 :first:mt-0"
                         key={i}
                       >
                         <div className="flex items-center justify-between">

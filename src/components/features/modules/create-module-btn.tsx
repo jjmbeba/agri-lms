@@ -144,7 +144,7 @@ const CreateModuleBtn = ({
                 {showText && "Add Content"}
               </Button>
             </DrawerTrigger>
-            <UIDrawerContent>
+            <UIDrawerContent className="h-[92%] max-h-[92vh]">
               <DrawerHeader>
                 <DrawerTitle>
                   <Stepper
