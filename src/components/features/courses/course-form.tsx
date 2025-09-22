@@ -161,6 +161,7 @@ const CourseForm = (props: CourseFormProps) => {
                   onValueChange={(value) => field.handleChange(value)}
                 >
                   <SelectTrigger
+                    aria-invalid={field.state.meta.errors.length > 0}
                     className="w-full"
                     disabled={isLoadingDepartments || departments?.length === 0}
                   >
@@ -181,7 +182,7 @@ const CourseForm = (props: CourseFormProps) => {
                   </SelectTrigger>
                   <SelectContent>
                     {departments && departments.length === 0 && (
-                      <SelectItem value="no-departments">
+                      <SelectItem disabled value="no-departments">
                         No departments found
                       </SelectItem>
                     )}

@@ -50,12 +50,9 @@ export function CourseGrid({ courses }: CourseGridProps) {
                 </Link>
               </div>
               <Badge
-                className={
-                  course.course.status === "Active"
-                    ? "border-green-200 text-secondary-foreground"
-                    : "border-neutral-700 text-muted-foreground"
+                variant={
+                  course.course.status === "active" ? "default" : "outline"
                 }
-                variant="outline"
               >
                 {capitalize(course.course?.status ?? "")}
               </Badge>

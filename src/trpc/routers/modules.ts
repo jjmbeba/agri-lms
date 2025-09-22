@@ -390,11 +390,41 @@ export const modulesRouter = createTRPCRouter({
         .where(eq(draftModules.id, input));
     }),
   deleteDraftModuleContent: protectedProcedure
-    .input(z.string())
+    .input(z.uuid())
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
+
+      const [row] = await ctx.db
+        .select({
+          id: draftModuleContent.id,
+          draftModuleId: draftModuleContent.draftModuleId,
+        })
+        .from(draftModuleContent)
+        .where(eq(draftModuleContent.id, input))
+        .limit(1);
+
+      if (!row) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Content not found",
+        });
+      }
+      // Count remaining items in the module
+      const [{ count: cnt }] = await ctx.db
+        .select({ count: count() })
+        .from(draftModuleContent)
+        .where(eq(draftModuleContent.draftModuleId, row.draftModuleId));
+
+      if (cnt <= 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "You cannot delete the last content item in a module. Add a new item before deleting.",
+        });
+      }
+
       return await ctx.db
         .delete(draftModuleContent)
         .where(eq(draftModuleContent.id, input));

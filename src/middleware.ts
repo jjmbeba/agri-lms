@@ -15,5 +15,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard", "/courses"], // Specify the routes the middleware applies to
+  matcher: ["/dashboard/:path*", "/courses/:path*"], // Specify the routes the middleware applies to
 };

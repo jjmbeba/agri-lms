@@ -358,6 +358,7 @@ export function CourseContentManagement({
                                   <a
                                     className="block max-w-[240px] truncate font-medium text-sm hover:underline sm:max-w-[420px] sm:text-base md:max-w-[560px]"
                                     href={contentItem.content as string}
+                                    rel="noopener noreferrer"
                                     target="_blank"
                                   >
                                     {capitalize(contentItem.title)}

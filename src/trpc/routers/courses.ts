@@ -32,7 +32,7 @@ export const coursesRouter = createTRPCRouter({
       .from(course)
       .leftJoin(department, eq(course.departmentId, department.id));
   }),
-  getCourse: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
+  getCourse: publicProcedure.input(z.uuid()).query(async ({ ctx, input }) => {
     // Get the course with department info
     const courseData = await ctx.db
       .select()
@@ -72,7 +72,7 @@ export const coursesRouter = createTRPCRouter({
     };
   }),
   deleteCourse: protectedProcedure
-    .input(z.string())
+    .input(z.uuid())
     .mutation(({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "UNAUTHORIZED" });
