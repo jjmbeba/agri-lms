@@ -2,6 +2,7 @@
 
 import {
   IconFileText,
+  IconGripVertical,
   IconMessageCircle,
   IconTrash,
   IconVideo,
@@ -112,7 +113,10 @@ export function CourseContentManagement({
               Manage lessons, quizzes, and course materials
             </CardDescription>
           </div>
-          <CreateModuleBtn courseId={courseId} />
+          <div className="flex items-center gap-2">
+            <Button>Publish</Button>
+            <CreateModuleBtn courseId={courseId} />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -122,8 +126,9 @@ export function CourseContentManagement({
               {/* Module Header */}
               <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
                 <div className="flex items-center gap-4">
+                  <IconGripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted font-medium text-sm">
-                    {module.position}
+                    {moduleIndex + 1}
                   </div>
                   <div>
                     <h4 className="font-medium">{module.title}</h4>
@@ -193,7 +198,8 @@ export function CourseContentManagement({
                       <div className="flex items-center gap-2">
                         {getLessonIcon(contentItem.type)}
                         <div>
-                          {contentItem.type === "file" ? (
+                          {contentItem.type === "file" ||
+                          contentItem.type === "video" ? (
                             <a
                               className="font-medium text-sm hover:underline"
                               href={contentItem.content as string}

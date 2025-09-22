@@ -114,7 +114,7 @@ const CreateModuleBtn = ({
     <ModuleFormProvider>
       <FormDialog isOpen={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogTrigger asChild>
-          <Button>
+          <Button variant="secondary">
             <IconPlus className="mr-2 h-4 w-4" />
             {showText && "Add Content"}
           </Button>
