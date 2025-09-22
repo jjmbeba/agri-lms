@@ -22,14 +22,13 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
                     {course.course.title}
                   </h1>
                   <Badge
-                    className={
-                      course.course.status === "Active"
-                        ? "border-green-200 text-secondary-foreground"
-                        : "border-neutral-700 text-muted-foreground"
+                    variant={
+                      course.course.status === "published"
+                        ? "default"
+                        : "outline"
                     }
-                    variant="outline"
                   >
-                    {capitalize(course.course?.status ?? "")}
+                    {capitalize(course.course.status ?? "")}
                   </Badge>
                 </div>
                 <p className="text-lg text-muted-foreground">

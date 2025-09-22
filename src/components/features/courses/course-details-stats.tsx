@@ -6,24 +6,18 @@ import {
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import type { CourseWithCategory } from "./types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Course } from "./types";
 
 type CourseDetailsStatsProps = {
-  course: CourseWithCategory;
+  course: Course;
 };
 
 export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
   // Mock data - in real app, these would come from the database
   const stats = {
     enrolledStudents: 245,
-    completionRate: 87,
+    modules: 8,
     averageRating: 4.6,
     totalLessons: 12,
     totalDuration: "8 hours",
@@ -47,12 +41,14 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="font-medium text-sm">Completion Rate</CardTitle>
+          <CardTitle className="font-medium text-sm">Modules</CardTitle>
           <IconTrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="font-bold text-2xl">{stats.completionRate}%</div>
-          <p className="text-muted-foreground text-xs">+5% from last month</p>
+          <div className="font-bold text-2xl">{course?.modulesCount}</div>
+          <p className="text-muted-foreground text-xs">
+            Total published modules
+          </p>
         </CardContent>
       </Card>
 

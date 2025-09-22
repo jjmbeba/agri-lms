@@ -19,22 +19,20 @@ export async function generateMetadata({
   const { course } = await params;
 
   // fetch data
-  const [courseData] = await trpc.courses.getCourse(course);
+  const courseData = await trpc.courses.getCourse(course);
 
   return {
-    title: courseData.course?.title,
+    title: courseData?.course.title,
   };
 }
 
 const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
   const { course: courseId } = await params;
-  const courseData = await trpc.courses.getCourse(courseId);
+  const course = await trpc.courses.getCourse(courseId);
 
-  if (!courseData || courseData.length === 0) {
+  if (!course) {
     notFound();
   }
-
-  const course = courseData[0];
 
   return (
     <div className="space-y-6 p-6">
