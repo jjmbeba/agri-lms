@@ -1,12 +1,30 @@
 "use client";
 
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  type DraggableAttributes,
+  type DraggableSyntheticListeners,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   IconFileText,
   IconGripVertical,
   IconMessageCircle,
   IconTrash,
   IconVideo,
 } from "@tabler/icons-react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -31,6 +49,71 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { capitalize, cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
+
+type SortableItemContextValue = {
+  attributes: DraggableAttributes;
+  listeners: DraggableSyntheticListeners;
+  setActivatorNodeRef: (element: HTMLElement | null) => void;
+};
+
+const SortableItemContext = createContext<SortableItemContextValue | null>(
+  null
+);
+
+const DRAGGING_OPACITY = 0.6;
+
+const SortableModule = (props: { id: string; children: React.ReactNode }) => {
+  const { id, children } = props;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? DRAGGING_OPACITY : undefined,
+  };
+
+  return (
+    <SortableItemContext.Provider
+      value={{ attributes, listeners, setActivatorNodeRef }}
+    >
+      <div ref={setNodeRef} style={style}>
+        {children}
+      </div>
+    </SortableItemContext.Provider>
+  );
+};
+
+const DragHandle = (props: { "aria-label": string }) => {
+  const context = useContext(SortableItemContext);
+  if (!context) {
+    return null;
+  }
+
+  const { attributes, listeners, setActivatorNodeRef } = context;
+
+  return (
+    <button
+      aria-label={props["aria-label"]}
+      ref={setActivatorNodeRef}
+      type="button"
+      {...attributes}
+      {...listeners}
+      className="inline-flex cursor-grab items-center justify-center rounded p-1 text-muted-foreground hover:text-foreground"
+    >
+      <IconGripVertical aria-hidden="true" className="h-4 w-4" />
+      <span className="sr-only">{props["aria-label"]}</span>
+    </button>
+  );
+};
+
 import CreateModuleBtn from "../modules/create-module-btn";
 import EditModuleBtn from "../modules/edit-module-btn";
 import type { DraftModule, Module } from "./types";
@@ -81,6 +164,34 @@ export function CourseContentManagement({
   courseId,
   onRefresh,
 }: CourseContentManagementProps) {
+  const [modules, setModules] = useState<(DraftModule | Module)[]>(data);
+
+  useEffect(() => {
+    setModules(data);
+  }, [data]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    })
+  );
+
+  const moduleIds = useMemo(() => modules.map((m) => m.id), [modules]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = modules.findIndex((m) => m.id === active.id);
+    const newIndex = modules.findIndex((m) => m.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    setModules((current) => arrayMove(current, oldIndex, newIndex));
+  };
   const { mutate: deleteDraftModule } =
     trpc.modules.deleteDraftModule.useMutation({
       onSuccess: () => {
@@ -120,158 +231,180 @@ export function CourseContentManagement({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {data.map((module, moduleIndex) => (
-            <div className="space-y-2" key={module.id}>
-              {/* Module Header */}
-              <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                <div className="flex items-center gap-4">
-                  <IconGripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted font-medium text-sm">
-                    {moduleIndex + 1}
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{module.title}</h4>
-                    <p className="text-muted-foreground text-sm">
-                      {module.description}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <Badge className="text-xs" variant="outline">
-                        {module.content?.length || 0} content item(s)
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <EditModuleBtn
-                    moduleData={module}
-                    moduleId={module.id}
-                    onSuccess={onRefresh}
-                  />
-                  <Button size="sm" variant="outline">
-                    Preview
-                  </Button>
-                  {/* Only show delete button for draft modules */}
-                  {module.content && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="destructive">
-                          <IconTrash className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Module</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{module.title}"?
-                            This action cannot be undone. All content items in
-                            this module will also be deleted.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className={cn(
-                              buttonVariants({
-                                variant: "destructive",
-                              })
-                            )}
-                            onClick={() => deleteDraftModule(module.id)}
-                          >
-                            Delete Module
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-              </div>
-
-              {/* Content Items */}
-              {module.content && module.content.length > 0 && (
-                <div className="ml-8 space-y-2">
-                  {module.content.map((contentItem) => (
-                    <div
-                      className="flex items-center justify-between rounded-md border-muted border-l-2 bg-muted/30 p-3"
-                      key={contentItem.id}
-                    >
-                      <div className="flex items-center gap-2">
-                        {getLessonIcon(contentItem.type)}
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          sensors={sensors}
+        >
+          <SortableContext
+            items={moduleIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-4">
+              {modules.map((module, moduleIndex) => (
+                <SortableModule id={module.id} key={module.id}>
+                  <div className="space-y-2">
+                    {/* Module Header */}
+                    <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                      <div className="flex items-center gap-4">
+                        <DragHandle
+                          aria-label={`Drag to reorder module ${module.title}`}
+                        />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted font-medium text-sm">
+                          {moduleIndex + 1}
+                        </div>
                         <div>
-                          {contentItem.type === "file" ||
-                          contentItem.type === "video" ? (
-                            <a
-                              className="font-medium text-sm hover:underline"
-                              href={contentItem.content as string}
-                              target="_blank"
-                            >
-                              {capitalize(contentItem.title)}
-                            </a>
-                          ) : (
-                            <h5 className="font-medium text-sm">
-                              {capitalize(contentItem.title)}
-                            </h5>
-                          )}
-                          <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                            <Badge
-                              className={`${getLessonTypeColor(contentItem.type)} text-xs`}
-                              variant="secondary"
-                            >
-                              {contentItem.type}
+                          <h4 className="font-medium">{module.title}</h4>
+                          <p className="text-muted-foreground text-sm">
+                            {module.description}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <Badge className="text-xs" variant="outline">
+                              {module.content?.length || 0} content item(s)
                             </Badge>
-                            <span>Order: {contentItem.orderIndex + 1}</span>
                           </div>
                         </div>
                       </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
-                            <IconTrash className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Delete Content Item
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "
-                              {contentItem.title}"? This action cannot be
-                              undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className={cn(
-                                buttonVariants({
-                                  variant: "destructive",
-                                })
-                              )}
-                              onClick={() => {
-                                if (module.content.length === 1) {
-                                  toast.error(
-                                    "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
-                                  );
-                                  return;
-                                }
-                                deleteDraftModuleContent(contentItem.id);
-                              }}
-                            >
-                              Delete Content
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <div className="flex items-center gap-2">
+                        <EditModuleBtn
+                          moduleData={module}
+                          moduleId={module.id}
+                          onSuccess={onRefresh}
+                        />
+                        <Button size="sm" variant="outline">
+                          Preview
+                        </Button>
+                        {/* Only show delete button for draft modules */}
+                        {module.content && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                <IconTrash className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete Module
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "
+                                  {module.title}
+                                  "? This action cannot be undone. All content
+                                  items in this module will also be deleted.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className={cn(
+                                    buttonVariants({
+                                      variant: "destructive",
+                                    })
+                                  )}
+                                  onClick={() => deleteDraftModule(module.id)}
+                                >
+                                  Delete Module
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
 
-              {moduleIndex < data.length - 1 && <Separator className="my-4" />}
+                    {/* Content Items */}
+                    {module.content && module.content.length > 0 && (
+                      <div className="ml-8 space-y-2">
+                        {module.content.map((contentItem) => (
+                          <div
+                            className="flex items-center justify-between rounded-md border-muted border-l-2 bg-muted/30 p-3"
+                            key={contentItem.id}
+                          >
+                            <div className="flex items-center gap-2">
+                              {getLessonIcon(contentItem.type)}
+                              <div>
+                                {contentItem.type === "file" ||
+                                contentItem.type === "video" ? (
+                                  <a
+                                    className="font-medium text-sm hover:underline"
+                                    href={contentItem.content as string}
+                                    target="_blank"
+                                  >
+                                    {capitalize(contentItem.title)}
+                                  </a>
+                                ) : (
+                                  <h5 className="font-medium text-sm">
+                                    {capitalize(contentItem.title)}
+                                  </h5>
+                                )}
+                                <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                                  <Badge
+                                    className={`${getLessonTypeColor(contentItem.type)} text-xs`}
+                                    variant="secondary"
+                                  >
+                                    {contentItem.type}
+                                  </Badge>
+                                  <span>
+                                    Order: {contentItem.orderIndex + 1}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive">
+                                  <IconTrash className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete Content Item
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "
+                                    {contentItem.title}"? This action cannot be
+                                    undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className={cn(
+                                      buttonVariants({
+                                        variant: "destructive",
+                                      })
+                                    )}
+                                    onClick={() => {
+                                      if (module.content.length === 1) {
+                                        toast.error(
+                                          "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
+                                        );
+                                        return;
+                                      }
+                                      deleteDraftModuleContent(contentItem.id);
+                                    }}
+                                  >
+                                    Delete Content
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {moduleIndex < modules.length - 1 && (
+                      <Separator className="my-4" />
+                    )}
+                  </div>
+                </SortableModule>
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       </CardContent>
     </Card>
   );
