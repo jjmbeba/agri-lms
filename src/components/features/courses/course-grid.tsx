@@ -1,12 +1,13 @@
 "use client";
 
-import { IconBook, IconClock, IconPlus, IconUsers } from "@tabler/icons-react";
+import { IconBook, IconClock, IconUsers } from "@tabler/icons-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
+import CreateCourseButton from "./create-course-btn";
 import EditCourseButton from "./edit-course-btn";
 import type { CourseWithCategory } from "./types";
 
@@ -24,10 +25,7 @@ export function CourseGrid({ courses }: CourseGridProps) {
           <p className="mb-4 text-center text-muted-foreground">
             Try adjusting your search criteria or create a new course.
           </p>
-          <Button>
-            <IconPlus className="mr-2 h-4 w-4" />
-            Create Course
-          </Button>
+          <CreateCourseButton />
         </CardContent>
       </Card>
     );
