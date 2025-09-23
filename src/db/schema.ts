@@ -1,4 +1,12 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -56,7 +64,112 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
-    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const department = pgTable("department", {
+  id: uuid().primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const course = pgTable("course", {
+  id: uuid().primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  tags: text("tags").notNull(),
+  status: text("status").default("draft"),
+  departmentId: uuid("department_id")
+    .references(() => department.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const courseVersion = pgTable("course_version", {
+  id: uuid().primaryKey().defaultRandom(),
+  courseId: uuid("course_id")
+    .references(() => course.id, { onDelete: "cascade" })
+    .notNull(),
+  versionNumber: integer("version").notNull(),
+  changeLog: text("change_log").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// Updated modules table - removed type and content fields
+export const modules = pgTable("module", {
+  id: uuid().primaryKey().defaultRandom(),
+  courseVersionId: uuid("course_version_id")
+    .references(() => courseVersion.id, { onDelete: "cascade" })
+    .notNull(),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// New module content table for multiple content items per module
+export const moduleContent = pgTable("module_content", {
+  id: uuid().primaryKey().defaultRandom(),
+  moduleId: uuid("module_id")
+    .references(() => modules.id, { onDelete: "cascade" })
+    .notNull(),
+  type: text("type").notNull(), // 'text', 'video', 'pdf', 'quiz', 'assignment', 'link'
+  position: integer("position").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(), // URL, text, or file path
+  metadata: jsonb("metadata"), // Flexible metadata storage
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// Updated draft modules table - removed type and content fields
+export const draftModules = pgTable("draft_module", {
+  id: uuid().primaryKey().defaultRandom(),
+  courseId: uuid("course_id")
+    .references(() => course.id, { onDelete: "cascade" })
+    .notNull(),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+// New draft module content table for multiple content items per draft module
+export const draftModuleContent = pgTable("draft_module_content", {
+  id: uuid().primaryKey().defaultRandom(),
+  draftModuleId: uuid("draft_module_id")
+    .references(() => draftModules.id, { onDelete: "cascade" })
+    .notNull(),
+  type: text("type").notNull(), // 'text', 'video', 'pdf', 'quiz', 'assignment', 'link'
+  title: text("title").notNull(),
+  content: text("content").notNull(), // URL, text, or file path
+  metadata: jsonb("metadata"), // Flexible metadata storage
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });

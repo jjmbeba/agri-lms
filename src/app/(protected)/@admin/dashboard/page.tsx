@@ -1,5 +1,5 @@
 import { IconPlant, IconTrendingUp } from "@tabler/icons-react";
-
+import type { Metadata } from "next";
 import { ChartAreaInteractive } from "@/components/features/dashboard/chart-area-interactive";
 import { DataTable } from "@/components/features/dashboard/data-table";
 import { SectionCards } from "@/components/features/dashboard/section-cards";
@@ -11,8 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import data from "./data.json" with { type: "json" };
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export default function Page() {
   return (

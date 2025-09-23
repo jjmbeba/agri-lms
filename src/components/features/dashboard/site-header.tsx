@@ -30,14 +30,20 @@ export function SiteHeader() {
           <h1 className="font-medium text-base">
             <Breadcrumb>
               <BreadcrumbList>
-                {breadcrumbs.map((breadcrumb) => (
+                {breadcrumbs.flatMap((breadcrumb, index) => [
                   <BreadcrumbItem key={breadcrumb.label}>
                     <BreadcrumbLink href={breadcrumb.href}>
                       {capitalize(breadcrumb.label)}
                     </BreadcrumbLink>
-                    <BreadcrumbSeparator className="last:hidden" />
-                  </BreadcrumbItem>
-                ))}
+                  </BreadcrumbItem>,
+                  ...(index < breadcrumbs.length - 1
+                    ? [
+                        <BreadcrumbSeparator
+                          key={`${breadcrumb.label}-${breadcrumb.href}-separator`}
+                        />,
+                      ]
+                    : []),
+                ])}
               </BreadcrumbList>
             </Breadcrumb>
           </h1>

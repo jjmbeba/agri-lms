@@ -2,6 +2,7 @@
 
 import {
   IconBook,
+  IconBuilding,
   IconChartBar,
   IconDashboard,
   IconHelp,
@@ -37,6 +38,11 @@ const data = {
       title: "Courses",
       url: "/courses",
       icon: IconBook,
+    },
+    {
+      title: "Departments",
+      url: "/departments",
+      icon: IconBuilding,
     },
     {
       title: "Learners",
