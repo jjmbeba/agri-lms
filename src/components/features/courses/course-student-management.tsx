@@ -97,8 +97,12 @@ const HIGH_PROGRESS_THRESHOLD = 80;
 const MEDIUM_PROGRESS_THRESHOLD = 50;
 
 const getProgressColor = (progress: number) => {
-  if (progress >= HIGH_PROGRESS_THRESHOLD) return "bg-green-500";
-  if (progress >= MEDIUM_PROGRESS_THRESHOLD) return "bg-yellow-500";
+  if (progress >= HIGH_PROGRESS_THRESHOLD) {
+    return "bg-green-500";
+  }
+  if (progress >= MEDIUM_PROGRESS_THRESHOLD) {
+    return "bg-yellow-500";
+  }
   return "bg-red-500";
 };
 

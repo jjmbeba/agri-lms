@@ -17,15 +17,15 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import CourseForm from "./course-form";
-import type { CourseWithCategory } from "./types";
 
 const EditCourseButton = ({
   courseDetails,
   text,
   showIcon = false,
 }: {
-  courseDetails: CourseWithCategory;
+  courseDetails: Doc<"course">;
   text: string;
   showIcon?: boolean;
 }) => {
@@ -48,7 +48,7 @@ const EditCourseButton = ({
           <div className="p-6">
             <CourseForm
               courseDetails={courseDetails}
-              id={courseDetails.course.id}
+              id={courseDetails._id}
               type="edit"
             />
           </div>
@@ -71,7 +71,7 @@ const EditCourseButton = ({
         </DialogHeader>
         <CourseForm
           courseDetails={courseDetails}
-          id={courseDetails.course.id}
+          id={courseDetails._id}
           type="edit"
         />
       </DialogContent>

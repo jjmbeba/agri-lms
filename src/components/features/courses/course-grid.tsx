@@ -7,16 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import CreateCourseButton from "./create-course-btn";
 import EditCourseButton from "./edit-course-btn";
-import type { CourseWithCategory } from "./types";
 
 type CourseGridProps = {
-  courses: CourseWithCategory[];
+  coursesWithDepartment: {
+    course: Doc<"course">;
+    department: Doc<"department"> | null;
+  }[];
 };
 
-export function CourseGrid({ courses }: CourseGridProps) {
-  if (courses?.length === 0) {
+export function CourseGrid({ coursesWithDepartment }: CourseGridProps) {
+  if (coursesWithDepartment?.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -33,15 +36,15 @@ export function CourseGrid({ courses }: CourseGridProps) {
 
   return (
     <div className="grid @3xl/main:grid-cols-3 @xl/main:grid-cols-2 gap-6">
-      {courses?.map((course) => (
+      {coursesWithDepartment?.map((course) => (
         <Card
           className="group transition-shadow hover:shadow-lg"
-          key={course.course.id}
+          key={course.course._id}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <Link href={`/courses/${course.course.id}`}>
+                <Link href={`/courses/${course.course._id}`}>
                   <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
                     {course.course.title}
                   </CardTitle>
@@ -87,9 +90,9 @@ export function CourseGrid({ courses }: CourseGridProps) {
             <Separator />
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
-                <EditCourseButton courseDetails={course} text="Edit" />
+                <EditCourseButton courseDetails={course.course} text="Edit" />
                 <Button asChild size="sm">
-                  <Link href={`/courses/${course.course.id}`}>
+                  <Link href={`/courses/${course.course._id}`}>
                     View Details
                   </Link>
                 </Button>

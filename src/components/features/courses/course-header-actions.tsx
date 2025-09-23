@@ -1,6 +1,8 @@
 "use client";
 
+import { useConvexMutation } from "@convex-dev/react-query";
 import { IconShare, IconTrash } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -16,17 +18,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { trpc } from "@/trpc/client";
+import { api } from "../../../../convex/_generated/api";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import EditCourseButton from "./edit-course-btn";
-import type { CourseWithCategory } from "./types";
 
 const CourseHeaderActions = ({
   courseDetails,
 }: {
-  courseDetails: CourseWithCategory;
+  courseDetails: Doc<"course">;
 }) => {
   const router = useRouter();
-  const { mutate: deleteCourse } = trpc.courses.deleteCourse.useMutation({
+  const { mutate: deleteCourse } = useMutation({
+    mutationFn: useConvexMutation(api.courses.deleteCourse),
     onSuccess: () => {
       toast.success("Course deleted successfully");
       router.push("/courses");
@@ -65,7 +68,7 @@ const CourseHeaderActions = ({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className={cn(buttonVariants({ variant: "destructive" }))}
-              onClick={() => deleteCourse(courseDetails.course.id)}
+              onClick={() => deleteCourse({ id: courseDetails._id })}
             >
               Continue
             </AlertDialogAction>
