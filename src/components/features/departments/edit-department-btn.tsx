@@ -16,12 +16,12 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import DepartmentForm from "./department-form";
-import type { Department } from "./types";
 
 type EditDepartmentButtonProps = {
   id: string;
-  departmentDetails: Department;
+  departmentDetails: Doc<"department">;
 };
 
 const EditDepartmentButton = ({

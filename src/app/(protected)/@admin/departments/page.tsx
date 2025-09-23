@@ -1,29 +1,20 @@
-import {
-  IconBook,
-  IconBuilding,
-  IconTrendingUp,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconBuilding } from "@tabler/icons-react";
+import { preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 import CreateDepartmentButton from "@/components/features/departments/create-department-btn";
-import DepartmentCard from "@/components/features/departments/department-card";
-import DepartmentHeaderCard from "@/components/features/departments/department-header-card";
-import EmptyDepartmentsMessage from "@/components/features/departments/empty-departments-msg";
-import { trpc } from "@/trpc/server";
+import DepartmentGrid from "@/components/features/departments/department-grid";
+import DepartmentStatCards from "@/components/features/departments/department-stat-cards";
+import { api } from "../../../../../convex/_generated/api";
 
 export const metadata: Metadata = {
   title: "Departments",
 };
 
 const DepartmentsPage = async () => {
-  const departments = await trpc.departments.getAll();
-
-  const totalStudents = 0; // TODO: Calculate from student enrollments
-  const totalCourses = departments.reduce(
-    (sum, dept) => sum + dept.courseCount,
-    0
+  const preloadedDepartments = await preloadQuery(
+    api.departments.getAllDepartmentsWithCounts,
+    {}
   );
-  const activeDepartments = departments.length;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -51,47 +42,10 @@ const DepartmentsPage = async () => {
           </div>
 
           {/* Statistics Cards */}
-
-          <div className="px-4 lg:px-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <DepartmentHeaderCard
-                description={`${activeDepartments} active departments`}
-                icon={IconBuilding}
-                title="Total Departments"
-                value={departments.length}
-              />
-              <DepartmentHeaderCard
-                description="Across all departments"
-                icon={IconUsers}
-                title="Total Students"
-                value={totalStudents}
-              />
-              <DepartmentHeaderCard
-                description="Available programs"
-                icon={IconBook}
-                title="Total Courses"
-                value={totalCourses}
-              />
-              <DepartmentHeaderCard
-                description="Student enrollment this month"
-                icon={IconTrendingUp}
-                title="Growth Rate"
-                value={12.5}
-              />
-            </div>
-          </div>
+          <DepartmentStatCards preloadedDepartments={preloadedDepartments} />
 
           {/* Departments Grid */}
-          <div className="px-4 lg:px-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {departments.map((department) => (
-                <DepartmentCard department={department} key={department.id} />
-              ))}
-            </div>
-          </div>
-
-          {/* Empty State (if no departments) */}
-          {departments.length === 0 && <EmptyDepartmentsMessage />}
+          <DepartmentGrid preloadedDepartments={preloadedDepartments} />
         </div>
       </div>
     </div>

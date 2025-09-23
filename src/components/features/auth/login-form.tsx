@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { loginSchema } from "./schema";
 
@@ -32,7 +32,7 @@ export function LoginForm({
     },
     onSubmit: async ({ value }) => {
       const safeRedirect = redirect.startsWith("/") ? redirect : "/dashboard";
-      await signIn.email(
+      await authClient.signIn.email(
         {
           email: value.email,
           password: value.password,

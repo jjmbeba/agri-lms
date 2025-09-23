@@ -1,7 +1,8 @@
 "use client";
 
+import { useConvexMutation } from "@convex-dev/react-query";
 import { IconTrash } from "@tabler/icons-react";
-import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,22 +16,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { trpc } from "@/trpc/client";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 type Props = {
   id: string;
 };
 
 const DeleteDepartmentButton = ({ id }: Props) => {
-  const { mutate: deleteDepartment } =
-    trpc.departments.deleteDepartment.useMutation({
-      onSuccess: () => {
-        toast.success("Department deleted successfully");
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
+  const { mutate: deleteDepartment } = useMutation({
+    mutationFn: useConvexMutation(api.departments.deleteDepartment),
+  });
 
   return (
     <AlertDialog>
@@ -51,7 +47,7 @@ const DeleteDepartmentButton = ({ id }: Props) => {
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className={cn(buttonVariants({ variant: "destructive" }))}
-            onClick={() => deleteDepartment(id)}
+            onClick={() => deleteDepartment({ id: id as Id<"department"> })}
           >
             Continue
           </AlertDialogAction>

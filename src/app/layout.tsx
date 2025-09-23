@@ -6,6 +6,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Footer from "@/components/features/common/footer";
 import Navbar from "@/components/features/common/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { ConvexClientProvider } from "@/providers/convex-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 
 const outfit = Outfit({
@@ -30,17 +31,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} antialiased`}>
         <TRPCProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            disableTransitionOnChange
-            enableSystem
-          >
-            <Navbar />
-            <NuqsAdapter>{children}</NuqsAdapter>
-            <Footer />
-            <Toaster richColors />
-          </ThemeProvider>
+          <ConvexClientProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              disableTransitionOnChange
+              enableSystem
+            >
+              <Navbar />
+              <NuqsAdapter>{children}</NuqsAdapter>
+              <Footer />
+              <Toaster richColors />
+            </ThemeProvider>
+          </ConvexClientProvider>
         </TRPCProvider>
       </body>
     </html>

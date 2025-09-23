@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { resetPassword } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { resetPasswordSchema } from "./schema";
 
@@ -37,7 +37,7 @@ export function ResetPasswordForm({
         return;
       }
 
-      await resetPassword(
+      await authClient.resetPassword(
         {
           newPassword: value.password,
           token,

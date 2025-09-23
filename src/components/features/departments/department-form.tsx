@@ -1,4 +1,6 @@
+import { useConvexMutation } from "@convex-dev/react-query";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generateSlug } from "@/lib/utils";
-import { trpc } from "@/trpc/client";
+import { api } from "../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { createDepartmentSchema } from "./schema";
-import type { Department } from "./types";
 
 type CreateDepartmentFormProps = {
   type: "create";
@@ -18,7 +20,7 @@ type CreateDepartmentFormProps = {
 type EditDepartmentFormProps = {
   type: "edit";
   id: string;
-  departmentDetails: Department;
+  departmentDetails: Doc<"department">;
 };
 
 type DepartmentFormProps = CreateDepartmentFormProps | EditDepartmentFormProps;
@@ -27,7 +29,8 @@ const DepartmentForm = (props: DepartmentFormProps) => {
   const { type, ...rest } = props;
   const action = type === "create" ? "Create" : "Update";
   const { mutate: createDepartment, isPending: isCreatingDepartment } =
-    trpc.departments.create.useMutation({
+    useMutation({
+      mutationFn: useConvexMutation(api.departments.createDepartment),
       onSuccess: () => {
         toast.success("Department created successfully");
         form.reset();
@@ -38,7 +41,8 @@ const DepartmentForm = (props: DepartmentFormProps) => {
     });
 
   const { mutate: editDepartment, isPending: isEditingDepartment } =
-    trpc.departments.editDepartment.useMutation({
+    useMutation({
+      mutationFn: useConvexMutation(api.departments.editDepartment),
       onSuccess: () => {
         toast.success("Department updated successfully");
       },
@@ -69,7 +73,7 @@ const DepartmentForm = (props: DepartmentFormProps) => {
         });
       } else if (type === "edit" && "id" in rest) {
         editDepartment({
-          id: rest.id,
+          id: rest.id as Id<"department">,
           name: value.name,
           description: value.description,
           slug: value.slug,
