@@ -42,7 +42,7 @@ const CreateCourseButton = () => {
           <DrawerHeader>
             <DrawerTitle>Create Course</DrawerTitle>
           </DrawerHeader>
-          <div className="p-6">
+          <div className="px-6">
             <CreateCourseForm type="create" />
           </div>
         </DrawerContent>

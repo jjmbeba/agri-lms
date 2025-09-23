@@ -112,142 +112,144 @@ const CourseForm = (props: CourseFormProps) => {
       }}
     >
       <div className="flex flex-col gap-6">
-        <ScrollArea>
-          <form.Field name="title">
-            {(field) => (
-              <div className="grid gap-3">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  aria-invalid={field.state.meta.errors.length > 0}
-                  id="title"
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Title"
-                  value={field.state.value}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <FormError
-                    key={error?.message}
-                    message={error?.message ?? ""}
-                  />
-                ))}
-              </div>
-            )}
-          </form.Field>
-          <form.Field name="description">
-            {(field) => (
-              <div className="grid gap-3">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  aria-invalid={field.state.meta.errors.length > 0}
-                  id="description"
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Description"
-                  value={field.state.value}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <FormError
-                    key={error?.message}
-                    message={error?.message ?? ""}
-                  />
-                ))}
-              </div>
-            )}
-          </form.Field>
-          <div className="flex w-full flex-col items-start gap-3 md:flex-row">
-            <form.Field name="departmentId">
+        <ScrollArea className="h-[290px] space-y-4 pb-4 md:h-[400px]">
+          <div className="flex flex-col gap-4">
+            <form.Field name="title">
               {(field) => (
-                <div className="grid w-full gap-3 md:w-1/2">
-                  <Label htmlFor="departmentId">Department</Label>
-                  <Select
-                    defaultValue={field.state.value}
-                    onValueChange={(value) => field.handleChange(value)}
-                  >
-                    <SelectTrigger
-                      aria-invalid={field.state.meta.errors.length > 0}
-                      className="w-full"
-                      disabled={
-                        isLoadingDepartments || departments?.length === 0
-                      }
+                <div className="grid gap-3">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    id="title"
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Title"
+                    value={field.state.value}
+                  />
+                  {field.state.meta.errors.map((error) => (
+                    <FormError
+                      key={error?.message}
+                      message={error?.message ?? ""}
+                    />
+                  ))}
+                </div>
+              )}
+            </form.Field>
+            <form.Field name="description">
+              {(field) => (
+                <div className="grid gap-3">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    id="description"
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Description"
+                    value={field.state.value}
+                  />
+                  {field.state.meta.errors.map((error) => (
+                    <FormError
+                      key={error?.message}
+                      message={error?.message ?? ""}
+                    />
+                  ))}
+                </div>
+              )}
+            </form.Field>
+            <div className="flex w-full flex-col items-start gap-3 md:flex-row">
+              <form.Field name="departmentId">
+                {(field) => (
+                  <div className="grid w-full gap-3 md:w-1/2">
+                    <Label htmlFor="departmentId">Department</Label>
+                    <Select
+                      defaultValue={field.state.value}
+                      onValueChange={(value) => field.handleChange(value)}
                     >
-                      {isLoadingDepartments ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="size-4 animate-spin" />
-                          <span>Loading departments...</span>
-                        </div>
-                      ) : (
-                        <SelectValue
-                          placeholder={
-                            departments?.length === 0
-                              ? "No departments found"
-                              : "Select a department"
-                          }
-                        />
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments && departments.length === 0 && (
-                        <SelectItem disabled value="no-departments">
-                          No departments found
-                        </SelectItem>
-                      )}
-                      {departments &&
-                        departments.length > 0 &&
-                        departments.map((department) => (
-                          <SelectItem
-                            key={department.id}
-                            value={department.id.toString()}
-                          >
-                            {department.name}
+                      <SelectTrigger
+                        aria-invalid={field.state.meta.errors.length > 0}
+                        className="w-full"
+                        disabled={
+                          isLoadingDepartments || departments?.length === 0
+                        }
+                      >
+                        {isLoadingDepartments ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="size-4 animate-spin" />
+                            <span>Loading departments...</span>
+                          </div>
+                        ) : (
+                          <SelectValue
+                            placeholder={
+                              departments?.length === 0
+                                ? "No departments found"
+                                : "Select a department"
+                            }
+                          />
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments && departments.length === 0 && (
+                          <SelectItem disabled value="no-departments">
+                            No departments found
                           </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {field.state.meta.errors.map((error) => (
-                    <FormError
-                      key={error?.message}
-                      message={error?.message ?? ""}
+                        )}
+                        {departments &&
+                          departments.length > 0 &&
+                          departments.map((department) => (
+                            <SelectItem
+                              key={department.id}
+                              value={department.id.toString()}
+                            >
+                              {department.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {field.state.meta.errors.map((error) => (
+                      <FormError
+                        key={error?.message}
+                        message={error?.message ?? ""}
+                      />
+                    ))}
+                  </div>
+                )}
+              </form.Field>
+              <form.Field name="tags">
+                {(field) => (
+                  <div className="grid w-full gap-3 md:w-1/2">
+                    <Label htmlFor="tags">Tags</Label>
+                    <TagInput
+                      activeTagIndex={activeTagIndex}
+                      id="tags"
+                      inlineTags={false}
+                      inputFieldPosition="top"
+                      placeholder="Add a tag"
+                      setActiveTagIndex={setActiveTagIndex}
+                      setTags={(newTags) => {
+                        field.handleChange(newTags);
+                      }}
+                      styleClasses={{
+                        tagList: {
+                          container: "gap-1",
+                        },
+                        input:
+                          "rounded-md transition-[color,box-shadow] placeholder:text-muted-foreground/70 focus-visible:border-ring outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                        tag: {
+                          body: "relative h-7 bg-background border border-input hover:bg-background rounded-md font-medium text-xs ps-2 pe-7",
+                          closeButton:
+                            "absolute -inset-y-px -end-px p-0 rounded-s-none rounded-e-md flex size-7 transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] text-muted-foreground/80 hover:text-foreground",
+                        },
+                      }}
+                      tags={field.state.value}
                     />
-                  ))}
-                </div>
-              )}
-            </form.Field>
-            <form.Field name="tags">
-              {(field) => (
-                <div className="grid w-full gap-3 md:w-1/2">
-                  <Label htmlFor="tags">Tags</Label>
-                  <TagInput
-                    activeTagIndex={activeTagIndex}
-                    id="tags"
-                    inlineTags={false}
-                    inputFieldPosition="top"
-                    placeholder="Add a tag"
-                    setActiveTagIndex={setActiveTagIndex}
-                    setTags={(newTags) => {
-                      field.handleChange(newTags);
-                    }}
-                    styleClasses={{
-                      tagList: {
-                        container: "gap-1",
-                      },
-                      input:
-                        "rounded-md transition-[color,box-shadow] placeholder:text-muted-foreground/70 focus-visible:border-ring outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                      tag: {
-                        body: "relative h-7 bg-background border border-input hover:bg-background rounded-md font-medium text-xs ps-2 pe-7",
-                        closeButton:
-                          "absolute -inset-y-px -end-px p-0 rounded-s-none rounded-e-md flex size-7 transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] text-muted-foreground/80 hover:text-foreground",
-                      },
-                    }}
-                    tags={field.state.value}
-                  />
-                  {field.state.meta.errors.map((error) => (
-                    <FormError
-                      key={error?.message}
-                      message={error?.message ?? ""}
-                    />
-                  ))}
-                </div>
-              )}
-            </form.Field>
+                    {field.state.meta.errors.map((error) => (
+                      <FormError
+                        key={error?.message}
+                        message={error?.message ?? ""}
+                      />
+                    ))}
+                  </div>
+                )}
+              </form.Field>
+            </div>
           </div>
         </ScrollArea>
         <form.Subscribe
