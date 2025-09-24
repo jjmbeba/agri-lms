@@ -29,7 +29,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} antialiased`}>
-        {/* <TRPCProvider> */}
         <ConvexClientProvider>
           <ThemeProvider
             attribute="class"
@@ -43,7 +42,6 @@ export default function RootLayout({
             <Toaster richColors />
           </ThemeProvider>
         </ConvexClientProvider>
-        {/* </TRPCProvider> */}
       </body>
     </html>
   );
