@@ -17,13 +17,13 @@ export const createCourseSchema = z.object({
     .min(1, {
       message: "Tags are required",
     }),
-  departmentId: z.uuid().min(1, {
-    message: "Category is required",
+  departmentId: z.string().min(1, {
+    message: "Department is required",
   }),
 });
 
 export const editCourseSchema = createCourseSchema.extend({
-  id: z.uuid().min(1, {
+  id: z.string().min(1, {
     message: "ID is required",
   }),
 });

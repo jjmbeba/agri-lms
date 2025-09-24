@@ -1,3 +1,5 @@
+"use client";
+
 import { type Preloaded, usePreloadedQuery } from "convex/react";
 import type { api } from "../../../../convex/_generated/api";
 import { CourseDetailsHeader } from "./course-details-header";

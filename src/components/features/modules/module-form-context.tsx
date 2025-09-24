@@ -7,8 +7,8 @@ import type {
   ModuleFormData,
 } from "./types";
 
-type ModuleWithContent = Doc<"module"> & {
-  content: Doc<"moduleContent">[];
+type ModuleWithContent = Doc<"draftModule"> & {
+  content: Doc<"draftModuleContent">[];
 };
 
 type ModuleFormContextType = {
@@ -19,8 +19,8 @@ type ModuleFormContextType = {
   setContent: (data: ContentItem[]) => void;
   clearForm: () => void;
   initializeForm: (
-    moduleData: Doc<"module"> & {
-      content: Doc<"moduleContent">[];
+    moduleData: Doc<"draftModule"> & {
+      content: Doc<"draftModuleContent">[];
     }
   ) => void;
   setEditMode: (moduleId: string | null) => void;

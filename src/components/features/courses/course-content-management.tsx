@@ -310,7 +310,7 @@ export function CourseContentManagement({
                       <div className="flex flex-wrap items-center gap-2">
                         {variant === "draft" && (
                           <EditModuleBtn
-                            moduleData={module as ModuleWithContent}
+                            moduleData={module as DraftModuleWithContent}
                             moduleId={module._id}
                             onSuccess={onRefresh}
                           />

@@ -79,7 +79,9 @@ export const createAuth = (
 // Feel free to edit, omit, etc.
 export const getCurrentUser = query({
   args: {},
-  handler: (ctx) => {
-    return authComponent.getAuthUser(ctx);
+  handler: async (ctx) => {
+    return await createAuth(ctx).api.getSession({
+      headers: await authComponent.getHeaders(ctx),
+    });
   },
 });

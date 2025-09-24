@@ -1,15 +1,15 @@
-export default function Layout({
+import { getSession } from "@/components/features/auth/actions";
+
+export default async function Layout({
   learner,
   admin,
 }: {
   learner: React.ReactNode;
   admin: React.ReactNode;
 }) {
-  // const data = await fetchQuery(api.departments.getDepartments, {});
+  const session = await getSession();
 
-  // const user = await fetchQuery(api.auth.getCurrentUser, {});
-
-  const role = "admin";
+  const role = session?.user.role ?? "learner";
 
   return role === "admin" ? admin : learner;
 }

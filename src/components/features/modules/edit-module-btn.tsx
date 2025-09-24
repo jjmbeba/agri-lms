@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Steps are fixed */
 "use client";
 
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { IconEdit } from "@tabler/icons-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,8 +43,8 @@ import type { ModuleFormData } from "./types";
 
 type EditModuleBtnProps = {
   moduleId: string;
-  moduleData: Doc<"module"> & {
-    content: Doc<"moduleContent">[];
+  moduleData: Doc<"draftModule"> & {
+    content: Doc<"draftModuleContent">[];
   };
   onSuccess?: () => void;
 };
@@ -92,8 +92,8 @@ const EditModuleContent = ({
   onSuccess,
 }: {
   moduleId: string;
-  moduleData: Doc<"module"> & {
-    content: Doc<"moduleContent">[];
+  moduleData: Doc<"draftModule"> & {
+    content: Doc<"draftModuleContent">[];
   };
   onSuccess?: () => void;
 }) => {
@@ -101,6 +101,12 @@ const EditModuleContent = ({
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
   const { initializeForm, clearForm } = useModuleFormContext();
+
+  // const { data: backupData } = useQuery(
+  //   convexQuery(api.modules.getDraftModuleById, {
+  //     id: moduleId as Id<"draftModule">,
+  //   })
+  // );
 
   // Use passed data or fetched data
   const currentModuleData = moduleData;
