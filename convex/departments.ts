@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { ROLES } from "./constants";
 
 export const getDepartments = query({
   args: {},
@@ -16,14 +17,13 @@ export const createDepartment = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
-    // const identity = await ctx.auth.getUserIdentity();
     const session = await authComponent.getAuthUser(ctx);
 
     if (!session) {
       throw new Error("Not authenticated");
     }
 
-    if (session.role !== "admin") {
+    if (session.role !== ROLES.ADMIN) {
       throw new Error("Unauthorized");
     }
 
@@ -79,7 +79,7 @@ export const editDepartment = mutation({
       throw new Error("Not authenticated");
     }
 
-    if (session.role !== "admin") {
+    if (session.role !== ROLES.ADMIN) {
       throw new Error("Unauthorized");
     }
 
@@ -101,7 +101,7 @@ export const deleteDepartment = mutation({
       throw new Error("Not authenticated");
     }
 
-    if (session.role !== "admin") {
+    if (session.role !== ROLES.ADMIN) {
       throw new Error("Unauthorized");
     }
 

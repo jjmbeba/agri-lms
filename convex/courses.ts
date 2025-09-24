@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { ROLES } from "./constants";
 
 export const createCourse = mutation({
   args: {
@@ -16,7 +17,7 @@ export const createCourse = mutation({
       throw new Error("Not authenticated");
     }
 
-    if (session.role !== "admin") {
+    if (session.role !== ROLES.ADMIN) {
       throw new Error("Unauthorized");
     }
 
@@ -96,7 +97,7 @@ export const deleteCourse = mutation({
       throw new Error("Not authenticated");
     }
 
-    if (session.role !== "admin") {
+    if (session.role !== ROLES.ADMIN) {
       throw new Error("Unauthorized");
     }
 
@@ -120,7 +121,7 @@ export const editCourse = mutation({
       throw new Error("Not authenticated");
     }
 
-    if (session.role !== "admin") {
+    if (session.role !== ROLES.ADMIN) {
       throw new Error("Unauthorized");
     }
 
