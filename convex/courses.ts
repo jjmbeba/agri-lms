@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { authComponent } from "./auth";
 
 export const createCourse = mutation({
   args: {
@@ -9,6 +10,16 @@ export const createCourse = mutation({
     departmentId: v.id("department"),
   },
   handler: async (ctx, args) => {
+    const session = await authComponent.getAuthUser(ctx);
+
+    if (!session) {
+      throw new Error("Not authenticated");
+    }
+
+    if (session.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
     return await ctx.db.insert("course", {
       title: args.title,
       description: args.description,
@@ -79,6 +90,16 @@ export const getCourse = query({
 export const deleteCourse = mutation({
   args: { id: v.id("course") },
   handler: async (ctx, args) => {
+    const session = await authComponent.getAuthUser(ctx);
+
+    if (!session) {
+      throw new Error("Not authenticated");
+    }
+
+    if (session.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.delete(args.id);
     return { success: true } as const;
   },
@@ -93,6 +114,16 @@ export const editCourse = mutation({
     departmentId: v.id("department"),
   },
   handler: async (ctx, args) => {
+    const session = await authComponent.getAuthUser(ctx);
+
+    if (!session) {
+      throw new Error("Not authenticated");
+    }
+
+    if (session.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.patch(args.id, {
       title: args.title,
       description: args.description,

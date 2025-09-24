@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { createCourseSchema } from "./schema";
@@ -53,7 +54,7 @@ const CourseForm = (props: CourseFormProps) => {
       form.reset();
     },
     onError: (error) => {
-      toast.error(error.message);
+      displayToastError(error);
     },
   });
   const { mutate: editCourse, isPending: isEditingCourse } = useMutation({
@@ -62,7 +63,7 @@ const CourseForm = (props: CourseFormProps) => {
       toast.success("Course updated successfully");
     },
     onError: (error) => {
-      toast.error(error.message);
+      displayToastError(error);
     },
   });
 
