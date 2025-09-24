@@ -29,6 +29,7 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import BasicModuleInfoForm from "./basic-info-form";
@@ -97,7 +98,7 @@ const CreateModuleBtn = ({
         toast.success("Draft module created successfully");
       },
       onError: (error) => {
-        toast.error(error.message);
+        displayToastError(error);
       },
     });
 

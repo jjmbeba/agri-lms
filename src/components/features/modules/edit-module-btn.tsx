@@ -29,6 +29,7 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import BasicModuleInfoForm from "./basic-info-form";
@@ -102,12 +103,6 @@ const EditModuleContent = ({
   const isMobile = useIsMobile();
   const { initializeForm, clearForm } = useModuleFormContext();
 
-  // const { data: backupData } = useQuery(
-  //   convexQuery(api.modules.getDraftModuleById, {
-  //     id: moduleId as Id<"draftModule">,
-  //   })
-  // );
-
   // Use passed data or fetched data
   const currentModuleData = moduleData;
 
@@ -121,7 +116,7 @@ const EditModuleContent = ({
         onSuccess?.();
       },
       onError: (error) => {
-        toast.error(error.message);
+        displayToastError(error);
       },
     });
 
@@ -166,15 +161,6 @@ const EditModuleContent = ({
       setIsOpen(true);
     }
   };
-
-  // if (isLoadingModule && !moduleData) {
-  //   return (
-  //     <Button disabled size="sm" variant="outline">
-  //       <IconEdit className="mr-2 h-4 w-4" />
-  //       Loading...
-  //     </Button>
-  //   );
-  // }
 
   return (
     <FormDialog

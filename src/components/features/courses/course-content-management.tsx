@@ -47,7 +47,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { capitalize, cn } from "@/lib/utils";
+import { capitalize, cn, displayToastError } from "@/lib/utils";
 
 type SortableItemContextValue = {
   attributes: DraggableAttributes;
@@ -180,6 +180,9 @@ export function CourseContentManagement({
   >(data as (DraftModuleWithContent | ModuleWithContent)[]);
   const { mutateAsync: updateDraftModulePositions } = useMutation({
     mutationFn: useConvexMutation(api.modules.updateDraftModulePositions),
+    onError: (error) => {
+      displayToastError(error);
+    },
   });
 
   useEffect(() => {
@@ -233,7 +236,7 @@ export function CourseContentManagement({
       onRefresh?.();
     },
     onError: (error) => {
-      toast.error(error.message);
+      displayToastError(error);
     },
   });
 
@@ -244,7 +247,7 @@ export function CourseContentManagement({
       onRefresh?.();
     },
     onError: (error) => {
-      toast.error(error.message);
+      displayToastError(error);
     },
   });
 

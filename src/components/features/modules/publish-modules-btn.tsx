@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
@@ -33,9 +34,8 @@ const PublishModulesBtn = ({
 }: PublishModulesBtnProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [changeLog, setChangeLog] = useState("");
-  const [isPublishing, setIsPublishing] = useState(false);
 
-  const { mutate: publishModules } = useMutation({
+  const { mutate: publishModules, isPending: isPublishing } = useMutation({
     mutationFn: useConvexMutation(api.modules.publishDraftModules),
     onSuccess: () => {
       toast.success("Successfully published version");
@@ -44,13 +44,11 @@ const PublishModulesBtn = ({
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error(error.message);
-      setIsPublishing(false);
+      displayToastError(error);
     },
   });
 
   const handlePublish = () => {
-    setIsPublishing(true);
     publishModules({
       courseId: courseId as Id<"course">,
       changeLog: changeLog.trim() || undefined,
