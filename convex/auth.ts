@@ -1,11 +1,13 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
+import { requireActionCtx } from "@convex-dev/better-auth/utils";
 import { betterAuth } from "better-auth";
 import { adminClient } from "better-auth/client/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import authSchema from "./betterAuth/schema";
+import { sendForgotPasswordEmail } from "./email";
 
 // biome-ignore lint/style/noNonNullAssertion: Corrects type
 const siteUrl = process.env.SITE_URL!;
@@ -48,13 +50,14 @@ export const createAuth = (
     },
     emailAndPassword: {
       enabled: true,
-      //   sendResetPassword: async ({ user, url }) => {
-      //     await sendForgotPasswordEmail({
-      //       to: user.name,
-      //       subject: "Reset your password",
-      //       resetPasswordLink: url,
-      //     });
-      //   },
+      sendResetPassword: async ({ user, url }) => {
+        await sendForgotPasswordEmail({
+          ctx: requireActionCtx(ctx),
+          to: user.name,
+          subject: "Reset your password",
+          resetPasswordLink: url,
+        });
+      },
     },
     plugins: [
       // The Convex plugin is required for Convex compatibility

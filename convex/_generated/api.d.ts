@@ -16,6 +16,8 @@ import type * as betterAuth_auth from "../betterAuth/auth.js";
 import type * as constants from "../constants.js";
 import type * as courses from "../courses.js";
 import type * as departments from "../departments.js";
+import type * as email from "../email.js";
+import type * as emails_ForgotPasswordEmail from "../emails/ForgotPasswordEmail.js";
 import type * as http from "../http.js";
 import type * as modules from "../modules.js";
 
@@ -42,6 +44,8 @@ declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   courses: typeof courses;
   departments: typeof departments;
+  email: typeof email;
+  "emails/ForgotPasswordEmail": typeof emails_ForgotPasswordEmail;
   http: typeof http;
   modules: typeof modules;
 }>;
@@ -986,6 +990,135 @@ export declare const components: {
           onUpdateHandle?: string;
         },
         any
+      >;
+    };
+  };
+  resend: {
+    lib: {
+      cancelEmail: FunctionReference<
+        "mutation",
+        "internal",
+        { emailId: string },
+        null
+      >;
+      cleanupAbandonedEmails: FunctionReference<
+        "mutation",
+        "internal",
+        { olderThan?: number },
+        null
+      >;
+      cleanupOldEmails: FunctionReference<
+        "mutation",
+        "internal",
+        { olderThan?: number },
+        null
+      >;
+      createManualEmail: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          from: string;
+          headers?: Array<{ name: string; value: string }>;
+          replyTo?: Array<string>;
+          subject: string;
+          to: string;
+        },
+        string
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { emailId: string },
+        {
+          complained: boolean;
+          createdAt: number;
+          errorMessage?: string;
+          finalizedAt: number;
+          from: string;
+          headers?: Array<{ name: string; value: string }>;
+          html?: string;
+          opened: boolean;
+          replyTo: Array<string>;
+          resendId?: string;
+          segment: number;
+          status:
+            | "waiting"
+            | "queued"
+            | "cancelled"
+            | "sent"
+            | "delivered"
+            | "delivery_delayed"
+            | "bounced"
+            | "failed";
+          subject: string;
+          text?: string;
+          to: string;
+        } | null
+      >;
+      getStatus: FunctionReference<
+        "query",
+        "internal",
+        { emailId: string },
+        {
+          complained: boolean;
+          errorMessage: string | null;
+          opened: boolean;
+          status:
+            | "waiting"
+            | "queued"
+            | "cancelled"
+            | "sent"
+            | "delivered"
+            | "delivery_delayed"
+            | "bounced"
+            | "failed";
+        } | null
+      >;
+      handleEmailEvent: FunctionReference<
+        "mutation",
+        "internal",
+        { event: any },
+        null
+      >;
+      sendEmail: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          from: string;
+          headers?: Array<{ name: string; value: string }>;
+          html?: string;
+          options: {
+            apiKey: string;
+            initialBackoffMs: number;
+            onEmailEvent?: { fnHandle: string };
+            retryAttempts: number;
+            testMode: boolean;
+          };
+          replyTo?: Array<string>;
+          subject: string;
+          text?: string;
+          to: string;
+        },
+        string
+      >;
+      updateManualEmail: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          emailId: string;
+          errorMessage?: string;
+          resendId?: string;
+          status:
+            | "waiting"
+            | "queued"
+            | "cancelled"
+            | "sent"
+            | "delivered"
+            | "delivery_delayed"
+            | "bounced"
+            | "failed";
+        },
+        null
       >;
     };
   };
