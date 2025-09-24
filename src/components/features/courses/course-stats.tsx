@@ -13,29 +13,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { RouterOutputs } from "@/trpc/init";
-
-// type Course = {
-//   id: number;
-//   title: string;
-//   instructor: string;
-//   category: string;
-//   status: string;
-//   enrolledStudents: number;
-//   completionRate: number;
-//   duration: string;
-//   lastUpdated: string;
-//   thumbnail: string;
-//   description: string;
-// };
-
-type CourseWithCategory = RouterOutputs["courses"]["getCourses"][number];
 
 type CourseStatsProps = {
-  coursesWithCategory: CourseWithCategory[];
+  coursesCount: number;
 };
 
-export function CourseStats({ coursesWithCategory }: CourseStatsProps) {
+export function CourseStats({ coursesCount }: CourseStatsProps) {
   // const totalStudents = coursesWithCategory.reduce(
   //   (sum, courseWithCategory) => sum + courseWithCategory.course.enrolledStudents,
   //   0
@@ -58,7 +41,7 @@ export function CourseStats({ coursesWithCategory }: CourseStatsProps) {
             Total Courses
           </CardDescription>
           <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">
-            {coursesWithCategory?.length}
+            {coursesCount}
           </CardTitle>
         </CardHeader>
       </Card>

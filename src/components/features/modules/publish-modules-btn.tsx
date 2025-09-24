@@ -1,6 +1,8 @@
 "use client";
 
+import { useConvexMutation } from "@convex-dev/react-query";
 import { IconRocket } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,7 +17,9 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/trpc/client";
+import { displayToastError } from "@/lib/utils";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 
 type PublishModulesBtnProps = {
   courseId: string;
@@ -30,26 +34,23 @@ const PublishModulesBtn = ({
 }: PublishModulesBtnProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [changeLog, setChangeLog] = useState("");
-  const [isPublishing, setIsPublishing] = useState(false);
 
-  const { mutate: publishModules } =
-    trpc.modules.publishDraftModules.useMutation({
-      onSuccess: (data) => {
-        toast.success(`Successfully published version ${data.versionNumber}`);
-        setIsOpen(false);
-        setChangeLog("");
-        onSuccess?.();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-        setIsPublishing(false);
-      },
-    });
+  const { mutate: publishModules, isPending: isPublishing } = useMutation({
+    mutationFn: useConvexMutation(api.modules.publishDraftModules),
+    onSuccess: () => {
+      toast.success("Successfully published version");
+      setIsOpen(false);
+      setChangeLog("");
+      onSuccess?.();
+    },
+    onError: (error) => {
+      displayToastError(error);
+    },
+  });
 
   const handlePublish = () => {
-    setIsPublishing(true);
     publishModules({
-      courseId,
+      courseId: courseId as Id<"course">,
       changeLog: changeLog.trim() || undefined,
     });
   };

@@ -1,6 +1,8 @@
 "use client";
 
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { type Tag, TagInput } from "emblor";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -18,9 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/trpc/client";
+import { displayToastError } from "@/lib/utils";
+import { api } from "../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { createCourseSchema } from "./schema";
-import type { CourseWithCategory } from "./types";
 
 type CreateCourseFormProps = {
   type: "create";
@@ -28,7 +31,7 @@ type CreateCourseFormProps = {
 
 type EditCourseFormProps = {
   type: "edit";
-  courseDetails: CourseWithCategory;
+  courseDetails: Doc<"course">;
   id: string;
 };
 
@@ -40,39 +43,41 @@ const CourseForm = (props: CourseFormProps) => {
   const action = type === "create" ? "Create" : "Update";
 
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
-  const { data: departments, isLoading: isLoadingDepartments } =
-    trpc.departments.getAll.useQuery();
-  const { mutate: createCourse, isPending: isCreatingCourse } =
-    trpc.courses.create.useMutation({
-      onSuccess: () => {
-        toast.success("Course created successfully");
-        form.reset();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
-  const { mutate: editCourse, isPending: isEditingCourse } =
-    trpc.courses.editCourse.useMutation({
-      onSuccess: () => {
-        toast.success("Course updated successfully");
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
+  const { data: departments, isLoading: isLoadingDepartments } = useQuery(
+    convexQuery(api.departments.getDepartments, {})
+  );
+
+  const { mutate: createCourse, isPending: isCreatingCourse } = useMutation({
+    mutationFn: useConvexMutation(api.courses.createCourse),
+    onSuccess: () => {
+      toast.success("Course created successfully");
+      form.reset();
+    },
+    onError: (error) => {
+      displayToastError(error);
+    },
+  });
+  const { mutate: editCourse, isPending: isEditingCourse } = useMutation({
+    mutationFn: useConvexMutation(api.courses.editCourse),
+    onSuccess: () => {
+      toast.success("Course updated successfully");
+    },
+    onError: (error) => {
+      displayToastError(error);
+    },
+  });
 
   const form = useForm({
     defaultValues:
       type === "edit" && "courseDetails" in rest
         ? {
-            title: rest.courseDetails.course.title,
-            description: rest.courseDetails.course.description,
-            tags: rest.courseDetails.course.tags.split(",").map((tag) => ({
+            title: rest.courseDetails.title,
+            description: rest.courseDetails.description,
+            tags: rest.courseDetails.tags.map((tag) => ({
               id: tag,
               text: tag,
             })),
-            departmentId: rest.courseDetails.course.departmentId,
+            departmentId: rest.courseDetails.departmentId,
           }
         : {
             title: "",
@@ -89,16 +94,16 @@ const CourseForm = (props: CourseFormProps) => {
         createCourse({
           title: value.title,
           description: value.description,
-          tags: value.tags,
-          departmentId: value.departmentId,
+          tags: value.tags.map((tag) => tag.text),
+          departmentId: value.departmentId as Id<"department">,
         });
       } else if (type === "edit" && "id" in rest) {
         editCourse({
-          id: rest.id,
+          id: rest.id as Id<"course">,
           title: value.title,
           description: value.description,
-          tags: value.tags,
-          departmentId: value.departmentId,
+          tags: value.tags.map((tag) => tag.text),
+          departmentId: value.departmentId as Id<"department">,
         });
       }
     },
@@ -195,8 +200,8 @@ const CourseForm = (props: CourseFormProps) => {
                           departments.length > 0 &&
                           departments.map((department) => (
                             <SelectItem
-                              key={department.id}
-                              value={department.id.toString()}
+                              key={department._id}
+                              value={department._id.toString()}
                             >
                               {department.name}
                             </SelectItem>

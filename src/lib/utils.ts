@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -19,4 +20,17 @@ export function generateSlug(title: string) {
     .replace(/\s+/g, "-") // Replace spaces with hyphens
     .slice(0, MAX_SLUG_LENGTH); // Limit to 50 characters
   return slug;
+}
+
+export function displayToastError(error: Error) {
+  if (error.message.includes("Not authenticated")) {
+    toast.error("Not authenticated");
+    return;
+  }
+  if (error.message.includes("Unauthorized")) {
+    toast.error("You are not authorized to perform this action.");
+    return;
+  }
+
+  toast.error(error.message);
 }

@@ -1,7 +1,9 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Steps are fixed */
 "use client";
 
+import { useConvexMutation } from "@convex-dev/react-query";
 import { IconEdit } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,9 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { trpc } from "@/trpc/client";
+import { displayToastError } from "@/lib/utils";
+import { api } from "../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import BasicModuleInfoForm from "./basic-info-form";
 import { moduleSteps, moduleStepTitles } from "./constants";
 import ContentForm from "./content-form";
@@ -38,28 +42,11 @@ import {
 import ReviewForm from "./review-form";
 import type { ModuleFormData } from "./types";
 
-type ModuleWithContent = {
-  id: string;
-  title: string;
-  description: string;
-  position: number;
-  content: Array<{
-    id: string;
-    draftModuleId?: string;
-    moduleId?: string;
-    type: string;
-    title: string;
-    content: string;
-    metadata: unknown;
-    orderIndex: number;
-    createdAt: Date;
-    updatedAt: Date;
-  }>;
-};
-
 type EditModuleBtnProps = {
   moduleId: string;
-  moduleData?: ModuleWithContent;
+  moduleData: Doc<"draftModule"> & {
+    content: Doc<"draftModuleContent">[];
+  };
   onSuccess?: () => void;
 };
 
@@ -106,7 +93,9 @@ const EditModuleContent = ({
   onSuccess,
 }: {
   moduleId: string;
-  moduleData?: ModuleWithContent;
+  moduleData: Doc<"draftModule"> & {
+    content: Doc<"draftModuleContent">[];
+  };
   onSuccess?: () => void;
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -114,17 +103,12 @@ const EditModuleContent = ({
   const isMobile = useIsMobile();
   const { initializeForm, clearForm } = useModuleFormContext();
 
-  // Fallback to fetch module data if not provided
-  const { data: fetchedModuleData, isLoading: isLoadingModule } =
-    trpc.modules.getDraftModuleById.useQuery(moduleId, {
-      enabled: isOpen && !moduleData,
-    });
-
   // Use passed data or fetched data
-  const currentModuleData = moduleData || fetchedModuleData;
+  const currentModuleData = moduleData;
 
   const { mutate: updateDraftModule, isPending: isUpdatingModule } =
-    trpc.modules.updateDraftModule.useMutation({
+    useMutation({
+      mutationFn: useConvexMutation(api.modules.updateDraftModule),
       onSuccess: () => {
         clearForm();
         setIsOpen(false);
@@ -132,7 +116,7 @@ const EditModuleContent = ({
         onSuccess?.();
       },
       onError: (error) => {
-        toast.error(error.message);
+        displayToastError(error);
       },
     });
 
@@ -154,7 +138,7 @@ const EditModuleContent = ({
     }
 
     updateDraftModule({
-      moduleId,
+      moduleId: moduleId as Id<"draftModule">,
       basicInfo: values.basicInfo,
       content: { content: values.content },
     });
@@ -170,22 +154,13 @@ const EditModuleContent = ({
   const handleEditClick = () => {
     if (
       currentModuleData &&
-      "id" in currentModuleData &&
+      "_id" in currentModuleData &&
       "title" in currentModuleData
     ) {
-      initializeForm(currentModuleData as ModuleWithContent);
+      initializeForm(currentModuleData);
       setIsOpen(true);
     }
   };
-
-  if (isLoadingModule && !moduleData) {
-    return (
-      <Button disabled size="sm" variant="outline">
-        <IconEdit className="mr-2 h-4 w-4" />
-        Loading...
-      </Button>
-    );
-  }
 
   return (
     <FormDialog

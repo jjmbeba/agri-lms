@@ -1,15 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import DeleteDepartmentButton from "./delete-department-btn";
 import EditDepartmentButton from "./edit-department-btn";
-import type { Department } from "./types";
 
 type Props = {
-  department: Department & { courseCount: number };
+  department: Doc<"department"> & { courseCount: number };
 };
 
 const DepartmentCard = ({ department }: Props) => {
   return (
-    <Card className="transition-shadow hover:shadow-md" key={department.id}>
+    <Card className="transition-shadow hover:shadow-md" key={department._id}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -39,7 +39,7 @@ const DepartmentCard = ({ department }: Props) => {
 
           <div className="flex items-center justify-between pt-2">
             <p className="text-muted-foreground text-xs">
-              Updated {new Date(department.updatedAt).toLocaleDateString()}
+              Created {new Date(department._creationTime).toLocaleDateString()}
             </p>
             <div className="flex gap-2">
               {/* <Button size="sm" variant="outline">
@@ -47,9 +47,9 @@ const DepartmentCard = ({ department }: Props) => {
                           </Button> */}
               <EditDepartmentButton
                 departmentDetails={department}
-                id={department.id}
+                id={department._id}
               />
-              <DeleteDepartmentButton id={department.id} />
+              <DeleteDepartmentButton id={department._id} />
             </div>
           </div>
         </div>

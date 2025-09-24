@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signUp } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { signupSchema } from "./schema";
 
@@ -32,7 +32,7 @@ export function SignupForm({
       onDynamic: signupSchema,
     },
     onSubmit: async ({ value }) => {
-      await signUp.email(
+      await authClient.signUp.email(
         {
           email: value.email,
           name: value.name,

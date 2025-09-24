@@ -1,15 +1,17 @@
 import { IconBook } from "@tabler/icons-react";
+import { preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 import { CourseManager } from "@/components/features/courses/course-manager";
 import CreateCourseButton from "@/components/features/courses/create-course-btn";
-import { trpc } from "@/trpc/server";
+import { api } from "../../../../../convex/_generated/api";
 
 export const metadata: Metadata = {
   title: "Courses",
 };
 
 const CoursesPage = async () => {
-  const courses = await trpc.courses.getCourses();
+  const preloadedCourses = await preloadQuery(api.courses.getCourses, {});
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
@@ -35,7 +37,7 @@ const CoursesPage = async () => {
           </div>
 
           {/* Course Management Components */}
-          <CourseManager coursesWithCategory={courses} />
+          <CourseManager preloadedCourses={preloadedCourses} />
         </div>
       </div>
     </div>

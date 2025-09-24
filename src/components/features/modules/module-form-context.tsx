@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import type {
   BasicInfoData,
   ContentItem,
@@ -6,25 +7,8 @@ import type {
   ModuleFormData,
 } from "./types";
 
-type DatabaseContentItem = {
-  id: string;
-  draftModuleId?: string;
-  moduleId?: string;
-  type: string;
-  title: string;
-  content: string;
-  metadata: unknown;
-  orderIndex: number;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type ModuleWithContent = {
-  id: string;
-  title: string;
-  description: string;
-  position: number;
-  content: DatabaseContentItem[];
+type ModuleWithContent = Doc<"draftModule"> & {
+  content: Doc<"draftModuleContent">[];
 };
 
 type ModuleFormContextType = {
@@ -34,7 +18,11 @@ type ModuleFormContextType = {
   setBasicInfo: (data: BasicInfoData) => void;
   setContent: (data: ContentItem[]) => void;
   clearForm: () => void;
-  initializeForm: (moduleData: ModuleWithContent) => void;
+  initializeForm: (
+    moduleData: Doc<"draftModule"> & {
+      content: Doc<"draftModuleContent">[];
+    }
+  ) => void;
   setEditMode: (moduleId: string | null) => void;
 };
 
@@ -93,9 +81,6 @@ export const ModuleFormProvider = ({ children }: ModuleFormProviderProps) => {
       type: item.type as ContentType,
       content: item.content,
       title: item.title,
-      metadata: item.metadata
-        ? JSON.parse(JSON.stringify(item.metadata))
-        : undefined,
     }));
 
     setFormData({
@@ -106,7 +91,7 @@ export const ModuleFormProvider = ({ children }: ModuleFormProviderProps) => {
       content: contentItems,
     });
     setIsEditMode(true);
-    setEditModuleId(moduleData.id);
+    setEditModuleId(moduleData._id);
   };
 
   const setEditMode = (moduleId: string | null) => {

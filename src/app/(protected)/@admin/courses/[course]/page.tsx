@@ -1,10 +1,11 @@
+import { fetchQuery, preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CourseContentTabs from "@/components/features/courses/course-content-tabs";
-import { CourseDetailsHeader } from "@/components/features/courses/course-details-header";
-import { CourseDetailsStats } from "@/components/features/courses/course-details-stats";
+import CourseDetails from "@/components/features/courses/course-details";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { trpc } from "@/trpc/server";
+import { api } from "../../../../../../convex/_generated/api";
+import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 type CourseDetailsPageProps = {
   params: {
@@ -19,7 +20,9 @@ export async function generateMetadata({
   const { course } = await params;
 
   // fetch data
-  const courseData = await trpc.courses.getCourse(course);
+  const courseData = await fetchQuery(api.courses.getCourse, {
+    id: course as Id<"course">,
+  });
 
   return {
     title: courseData?.course.title,
@@ -28,18 +31,17 @@ export async function generateMetadata({
 
 const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
   const { course: courseId } = await params;
-  const course = await trpc.courses.getCourse(courseId);
+  const preloadedCourse = await preloadQuery(api.courses.getCourse, {
+    id: courseId as Id<"course">,
+  });
 
-  if (!course) {
+  if (!preloadedCourse) {
     notFound();
   }
 
   return (
     <div className="space-y-6 p-6">
-      <CourseDetailsHeader course={course} />
-
-      <CourseDetailsStats course={course} />
-
+      <CourseDetails preloadedCourse={preloadedCourse} />
       <Tabs className="space-y-6" defaultValue="content">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="content">Content</TabsTrigger>

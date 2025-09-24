@@ -22,11 +22,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut, useSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 const UserButton = () => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
 
   const initials = useMemo(() => {
     return session?.user.name
@@ -97,7 +97,7 @@ const UserButton = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() =>
-            signOut({
+            authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
                   router.push("/login"); // redirect to login page

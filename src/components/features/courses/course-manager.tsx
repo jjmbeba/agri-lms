@@ -1,32 +1,21 @@
 "use client";
 
+import { type Preloaded, usePreloadedQuery } from "convex/react";
 import { useCallback, useState } from "react";
+import type { api } from "../../../../convex/_generated/api";
 import { CourseFilters } from "./course-filters";
 import { CourseGrid } from "./course-grid";
 import { CourseStats } from "./course-stats";
-import type { CourseWithCategory } from "./types";
-
-// type Course = {
-//   id: number;
-//   title: string;
-//   instructor: string;
-//   category: string;
-//   status: string;
-//   enrolledStudents: number;
-//   completionRate: number;
-//   duration: string;
-//   lastUpdated: string;
-//   thumbnail: string;
-//   description: string;
-// };
 
 type CourseManagerProps = {
-  coursesWithCategory: CourseWithCategory[];
+  preloadedCourses: Preloaded<typeof api.courses.getCourses>;
 };
 
-export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
+export function CourseManager({ preloadedCourses }: CourseManagerProps) {
+  const coursesWithCategory = usePreloadedQuery(preloadedCourses);
+
   const [filteredCourses, setFilteredCourses] =
-    useState<CourseWithCategory[]>(coursesWithCategory);
+    useState<typeof coursesWithCategory>(coursesWithCategory);
 
   const handleFiltersChange = useCallback(
     (filters: {
@@ -62,8 +51,8 @@ export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
           //   return b.course.completionRate - a.course.completionRate;
           case "updated":
             return (
-              new Date(b.course.updatedAt).getTime() -
-              new Date(a.course.updatedAt).getTime()
+              new Date(b.course._creationTime).getTime() -
+              new Date(a.course._creationTime).getTime()
             );
           default:
             return 0;
@@ -77,14 +66,14 @@ export function CourseManager({ coursesWithCategory }: CourseManagerProps) {
 
   return (
     <>
-      <CourseStats coursesWithCategory={coursesWithCategory} />
+      <CourseStats coursesCount={coursesWithCategory.length} />
 
       <div className="px-4 lg:px-6">
         <CourseFilters onFiltersChange={handleFiltersChange} />
       </div>
 
       <div className="px-4 lg:px-6">
-        <CourseGrid courses={filteredCourses} />
+        <CourseGrid coursesWithDepartment={filteredCourses} />
       </div>
     </>
   );

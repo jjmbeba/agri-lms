@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import { TRPCProvider } from "@/trpc/client";
-import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Footer from "@/components/features/common/footer";
 import Navbar from "@/components/features/common/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { ConvexClientProvider } from "@/providers/convex-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import "./globals.css";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} antialiased`}>
-        <TRPCProvider>
+        <ConvexClientProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -41,7 +41,7 @@ export default function RootLayout({
             <Footer />
             <Toaster richColors />
           </ThemeProvider>
-        </TRPCProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

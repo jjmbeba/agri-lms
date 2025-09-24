@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/components/features/auth/actions";
 
 export default async function Layout({
   learner,
@@ -8,9 +7,7 @@ export default async function Layout({
   learner: React.ReactNode;
   admin: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   const role = session?.user.role ?? "learner";
 

@@ -26,11 +26,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { signOut, useSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { data: session, isPending: isPendingSession } = useSession();
+  const { data: session, isPending: isPendingSession } =
+    authClient.useSession();
   const router = useRouter();
 
   const user = session?.user;
@@ -120,7 +121,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() =>
-                signOut({
+                authClient.signOut({
                   fetchOptions: {
                     onSuccess: () => {
                       router.push("/login");

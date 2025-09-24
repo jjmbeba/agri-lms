@@ -1,6 +1,8 @@
 "use client";
 
+import { convexQuery } from "@convex-dev/react-query";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { trpc } from "@/trpc/client";
+import { api } from "../../../../convex/_generated/api";
 
 const statuses = ["All Status", "Active", "Inactive", "Draft", "Archived"];
 
@@ -31,8 +33,9 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
     useState("All Departments");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [sortBy, setSortBy] = useState("title");
-  const { data: departments, isLoading: isLoadingDepartments } =
-    trpc.departments.getAll.useQuery();
+  const { data: departments, isLoading: isLoadingDepartments } = useQuery(
+    convexQuery(api.departments.getDepartments, {})
+  );
 
   // Update filters when any value changes
   useEffect(() => {
@@ -94,7 +97,7 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
                     All Departments
                   </SelectItem>
                   {departments?.map((department) => (
-                    <SelectItem key={department.id} value={department.name}>
+                    <SelectItem key={department._id} value={department.name}>
                       {department.name}
                     </SelectItem>
                   ))}

@@ -2,11 +2,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import CourseHeaderActions from "./course-header-actions";
-import type { CourseWithCategory } from "./types";
 
 type CourseDetailsHeaderProps = {
-  course: CourseWithCategory;
+  course: { course: Doc<"course">; department: Doc<"department"> | null };
 };
 
 export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
@@ -46,21 +46,15 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
               <div className="flex items-center gap-2">
                 <span className="font-medium">Created:</span>
                 <span>
-                  {new Date(course.course.createdAt).toLocaleDateString()}
+                  {new Date(course.course._creationTime).toLocaleDateString()}
                 </span>
               </div>
               <Separator className="h-4" orientation="vertical" />
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Last Updated:</span>
-                <span>
-                  {new Date(course.course.updatedAt).toLocaleDateString()}
-                </span>
-              </div>
             </div>
 
             {course.course.tags && (
               <div className="flex flex-wrap gap-2">
-                {course.course.tags.split(",").map((tag, index) => (
+                {course.course.tags.map((tag, index) => (
                   <Badge
                     className="text-xs"
                     key={`tag-${index}-${tag.trim()}`}
@@ -72,7 +66,7 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
               </div>
             )}
           </div>
-          <CourseHeaderActions courseDetails={course} />
+          <CourseHeaderActions courseDetails={course.course} />
         </div>
       </CardContent>
     </Card>

@@ -1,7 +1,9 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Steps are fixed */
 "use client";
 
+import { useConvexMutation } from "@convex-dev/react-query";
 import { IconPlus } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,9 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { trpc } from "@/trpc/client";
+import { displayToastError } from "@/lib/utils";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import BasicModuleInfoForm from "./basic-info-form";
 import { moduleSteps, moduleStepTitles } from "./constants";
 import ContentForm from "./content-form";
@@ -87,13 +91,14 @@ const CreateModuleBtn = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
   const { mutate: createDraftModule, isPending: isCreatingDraftModule } =
-    trpc.modules.createDraftModule.useMutation({
+    useMutation({
+      mutationFn: useConvexMutation(api.modules.createDraftModule),
       onSuccess: () => {
         setIsOpen(false);
         toast.success("Draft module created successfully");
       },
       onError: (error) => {
-        toast.error(error.message);
+        displayToastError(error);
       },
     });
 
@@ -117,7 +122,7 @@ const CreateModuleBtn = ({
     createDraftModule({
       basicInfo: values.basicInfo,
       content: { content: values.content },
-      courseId,
+      courseId: courseId as Id<"course">,
     });
   };
 
