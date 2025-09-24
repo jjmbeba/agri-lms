@@ -1,18 +1,15 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-
-export default async function Layout({
+export default function Layout({
   learner,
   admin,
 }: {
   learner: React.ReactNode;
   admin: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  // const data = await fetchQuery(api.departments.getDepartments, {});
 
-  const role = session?.user.role ?? "learner";
+  // const user = await fetchQuery(api.auth.getCurrentUser, {});
+
+  const role = "admin";
 
   return role === "admin" ? admin : learner;
 }

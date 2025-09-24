@@ -1,15 +1,26 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
+import { adminClient } from "better-auth/client/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
+import { query } from "./_generated/server";
+import authSchema from "./betterAuth/schema";
 
 // biome-ignore lint/style/noNonNullAssertion: Corrects type
 const siteUrl = process.env.SITE_URL!;
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
-export const authComponent = createClient<DataModel>(components.betterAuth);
+export const authComponent = createClient<DataModel, typeof authSchema>(
+  components.betterAuth,
+  {
+    local: {
+      schema: authSchema,
+    },
+    // verbose: true,
+  }
+);
 const SESSION_MAX_AGE_IN_MINUTES = 5; // 5 minutes
 
 export const createAuth = (
@@ -48,6 +59,7 @@ export const createAuth = (
     plugins: [
       // The Convex plugin is required for Convex compatibility
       convex(),
+      adminClient(),
     ],
     session: {
       cookieCache: {
@@ -65,9 +77,9 @@ export const createAuth = (
 
 // Example function for getting the current user
 // Feel free to edit, omit, etc.
-// export const getCurrentUser = query({
-//   args: {},
-//   handler: async (ctx) => {
-//     return authComponent.getAuthUser(ctx);
-//   },
-// });
+export const getCurrentUser = query({
+  args: {},
+  handler: (ctx) => {
+    return authComponent.getAuthUser(ctx);
+  },
+});

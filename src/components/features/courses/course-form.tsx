@@ -1,8 +1,8 @@
 "use client";
 
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { type Tag, TagInput } from "emblor";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/trpc/client";
 import { api } from "../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { createCourseSchema } from "./schema";
@@ -43,8 +42,10 @@ const CourseForm = (props: CourseFormProps) => {
   const action = type === "create" ? "Create" : "Update";
 
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
-  const { data: departments, isLoading: isLoadingDepartments } =
-    trpc.departments.getAll.useQuery();
+  const { data: departments, isLoading: isLoadingDepartments } = useQuery(
+    convexQuery(api.departments.getDepartments, {})
+  );
+
   const { mutate: createCourse, isPending: isCreatingCourse } = useMutation({
     mutationFn: useConvexMutation(api.courses.createCourse),
     onSuccess: () => {
@@ -198,8 +199,8 @@ const CourseForm = (props: CourseFormProps) => {
                           departments.length > 0 &&
                           departments.map((department) => (
                             <SelectItem
-                              key={department.id}
-                              value={department.id.toString()}
+                              key={department._id}
+                              value={department._id.toString()}
                             >
                               {department.name}
                             </SelectItem>

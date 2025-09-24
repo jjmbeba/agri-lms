@@ -48,7 +48,6 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize, cn } from "@/lib/utils";
-import { trpc } from "@/trpc/client";
 
 type SortableItemContextValue = {
   attributes: DraggableAttributes;
@@ -114,9 +113,12 @@ const DragHandle = (props: { "aria-label": string }) => {
   );
 };
 
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import CreateModuleBtn from "../modules/create-module-btn";
 import EditModuleBtn from "../modules/edit-module-btn";
-import type { DraftModule, Module } from "./types";
 
 const getLessonIcon = (type: string) => {
   switch (type) {
@@ -153,8 +155,15 @@ const getLessonTypeColor = (type: string) => {
   }
 };
 
+type DraftModuleWithContent = Doc<"draftModule"> & {
+  content: Doc<"draftModuleContent">[];
+};
+type ModuleWithContent = Doc<"module"> & {
+  content: Doc<"moduleContent">[];
+};
+
 type CourseContentManagementProps = {
-  data: DraftModule[] | Module[];
+  data: DraftModuleWithContent[] | ModuleWithContent[];
   courseId: string;
   onRefresh?: () => void;
   variant: "published" | "draft";
@@ -166,12 +175,15 @@ export function CourseContentManagement({
   onRefresh,
   variant,
 }: CourseContentManagementProps) {
-  const [modules, setModules] = useState<(DraftModule | Module)[]>(data);
-  const { mutateAsync: updateDraftModulePositions } =
-    trpc.modules.updateDraftModulePositions.useMutation();
+  const [modules, setModules] = useState<
+    (DraftModuleWithContent | ModuleWithContent)[]
+  >(data as (DraftModuleWithContent | ModuleWithContent)[]);
+  const { mutateAsync: updateDraftModulePositions } = useMutation({
+    mutationFn: useConvexMutation(api.modules.updateDraftModulePositions),
+  });
 
   useEffect(() => {
-    setModules(data);
+    setModules(data as (DraftModuleWithContent | ModuleWithContent)[]);
   }, [data]);
 
   const sensors = useSensors(
@@ -180,7 +192,7 @@ export function CourseContentManagement({
     })
   );
 
-  const moduleIds = useMemo(() => modules.map((m) => m.id), [modules]);
+  const moduleIds = useMemo(() => modules.map((m) => m._id), [modules]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -188,8 +200,8 @@ export function CourseContentManagement({
       return;
     }
 
-    const oldIndex = modules.findIndex((m) => m.id === active.id);
-    const newIndex = modules.findIndex((m) => m.id === over.id);
+    const oldIndex = modules.findIndex((m) => m._id === active.id);
+    const newIndex = modules.findIndex((m) => m._id === over.id);
     if (oldIndex === -1 || newIndex === -1) {
       return;
     }
@@ -199,8 +211,11 @@ export function CourseContentManagement({
     setModules(next);
 
     // Persist order for draft modules (by courseId)
-    const payload = next.map((m, idx) => ({ id: m.id, position: idx + 1 }));
-    updateDraftModulePositions({ courseId, items: payload })
+    const payload = next.map((m, idx) => ({ id: m._id, position: idx + 1 }));
+    updateDraftModulePositions({
+      courseId: courseId as Id<"course">,
+      items: payload as { id: Id<"draftModule">; position: number }[],
+    })
       .then(() => {
         onRefresh?.();
       })
@@ -211,27 +226,27 @@ export function CourseContentManagement({
         );
       });
   };
-  const { mutate: deleteDraftModule } =
-    trpc.modules.deleteDraftModule.useMutation({
-      onSuccess: () => {
-        toast.success("Module deleted successfully");
-        onRefresh?.();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
+  const { mutate: deleteDraftModule } = useMutation({
+    mutationFn: useConvexMutation(api.modules.deleteDraftModule),
+    onSuccess: () => {
+      toast.success("Module deleted successfully");
+      onRefresh?.();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
-  const { mutate: deleteDraftModuleContent } =
-    trpc.modules.deleteDraftModuleContent.useMutation({
-      onSuccess: () => {
-        toast.success("Content item deleted successfully");
-        onRefresh?.();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    });
+  const { mutate: deleteDraftModuleContent } = useMutation({
+    mutationFn: useConvexMutation(api.modules.deleteDraftModuleContent),
+    onSuccess: () => {
+      toast.success("Content item deleted successfully");
+      onRefresh?.();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   return (
     <Card>
@@ -263,7 +278,7 @@ export function CourseContentManagement({
             <div className="space-y-3 sm:space-y-4">
               {modules.map((module, moduleIndex) => {
                 const moduleContent = (
-                  <div className="space-y-2" key={module.id}>
+                  <div className="space-y-2" key={module._id}>
                     {/* Module Header */}
                     <div className="flex flex-col items-start justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:p-4">
                       <div className="flex items-center gap-3 sm:gap-4">
@@ -295,8 +310,8 @@ export function CourseContentManagement({
                       <div className="flex flex-wrap items-center gap-2">
                         {variant === "draft" && (
                           <EditModuleBtn
-                            moduleData={module}
-                            moduleId={module.id}
+                            moduleData={module as ModuleWithContent}
+                            moduleId={module._id}
                             onSuccess={onRefresh}
                           />
                         )}
@@ -331,7 +346,11 @@ export function CourseContentManagement({
                                       variant: "destructive",
                                     })
                                   )}
-                                  onClick={() => deleteDraftModule(module.id)}
+                                  onClick={() =>
+                                    deleteDraftModule({
+                                      id: module._id as Id<"draftModule">,
+                                    })
+                                  }
                                 >
                                   Delete Module
                                 </AlertDialogAction>
@@ -348,7 +367,7 @@ export function CourseContentManagement({
                         {module.content.map((contentItem) => (
                           <div
                             className="flex w-full flex-col items-start justify-between gap-2 rounded-md border-muted border-l-2 bg-muted/30 p-3 sm:flex-row sm:items-center"
-                            key={contentItem.id}
+                            key={contentItem._id}
                           >
                             <div className="flex min-w-0 flex-1 items-center gap-2">
                               {getLessonIcon(contentItem.type)}
@@ -417,9 +436,9 @@ export function CourseContentManagement({
                                           );
                                           return;
                                         }
-                                        deleteDraftModuleContent(
-                                          contentItem.id
-                                        );
+                                        deleteDraftModuleContent({
+                                          id: contentItem._id as Id<"draftModuleContent">,
+                                        });
                                       }}
                                     >
                                       Delete Content
@@ -440,7 +459,7 @@ export function CourseContentManagement({
                 );
 
                 return variant === "draft" ? (
-                  <SortableModule id={module.id} key={module.id}>
+                  <SortableModule id={module._id} key={module._id}>
                     {moduleContent}
                   </SortableModule>
                 ) : (

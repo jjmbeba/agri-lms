@@ -7,10 +7,14 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Course } from "./types";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 
 type CourseDetailsStatsProps = {
-  course: Course;
+  course: {
+    course: Doc<"course">;
+    modulesCount: number;
+    department: Doc<"department"> | null;
+  };
 };
 
 export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {

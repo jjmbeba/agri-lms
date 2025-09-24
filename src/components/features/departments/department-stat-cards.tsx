@@ -1,3 +1,5 @@
+"use client";
+
 import {
   IconBook,
   IconBuilding,

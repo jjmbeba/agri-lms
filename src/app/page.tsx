@@ -4,7 +4,6 @@ import CTA from "@/components/features/homepage/cta";
 import FAQ from "@/components/features/homepage/faq";
 import Features from "@/components/features/homepage/features";
 import HeroSection from "@/components/features/homepage/hero";
-import { HydrateClient } from "@/trpc/server";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <HydrateClient>
+    <main>
       <HeroSection />
       <Features />
       <CourseCategories />
@@ -27,6 +26,6 @@ export default function Home() {
         heading="Learn anywhere. Grow everywhere."
       />
       <FAQ />
-    </HydrateClient>
+    </main>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -9,27 +11,22 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { trpc } from "@/trpc/client";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import PublishModulesBtn from "../modules/publish-modules-btn";
 import { CourseContentManagement } from "./course-content-management";
 
 const CourseContentTabs = ({ courseId }: { courseId: string }) => {
-  const {
-    data: publishedData,
-    isLoading: isLoadingPublished,
-    refetch: refetchPublished,
-  } = trpc.modules.getModulesByLatestVersionId.useQuery(courseId);
-  const {
-    data: draftData,
-    isLoading: isLoadingDraft,
-    refetch: refetchDraft,
-  } = trpc.modules.getDraftModulesByCourseId.useQuery(courseId);
-
-  const handlePublishSuccess = () => {
-    // Refetch both published and draft data
-    refetchPublished();
-    refetchDraft();
-  };
+  const { data: publishedData, isLoading: isLoadingPublished } = useQuery(
+    convexQuery(api.modules.getModulesByLatestVersionId, {
+      courseId: courseId as Id<"course">,
+    })
+  );
+  const { data: draftData, isLoading: isLoadingDraft } = useQuery(
+    convexQuery(api.modules.getDraftModulesByCourseId, {
+      courseId: courseId as Id<"course">,
+    })
+  );
 
   return (
     <Tabs defaultValue="published">
@@ -43,7 +40,7 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
         ) : (
           <CourseContentManagement
             courseId={courseId}
-            data={publishedData ?? []}
+            data={[...(publishedData ?? [])]}
             variant="published"
           />
         )}
@@ -54,7 +51,6 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
           <PublishModulesBtn
             courseId={courseId}
             disabled={!draftData || draftData.length === 0}
-            onSuccess={handlePublishSuccess}
           />
         </div>
         {isLoadingDraft ? (
@@ -62,7 +58,7 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
         ) : (
           <CourseContentManagement
             courseId={courseId}
-            data={draftData ?? []}
+            data={[...(draftData ?? [])]}
             variant="draft"
           />
         )}
