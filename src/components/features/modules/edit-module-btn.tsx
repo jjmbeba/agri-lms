@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Steps are fixed */
 "use client";
 
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { IconEdit } from "@tabler/icons-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -159,7 +159,7 @@ const EditModuleContent = ({
   const handleEditClick = () => {
     if (
       currentModuleData &&
-      "id" in currentModuleData &&
+      "_id" in currentModuleData &&
       "title" in currentModuleData
     ) {
       initializeForm(currentModuleData);
