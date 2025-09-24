@@ -21,7 +21,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 type Props = {
-  id: string;
+  id: Id<"department">;
 };
 
 const DeleteDepartmentButton = ({ id }: Props) => {
@@ -54,7 +54,7 @@ const DeleteDepartmentButton = ({ id }: Props) => {
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className={cn(buttonVariants({ variant: "destructive" }))}
-            onClick={() => deleteDepartment({ id: id as Id<"department"> })}
+            onClick={() => deleteDepartment({ id })}
           >
             Continue
           </AlertDialogAction>

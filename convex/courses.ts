@@ -101,6 +101,32 @@ export const deleteCourse = mutation({
       throw new Error("Unauthorized");
     }
 
+    const versions = await ctx.db
+      .query("courseVersion")
+      .filter((q) => q.eq(q.field("courseId"), args.id))
+      .collect();
+
+    for (const vRow of versions) {
+      const modules = await ctx.db
+
+        .query("module")
+        .filter((q) => q.eq(q.field("courseVersionId"), vRow._id))
+        .collect();
+
+      for (const m of modules) {
+        const contents = await ctx.db
+
+          .query("moduleContent")
+          .filter((q) => q.eq(q.field("moduleId"), m._id))
+          .collect();
+
+        for (const c of contents) {
+          await ctx.db.delete(c._id);
+        }
+        await ctx.db.delete(m._id);
+      }
+      await ctx.db.delete(vRow._id);
+    }
     await ctx.db.delete(args.id);
     return { success: true } as const;
   },

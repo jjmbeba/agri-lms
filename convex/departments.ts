@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { ROLES } from "./constants";
@@ -43,17 +44,16 @@ export const getAllDepartmentsWithCounts = query({
       ctx.db.query("course").collect(),
     ]);
 
-    const courseCountByDepartmentId = new Map<string, number>();
+    const courseCountByDepartmentId = new Map<Id<"department">, number>();
     for (const course of courses) {
-      const key = course.departmentId as unknown as string;
+      const key = course.departmentId;
       const current = courseCountByDepartmentId.get(key) ?? 0;
       courseCountByDepartmentId.set(key, current + 1);
     }
 
     return departments.map((dept) => ({
       ...dept,
-      courseCount:
-        courseCountByDepartmentId.get(dept._id as unknown as string) ?? 0,
+      courseCount: courseCountByDepartmentId.get(dept._id) ?? 0,
     }));
   },
 });

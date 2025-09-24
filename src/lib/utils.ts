@@ -23,7 +23,7 @@ export function generateSlug(title: string) {
 }
 
 export function displayToastError(error: Error) {
-  if (error.message.includes("Unauthenticated")) {
+  if (error.message.includes("Not authenticated")) {
     toast.error("Not authenticated");
     return;
   }
