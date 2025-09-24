@@ -3,6 +3,7 @@
 import { useConvexMutation } from "@convex-dev/react-query";
 import { IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, displayToastError } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
@@ -26,6 +27,12 @@ type Props = {
 const DeleteDepartmentButton = ({ id }: Props) => {
   const { mutate: deleteDepartment } = useMutation({
     mutationFn: useConvexMutation(api.departments.deleteDepartment),
+    onSuccess: () => {
+      toast.success("Department deleted successfully");
+    },
+    onError: (error) => {
+      displayToastError(error);
+    },
   });
 
   return (

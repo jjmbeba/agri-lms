@@ -8,7 +8,7 @@ import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { generateSlug } from "@/lib/utils";
+import { displayToastError, generateSlug } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { createDepartmentSchema } from "./schema";
@@ -36,7 +36,7 @@ const DepartmentForm = (props: DepartmentFormProps) => {
         form.reset();
       },
       onError: (error) => {
-        toast.error(error.message);
+        displayToastError(error);
       },
     });
 
@@ -45,6 +45,9 @@ const DepartmentForm = (props: DepartmentFormProps) => {
       mutationFn: useConvexMutation(api.departments.editDepartment),
       onSuccess: () => {
         toast.success("Department updated successfully");
+      },
+      onError: (error) => {
+        displayToastError(error);
       },
     });
   const form = useForm({

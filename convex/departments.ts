@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { authComponent } from "./auth";
 
 export const getDepartments = query({
   args: {},
@@ -15,6 +16,17 @@ export const createDepartment = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
+    // const identity = await ctx.auth.getUserIdentity();
+    const session = await authComponent.getAuthUser(ctx);
+
+    if (!session) {
+      throw new Error("Not authenticated");
+    }
+
+    if (session.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
     return await ctx.db.insert("department", {
       name: args.name,
       slug: args.slug,
@@ -61,6 +73,16 @@ export const editDepartment = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
+    const session = await authComponent.getAuthUser(ctx);
+
+    if (!session) {
+      throw new Error("Not authenticated");
+    }
+
+    if (session.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.patch(args.id, {
       name: args.name,
       slug: args.slug,
@@ -73,6 +95,16 @@ export const editDepartment = mutation({
 export const deleteDepartment = mutation({
   args: { id: v.id("department") },
   handler: async (ctx, args) => {
+    const session = await authComponent.getAuthUser(ctx);
+
+    if (!session) {
+      throw new Error("Not authenticated");
+    }
+
+    if (session.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.delete(args.id);
     return { success: true } as const;
   },
