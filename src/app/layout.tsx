@@ -7,6 +7,15 @@ import { Toaster } from "@/components/ui/sonner";
 import { ConvexClientProvider } from "@/providers/convex-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import "./globals.css";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -27,22 +36,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} antialiased`}>
-        <ConvexClientProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            disableTransitionOnChange
-            enableSystem
-          >
-            <Navbar />
-            <NuqsAdapter>{children}</NuqsAdapter>
-            <Footer />
-            <Toaster richColors />
-          </ThemeProvider>
-        </ConvexClientProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${outfit.variable} antialiased`}>
+          <ConvexClientProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              disableTransitionOnChange
+              enableSystem
+            >
+              <Navbar>
+                <SignedOut>
+                  <SignInButton />
+                  <SignUpButton>
+                    <Button size={"sm"}>Get Started</Button>
+                  </SignUpButton>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
+              </Navbar>
+              <NuqsAdapter>{children}</NuqsAdapter>
+              <Footer />
+              <Toaster richColors />
+            </ThemeProvider>
+          </ConvexClientProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

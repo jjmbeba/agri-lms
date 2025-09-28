@@ -1,4 +1,4 @@
-import { getSession } from "@/components/features/auth/actions";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function Layout({
   learner,
@@ -7,9 +7,8 @@ export default async function Layout({
   learner: React.ReactNode;
   admin: React.ReactNode;
 }) {
-  const session = await getSession();
-
-  const role = session?.user.role ?? "learner";
+  const { sessionClaims } = await auth();
+  const role = sessionClaims?.metadata.role;
 
   return role === "admin" ? admin : learner;
 }

@@ -10,6 +10,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.33.0",
     "@convex-dev/better-auth": "^0.8.6",
     "@convex-dev/react-query": "^0.0.0-alpha.11",
     "@convex-dev/resend": "^0.1.13",
