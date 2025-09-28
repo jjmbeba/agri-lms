@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { ChartAreaInteractive } from "@/components/features/dashboard/chart-area-interactive";
 import { DataTable } from "@/components/features/dashboard/data-table";
 import { SectionCards } from "@/components/features/dashboard/section-cards";
-import CreateDepartmentButton from "@/components/features/departments/create-department-btn";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -34,7 +33,6 @@ export default function Page() {
                   <h1 className="font-bold text-2xl tracking-tight">
                     Agriculture LMS Dashboard
                   </h1>
-                  <CreateDepartmentButton />
                   <p className="text-muted-foreground">
                     Monitor courses, students, and farm partnerships
                   </p>
