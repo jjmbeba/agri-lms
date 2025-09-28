@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
-import { ROLES } from "./constants";
+import { restrictRoles } from "./auth";
 
 export const getDepartments = query({
   args: {},
@@ -18,15 +17,9 @@ export const createDepartment = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
+    const identity = await ctx.auth.getUserIdentity();
 
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    restrictRoles(identity, ["admin"]);
 
     return await ctx.db.insert("department", {
       name: args.name,
@@ -73,15 +66,8 @@ export const editDepartment = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     await ctx.db.patch(args.id, {
       name: args.name,
@@ -95,15 +81,8 @@ export const editDepartment = mutation({
 export const deleteDepartment = mutation({
   args: { id: v.id("department") },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     await ctx.db.delete(args.id);
     return { success: true } as const;

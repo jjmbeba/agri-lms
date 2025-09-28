@@ -1,6 +1,6 @@
+import { auth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { getSession } from "@/components/features/auth/actions";
 
 const f = createUploadthing();
 
@@ -21,7 +21,7 @@ export const ourFileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(async () => {
       // This code runs on your server before upload
-      const session = await getSession();
+      const session = await auth();
 
       // If you throw, the user will not be able to upload
       if (!session) {
@@ -29,7 +29,7 @@ export const ourFileRouter = {
       }
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: session.user.id };
+      return { userId: session.userId };
     })
     .onUploadComplete(({ metadata }) => {
       return { uploadedBy: metadata.userId };
@@ -44,7 +44,7 @@ export const ourFileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(async () => {
       // This code runs on your server before upload
-      const session = await getSession();
+      const session = await auth();
 
       // If you throw, the user will not be able to upload
       if (!session) {
@@ -52,7 +52,7 @@ export const ourFileRouter = {
       }
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: session.user.id };
+      return { userId: session.userId };
     })
     .onUploadComplete(({ metadata }) => {
       return { uploadedBy: metadata.userId };

@@ -10,6 +10,7 @@ export const env = createEnv({
     RESEND_FROM: z.string(),
     UPLOADTHING_TOKEN: z.string(),
     SITE_URL: z.string(),
+    CLERK_JWT_ISSUER_DOMAIN: z.string(),
   },
   client: {
     NEXT_PUBLIC_CONVEX_URL: z.string(),
@@ -24,6 +25,7 @@ export const env = createEnv({
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
     SITE_URL: process.env.SITE_URL,
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+    CLERK_JWT_ISSUER_DOMAIN: process.env.CLERK_JWT_ISSUER_DOMAIN,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {

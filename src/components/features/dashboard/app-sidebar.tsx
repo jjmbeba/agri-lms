@@ -16,11 +16,9 @@ import Link from "next/link";
 import type * as React from "react";
 import { NavMain } from "@/components/features/dashboard/nav-main";
 import { NavSecondary } from "@/components/features/dashboard/nav-secondary";
-import { NavUser } from "@/components/features/dashboard/nav-user";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -102,9 +100,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavDocuments items={data.documents} /> */}
         <NavSecondary className="mt-auto" items={data.navSecondary} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
-      </SidebarFooter>
     </Sidebar>
   );
 }
