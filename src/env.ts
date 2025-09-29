@@ -5,8 +5,6 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.url(),
     RESEND_API_KEY: z.string(),
-    BETTER_AUTH_URL: z.string(),
-    BETTER_AUTH_SECRET: z.string(),
     RESEND_FROM: z.string(),
     UPLOADTHING_TOKEN: z.string(),
     SITE_URL: z.string(),
@@ -19,8 +17,6 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
-    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
-    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     RESEND_FROM: process.env.RESEND_FROM,
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
     SITE_URL: process.env.SITE_URL,

@@ -24,7 +24,7 @@ export const ourFileRouter = {
       const session = await auth();
 
       // If you throw, the user will not be able to upload
-      if (!session) {
+      if (!session.userId) {
         throw new UploadThingError("Unauthorized");
       }
 
@@ -47,7 +47,7 @@ export const ourFileRouter = {
       const session = await auth();
 
       // If you throw, the user will not be able to upload
-      if (!session) {
+      if (!session.userId) {
         throw new UploadThingError("Unauthorized");
       }
 
