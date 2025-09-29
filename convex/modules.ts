@@ -2,8 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
-import { ROLES } from "./constants";
+import { restrictRoles } from "./auth";
 
 // -----------------------------
 // Validators
@@ -256,15 +255,8 @@ export const createDraftModule = mutation({
     courseId: v.id("course"),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     await validateCourseExists(ctx, args.courseId);
 
@@ -301,15 +293,8 @@ export const createDraftModule = mutation({
 export const deleteDraftModule = mutation({
   args: { id: v.id("draftModule") },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     const module = await ctx.db.get(args.id);
     if (!module) {
@@ -331,15 +316,8 @@ export const deleteDraftModule = mutation({
 export const deleteDraftModuleContent = mutation({
   args: { id: v.id("draftModuleContent") },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     const row = await ctx.db.get(args.id);
     if (!row) {
@@ -382,15 +360,8 @@ export const updateDraftModule = mutation({
     content: contentValidator,
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     const existingModule = await ctx.db.get(args.moduleId);
     if (!existingModule) {
@@ -433,15 +404,8 @@ export const updateDraftModulePositions = mutation({
     items: v.array(v.object({ id: v.id("draftModule"), position: v.number() })),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     const ids = new Set(args.items.map((i) => i.id));
     const rows = await ctx.db
@@ -468,15 +432,8 @@ export const updateModulePositions = mutation({
     items: v.array(v.object({ id: v.id("module"), position: v.number() })),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     const ids = new Set(args.items.map((i) => i.id));
     const rows = await ctx.db
@@ -505,15 +462,8 @@ export const publishDraftModules = mutation({
     changeLog: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     await validateCourseExists(ctx, args.courseId);
 

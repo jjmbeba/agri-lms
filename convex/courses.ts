@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
-import { ROLES } from "./constants";
+import { restrictRoles } from "./auth";
 
 export const createCourse = mutation({
   args: {
@@ -11,15 +10,8 @@ export const createCourse = mutation({
     departmentId: v.id("department"),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     return await ctx.db.insert("course", {
       title: args.title,
@@ -91,15 +83,8 @@ export const getCourse = query({
 export const deleteCourse = mutation({
   args: { id: v.id("course") },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     const versions = await ctx.db
       .query("courseVersion")
@@ -108,14 +93,12 @@ export const deleteCourse = mutation({
 
     for (const vRow of versions) {
       const modules = await ctx.db
-
         .query("module")
         .filter((q) => q.eq(q.field("courseVersionId"), vRow._id))
         .collect();
 
       for (const m of modules) {
         const contents = await ctx.db
-
           .query("moduleContent")
           .filter((q) => q.eq(q.field("moduleId"), m._id))
           .collect();
@@ -141,15 +124,8 @@ export const editCourse = mutation({
     departmentId: v.id("department"),
   },
   handler: async (ctx, args) => {
-    const session = await authComponent.getAuthUser(ctx);
-
-    if (!session) {
-      throw new Error("Not authenticated");
-    }
-
-    if (session.role !== ROLES.ADMIN) {
-      throw new Error("Unauthorized");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
 
     await ctx.db.patch(args.id, {
       title: args.title,

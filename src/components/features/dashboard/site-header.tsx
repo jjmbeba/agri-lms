@@ -1,5 +1,6 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
@@ -47,7 +48,10 @@ export function SiteHeader() {
               </BreadcrumbList>
             </Breadcrumb>
           </h1>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserButton />
+          </div>
         </div>
       </div>
     </header>

@@ -1,17 +1,14 @@
 "use client";
 
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { useAuth } from "@clerk/nextjs";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import type { ReactNode } from "react";
 import { env } from "@/env";
-import { authClient } from "@/lib/auth-client";
 
-const convex = new ConvexReactClient(env.NEXT_PUBLIC_CONVEX_URL, {
-  // Optionally pause queries until the user is authenticated
-  expectAuth: true,
-});
+const convex = new ConvexReactClient(env.NEXT_PUBLIC_CONVEX_URL);
 
 const convexQueryClient = new ConvexQueryClient(convex);
 const queryClient = new QueryClient({
@@ -26,8 +23,8 @@ convexQueryClient.connect(queryClient);
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
-    <ConvexBetterAuthProvider authClient={authClient} client={convex}>
+    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </ConvexBetterAuthProvider>
+    </ConvexProviderWithClerk>
   );
 }

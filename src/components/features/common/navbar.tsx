@@ -2,6 +2,7 @@
 
 import { MenuIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import type { PropsWithChildren } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -26,11 +27,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import ThemeToggle from "@/components/ui/theme-toggle";
-import UserButton from "../auth/user-button";
 import { isPublicPage } from "../auth/utils";
 import AuthLogo from "./logo";
 
-const Navbar = () => {
+const Navbar = ({ children }: PropsWithChildren) => {
   const pathname = usePathname();
 
   if (!isPublicPage(pathname)) {
@@ -130,7 +130,7 @@ const Navbar = () => {
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
             <ThemeToggle />
-            <UserButton />
+            {children}
           </div>
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
@@ -189,7 +189,7 @@ const Navbar = () => {
                 </div>
                 <div className="mt-6 flex flex-col gap-4">
                   <ThemeToggle />
-                  <UserButton />
+                  {children}
                 </div>
               </div>
             </SheetContent>
