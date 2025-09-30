@@ -37,14 +37,11 @@ export const getCourses = query({
     const courses = await ctx.db.query("course").collect();
     const departments = await ctx.db.query("department").collect();
 
-    const departmentById = new Map(
-      departments.map((d) => [d._id as unknown as string, d])
-    );
+    const departmentById = new Map(departments.map((d) => [d._id, d]));
 
     return courses.map((c) => ({
       course: c,
-      department:
-        departmentById.get(c.departmentId as unknown as string) ?? null,
+      department: departmentById.get(c.departmentId) ?? null,
     }));
   },
 });
@@ -134,5 +131,23 @@ export const editCourse = mutation({
       departmentId: args.departmentId,
     });
     return await ctx.db.get(args.id);
+  },
+});
+
+export const getPublishedCourses = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db
+      .query("course")
+      .filter((q) => q.eq(q.field("status"), "published"))
+      .collect();
+    const departments = await ctx.db.query("department").collect();
+
+    const departmentById = new Map(departments.map((d) => [d._id, d]));
+
+    return courses.map((c) => ({
+      course: c,
+      department: departmentById.get(c.departmentId) ?? null,
+    }));
   },
 });

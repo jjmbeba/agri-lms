@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -31,9 +30,6 @@ export const CourseCard = ({ data }: CourseCardProps) => {
             </Link>
             <div className="mt-1 text-muted-foreground text-xs">{d?.name}</div>
           </div>
-          <Badge className="uppercase" variant="secondary">
-            {c.status}
-          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
