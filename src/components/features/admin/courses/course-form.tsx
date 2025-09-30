@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { displayToastError } from "@/lib/utils";
-import { api } from "../../../../convex/_generated/api";
-import type { Doc, Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { createCourseSchema } from "./schema";
 
 type CreateCourseFormProps = {

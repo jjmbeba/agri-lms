@@ -1,8 +1,8 @@
 import { IconPlant, IconTrendingUp } from "@tabler/icons-react";
 import type { Metadata } from "next";
-import { ChartAreaInteractive } from "@/components/features/dashboard/chart-area-interactive";
-import { DataTable } from "@/components/features/dashboard/data-table";
-import { SectionCards } from "@/components/features/dashboard/section-cards";
+import { ChartAreaInteractive } from "@/components/features/admin/dashboard/chart-area-interactive";
+import { DataTable } from "@/components/features/admin/dashboard/data-table";
+import { SectionCards } from "@/components/features/admin/dashboard/section-cards";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,

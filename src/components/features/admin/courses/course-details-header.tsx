@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
-import type { Doc } from "../../../../convex/_generated/dataModel";
+import type { Doc } from "../../../../../convex/_generated/dataModel";
 import CourseHeaderActions from "./course-header-actions";
 
 type CourseDetailsHeaderProps = {

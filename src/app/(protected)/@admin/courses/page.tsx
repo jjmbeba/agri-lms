@@ -1,8 +1,8 @@
 import { IconBook } from "@tabler/icons-react";
 import { preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
-import { CourseManager } from "@/components/features/courses/course-manager";
-import CreateCourseButton from "@/components/features/courses/create-course-btn";
+import { CourseManager } from "@/components/features/admin/courses/course-manager";
+import CreateCourseButton from "@/components/features/admin/courses/create-course-btn";
 import { api } from "../../../../../convex/_generated/api";
 
 export const metadata: Metadata = {

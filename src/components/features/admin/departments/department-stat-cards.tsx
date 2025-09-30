@@ -7,7 +7,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { type Preloaded, usePreloadedQuery } from "convex/react";
-import type { api } from "../../../../convex/_generated/api";
+import type { api } from "../../../../../convex/_generated/api";
 import DepartmentHeaderCard from "./department-header-card";
 
 type Props = {

@@ -1,0 +1,172 @@
+import { EnrolledCourses } from "./enrolled-courses";
+import { LearnerDashboardStats } from "./learner-dashboard-stats";
+import { ProgressOverview } from "./progress-overview";
+import { QuickActions } from "./quick-actions";
+import { RecentActivity } from "./recent-activity";
+import { UpcomingDeadlines } from "./upcoming-deadlines";
+
+// Mock data - in a real app, this would come from the database
+const mockStats = {
+  totalCourses: 8,
+  completedCourses: 3,
+  inProgressCourses: 5,
+  totalStudyTime: "24h 30m",
+  achievements: 12,
+  averageScore: 87,
+};
+
+const mockCourses = [
+  {
+    id: "1",
+    title: "Sustainable Farming Practices",
+    description:
+      "Learn modern sustainable farming techniques that protect the environment while maximizing crop yield.",
+    instructor: "Dr. Sarah Johnson",
+    progress: 75,
+    duration: "8 weeks",
+    difficulty: "Intermediate" as const,
+    rating: 4.8,
+    lastAccessed: "2 days ago",
+  },
+  {
+    id: "2",
+    title: "Crop Rotation Techniques",
+    description:
+      "Master the art of crop rotation to improve soil health and prevent pest infestations.",
+    instructor: "Prof. Michael Chen",
+    progress: 100,
+    duration: "6 weeks",
+    difficulty: "Beginner" as const,
+    rating: 4.9,
+    lastAccessed: "1 week ago",
+  },
+  {
+    id: "3",
+    title: "Soil Health Assessment",
+    description:
+      "Comprehensive guide to assessing and improving soil health for better agricultural outcomes.",
+    instructor: "Dr. Emily Rodriguez",
+    progress: 45,
+    duration: "4 weeks",
+    difficulty: "Advanced" as const,
+    rating: 4.7,
+    lastAccessed: "1 day ago",
+  },
+];
+
+const mockProgress = {
+  weeklyGoal: 10,
+  weeklyProgress: 7,
+  monthlyGoal: 40,
+  monthlyProgress: 28,
+  streak: 12,
+  lastActivity: "2 hours ago",
+};
+
+const mockActivities = [
+  {
+    id: "1",
+    type: "course_completed" as const,
+    title: "Completed Crop Rotation Techniques",
+    description:
+      "Congratulations! You've successfully completed the Crop Rotation Techniques course.",
+    timestamp: "2 days ago",
+    courseTitle: "Crop Rotation Techniques",
+  },
+  {
+    id: "2",
+    type: "quiz_passed" as const,
+    title: "Quiz: Soil Composition",
+    description: "Great job! You scored 92% on the Soil Composition quiz.",
+    timestamp: "3 days ago",
+    courseTitle: "Soil Health Assessment",
+    score: 92,
+  },
+  {
+    id: "3",
+    type: "streak_milestone" as const,
+    title: "10 Day Learning Streak!",
+    description:
+      "Amazing! You've maintained a 10-day learning streak. Keep it up!",
+    timestamp: "4 days ago",
+    streak: 10,
+  },
+  {
+    id: "4",
+    type: "certificate_earned" as const,
+    title: "Certificate Earned",
+    description:
+      "You've earned a certificate for completing Sustainable Farming Practices.",
+    timestamp: "1 week ago",
+    courseTitle: "Sustainable Farming Practices",
+  },
+];
+
+const mockDeadlines = [
+  {
+    id: "1",
+    title: "Soil Analysis Report",
+    courseTitle: "Soil Health Assessment",
+    dueDate: "2024-01-25",
+    type: "assignment" as const,
+    priority: "high" as const,
+    isOverdue: false,
+  },
+  {
+    id: "2",
+    title: "Sustainable Farming Quiz",
+    courseTitle: "Sustainable Farming Practices",
+    dueDate: "2024-01-28",
+    type: "quiz" as const,
+    priority: "medium" as const,
+    isOverdue: false,
+  },
+  {
+    id: "3",
+    title: "Final Project Submission",
+    courseTitle: "Advanced Agriculture Techniques",
+    dueDate: "2024-01-20",
+    type: "project" as const,
+    priority: "high" as const,
+    isOverdue: true,
+  },
+];
+
+export function LearnerDashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="px-4 lg:px-6">
+        <div className="py-6">
+          <h1 className="font-bold text-3xl tracking-tight">Welcome back!</h1>
+          <p className="text-muted-foreground">
+            Continue your learning journey and track your progress.
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <LearnerDashboardStats {...mockStats} />
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-3 lg:px-6">
+        {/* Left Column */}
+        <div className="grid gap-6 lg:col-span-2">
+          <EnrolledCourses courses={mockCourses} />
+          <ProgressOverview {...mockProgress} />
+        </div>
+
+        {/* Right Column */}
+        <div className="grid gap-6 lg:col-span-1">
+          <RecentActivity activities={mockActivities} />
+          <UpcomingDeadlines deadlines={mockDeadlines} />
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="px-4 lg:px-6">
+        <QuickActions />
+      </div>
+    </div>
+  );
+}

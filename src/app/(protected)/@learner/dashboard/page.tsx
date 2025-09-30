@@ -1,5 +1,7 @@
+import { LearnerDashboard } from "@/components/features/learner/dashboard/learner-dashboard";
+
 const DashboardPage = () => {
-  return <div>DashboardPage</div>;
+  return <LearnerDashboard />;
 };
 
 export default DashboardPage;
