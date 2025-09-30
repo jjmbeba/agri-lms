@@ -14,8 +14,8 @@ import {
 import { GalleryVerticalEndIcon } from "lucide-react";
 import Link from "next/link";
 import type * as React from "react";
-import { NavMain } from "@/components/features/dashboard/nav-main";
-import { NavSecondary } from "@/components/features/dashboard/nav-secondary";
+import { NavMain } from "@/components/features/admin/dashboard/nav-main";
+import { NavSecondary } from "@/components/features/admin/dashboard/nav-secondary";
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const data = {
-  navMain: [
+  adminNavMain: [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -63,6 +63,13 @@ const data = {
       icon: IconReport,
     },
   ],
+  learnerNavMain: [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: IconDashboard,
+    },
+  ],
   navSecondary: [
     {
       title: "Settings",
@@ -77,7 +84,10 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  userRole,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { userRole: "admin" | "learner" }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -96,7 +106,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain
+          items={userRole === "admin" ? data.adminNavMain : data.learnerNavMain}
+        />
         {/* <NavDocuments items={data.documents} /> */}
         <NavSecondary className="mt-auto" items={data.navSecondary} />
       </SidebarContent>

@@ -7,7 +7,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Doc } from "../../../../convex/_generated/dataModel";
+import type { Doc } from "../../../../../convex/_generated/dataModel";
 
 type CourseDetailsStatsProps = {
   course: {

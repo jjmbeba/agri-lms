@@ -2,7 +2,7 @@
 
 import { type Preloaded, usePreloadedQuery } from "convex/react";
 import { useCallback, useState } from "react";
-import type { api } from "../../../../convex/_generated/api";
+import type { api } from "../../../../../convex/_generated/api";
 import { CourseFilters } from "./course-filters";
 import { CourseGrid } from "./course-grid";
 import { CourseStats } from "./course-stats";

@@ -30,8 +30,8 @@ import {
 } from "@/components/ui/stepper";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { displayToastError } from "@/lib/utils";
-import { api } from "../../../../convex/_generated/api";
-import type { Doc, Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import BasicModuleInfoForm from "./basic-info-form";
 import { moduleSteps, moduleStepTitles } from "./constants";
 import ContentForm from "./content-form";

@@ -12,8 +12,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         } as React.CSSProperties
       }
     >
-      <AppSidebar userRole="admin" variant="sidebar" />
-      <SidebarInset>
+      <AppSidebar userRole="learner" variant="sidebar" />
+      <SidebarInset className="container-type:inline-size container-name:main">
         <SiteHeader />
         {children}
       </SidebarInset>

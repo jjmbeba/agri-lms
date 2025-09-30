@@ -115,8 +115,8 @@ const DragHandle = (props: { "aria-label": string }) => {
 
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { api } from "../../../../convex/_generated/api";
-import type { Doc, Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import CreateModuleBtn from "../modules/create-module-btn";
 import EditModuleBtn from "../modules/edit-module-btn";
 

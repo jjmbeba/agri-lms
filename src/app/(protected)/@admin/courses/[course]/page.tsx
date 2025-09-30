@@ -1,8 +1,8 @@
 import { fetchQuery, preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import CourseContentTabs from "@/components/features/courses/course-content-tabs";
-import CourseDetails from "@/components/features/courses/course-details";
+import CourseContentTabs from "@/components/features/admin/courses/course-content-tabs";
+import CourseDetails from "@/components/features/admin/courses/course-details";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id } from "../../../../../../convex/_generated/dataModel";

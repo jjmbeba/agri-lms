@@ -1,9 +1,9 @@
 import { IconBuilding } from "@tabler/icons-react";
 import { preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
-import CreateDepartmentButton from "@/components/features/departments/create-department-btn";
-import DepartmentGrid from "@/components/features/departments/department-grid";
-import DepartmentStatCards from "@/components/features/departments/department-stat-cards";
+import CreateDepartmentButton from "@/components/features/admin/departments/create-department-btn";
+import DepartmentGrid from "@/components/features/admin/departments/department-grid";
+import DepartmentStatCards from "@/components/features/admin/departments/department-stat-cards";
 import { api } from "../../../../../convex/_generated/api";
 
 export const metadata: Metadata = {
