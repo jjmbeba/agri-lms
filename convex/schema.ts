@@ -48,4 +48,8 @@ export default defineSchema({
     content: v.string(),
     orderIndex: v.number(),
   }),
+  enrollment: defineTable({
+    courseId: v.id("course"),
+    userId: v.string(),
+  }),
 });

@@ -1,9 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { Doc } from "../../../convex/_generated/dataModel";
+import EnrollCourseBtn from "./enroll-course-btn";
 
 type CourseHeaderProps = {
-  course: { course: Doc<"course">; department: Doc<"department"> | null };
+  course: {
+    course: Doc<"course">;
+    department: Doc<"department"> | null;
+    isEnrolled: boolean;
+  };
 };
 
 export const CourseHeader = ({ course }: CourseHeaderProps) => {
@@ -24,6 +29,10 @@ export const CourseHeader = ({ course }: CourseHeaderProps) => {
                 </div>
                 <p className="text-lg text-muted-foreground">{c.description}</p>
               </div>
+              <EnrollCourseBtn
+                courseId={c._id}
+                isEnrolled={course.isEnrolled}
+              />
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">

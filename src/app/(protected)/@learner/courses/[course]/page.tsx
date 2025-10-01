@@ -2,7 +2,7 @@ import { preloadQuery } from "convex/nextjs";
 import { notFound } from "next/navigation";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
-import { CourseDetails } from "../../../../../components/@courses/CourseDetails";
+import { CourseDetails } from "../../../../../components/@courses/course-details";
 
 type CoursePageProps = {
   params: { course: string };

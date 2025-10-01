@@ -73,7 +73,22 @@ export const getCourse = query({
       modulesCount = modulesForLatest.length;
     }
 
-    return { course, department, modulesCount } as const;
+    const identity = await ctx.auth.getUserIdentity();
+    let isEnrolled = false;
+    if (identity) {
+      const enrollment = await ctx.db
+        .query("enrollment")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("userId"), identity.subject),
+            q.eq(q.field("courseId"), args.id)
+          )
+        )
+        .first();
+      isEnrolled = Boolean(enrollment);
+    }
+
+    return { course, department, modulesCount, isEnrolled } as const;
   },
 });
 
@@ -137,6 +152,12 @@ export const editCourse = mutation({
 export const getPublishedCourses = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      return [];
+    }
+
     const courses = await ctx.db
       .query("course")
       .filter((q) => q.eq(q.field("status"), "published"))
@@ -145,9 +166,15 @@ export const getPublishedCourses = query({
 
     const departmentById = new Map(departments.map((d) => [d._id, d]));
 
+    const userEnrollments = await ctx.db
+      .query("enrollment")
+      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .collect();
+
     return courses.map((c) => ({
       course: c,
       department: departmentById.get(c.departmentId) ?? null,
+      isEnrolled: userEnrollments.some((e) => e.courseId === c._id),
     }));
   },
 });

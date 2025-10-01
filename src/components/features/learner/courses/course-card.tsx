@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -8,6 +9,7 @@ type CourseCardProps = {
   data: {
     course: Doc<"course">;
     department: Doc<"department"> | null;
+    isEnrolled: boolean;
   };
 };
 
@@ -29,6 +31,11 @@ export const CourseCard = ({ data }: CourseCardProps) => {
               </CardTitle>
             </Link>
             <div className="mt-1 text-muted-foreground text-xs">{d?.name}</div>
+            {data.isEnrolled && (
+              <Badge className="mt-1" variant="outline">
+                Enrolled
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>

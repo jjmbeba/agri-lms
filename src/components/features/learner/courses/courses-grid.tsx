@@ -6,7 +6,7 @@ import { CourseCard } from "./course-card";
 import { EmptyState } from "./empty-state";
 
 type CoursesGridProps = {
-  preloadedCourses: Preloaded<typeof api.courses.getCourses>;
+  preloadedCourses: Preloaded<typeof api.courses.getPublishedCourses>;
 };
 
 export const CoursesGrid = ({ preloadedCourses }: CoursesGridProps) => {

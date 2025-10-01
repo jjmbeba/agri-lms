@@ -2,9 +2,9 @@
 
 import { type Preloaded, usePreloadedQuery, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { CourseContent } from "./CourseContent";
-import { CourseHeader } from "./CourseHeader";
-import { CourseStats } from "./CourseStats";
+import { CourseContent } from "./course-content";
+import { CourseHeader } from "./course-header";
+import { CourseStats } from "./course-stats";
 
 type Props = {
   preloadedCourse: Preloaded<typeof api.courses.getCourse>;
