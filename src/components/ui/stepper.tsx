@@ -1,56 +1,58 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { createContext, useContext } from "react"
-import { CheckIcon, LoaderCircleIcon } from "lucide-react"
-import { Slot } from "radix-ui"
+import * as React from "react";
+import { createContext, useContext } from "react";
+import { CheckIcon, LoaderCircleIcon } from "lucide-react";
+import { Slot } from "radix-ui";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 // Types
 type StepperContextValue = {
-  activeStep: number
-  setActiveStep: (step: number) => void
-  orientation: "horizontal" | "vertical"
-}
+  activeStep: number;
+  setActiveStep: (step: number) => void;
+  orientation: "horizontal" | "vertical";
+};
 
 type StepItemContextValue = {
-  step: number
-  state: StepState
-  isDisabled: boolean
-  isLoading: boolean
-}
+  step: number;
+  state: StepState;
+  isDisabled: boolean;
+  isLoading: boolean;
+};
 
-type StepState = "active" | "completed" | "inactive" | "loading"
+type StepState = "active" | "completed" | "inactive" | "loading";
 
 // Contexts
-const StepperContext = createContext<StepperContextValue | undefined>(undefined)
+const StepperContext = createContext<StepperContextValue | undefined>(
+  undefined
+);
 const StepItemContext = createContext<StepItemContextValue | undefined>(
   undefined
-)
+);
 
 const useStepper = () => {
-  const context = useContext(StepperContext)
+  const context = useContext(StepperContext);
   if (!context) {
-    throw new Error("useStepper must be used within a Stepper")
+    throw new Error("useStepper must be used within a Stepper");
   }
-  return context
-}
+  return context;
+};
 
 const useStepItem = () => {
-  const context = useContext(StepItemContext)
+  const context = useContext(StepItemContext);
   if (!context) {
-    throw new Error("useStepItem must be used within a StepperItem")
+    throw new Error("useStepItem must be used within a StepperItem");
   }
-  return context
-}
+  return context;
+};
 
 // Components
 interface StepperProps extends React.HTMLAttributes<HTMLDivElement> {
-  defaultValue?: number
-  value?: number
-  onValueChange?: (value: number) => void
-  orientation?: "horizontal" | "vertical"
+  defaultValue?: number;
+  value?: number;
+  onValueChange?: (value: number) => void;
+  orientation?: "horizontal" | "vertical";
 }
 
 function Stepper({
@@ -61,19 +63,19 @@ function Stepper({
   className,
   ...props
 }: StepperProps) {
-  const [activeStep, setInternalStep] = React.useState(defaultValue)
+  const [activeStep, setInternalStep] = React.useState(defaultValue);
 
   const setActiveStep = React.useCallback(
     (step: number) => {
       if (value === undefined) {
-        setInternalStep(step)
+        setInternalStep(step);
       }
-      onValueChange?.(step)
+      onValueChange?.(step);
     },
     [value, onValueChange]
-  )
+  );
 
-  const currentStep = value ?? activeStep
+  const currentStep = value ?? activeStep;
 
   return (
     <StepperContext.Provider
@@ -93,15 +95,15 @@ function Stepper({
         {...props}
       />
     </StepperContext.Provider>
-  )
+  );
 }
 
 // StepperItem
 interface StepperItemProps extends React.HTMLAttributes<HTMLDivElement> {
-  step: number
-  completed?: boolean
-  disabled?: boolean
-  loading?: boolean
+  step: number;
+  completed?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 function StepperItem({
@@ -113,16 +115,16 @@ function StepperItem({
   children,
   ...props
 }: StepperItemProps) {
-  const { activeStep } = useStepper()
+  const { activeStep } = useStepper();
 
   const state: StepState =
     completed || step < activeStep
       ? "completed"
       : activeStep === step
         ? "active"
-        : "inactive"
+        : "inactive";
 
-  const isLoading = loading && step === activeStep
+  const isLoading = loading && step === activeStep;
 
   return (
     <StepItemContext.Provider
@@ -141,13 +143,13 @@ function StepperItem({
         {children}
       </div>
     </StepItemContext.Provider>
-  )
+  );
 }
 
 // StepperTrigger
 interface StepperTriggerProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean
+  asChild?: boolean;
 }
 
 function StepperTrigger({
@@ -156,16 +158,16 @@ function StepperTrigger({
   children,
   ...props
 }: StepperTriggerProps) {
-  const { setActiveStep } = useStepper()
-  const { step, isDisabled } = useStepItem()
+  const { setActiveStep } = useStepper();
+  const { step, isDisabled } = useStepItem();
 
   if (asChild) {
-    const Comp = asChild ? Slot.Root : "span"
+    const Comp = asChild ? Slot.Root : "span";
     return (
       <Comp data-slot="stepper-trigger" className={className}>
         {children}
       </Comp>
-    )
+    );
   }
 
   return (
@@ -181,12 +183,12 @@ function StepperTrigger({
     >
       {children}
     </button>
-  )
+  );
 }
 
 // StepperIndicator
 interface StepperIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
-  asChild?: boolean
+  asChild?: boolean;
 }
 
 function StepperIndicator({
@@ -195,7 +197,7 @@ function StepperIndicator({
   children,
   ...props
 }: StepperIndicatorProps) {
-  const { state, step, isLoading } = useStepItem()
+  const { state, step, isLoading } = useStepItem();
 
   return (
     <span
@@ -231,7 +233,7 @@ function StepperIndicator({
         </>
       )}
     </span>
-  )
+  );
 }
 
 // StepperTitle
@@ -245,7 +247,7 @@ function StepperTitle({
       className={cn("text-sm font-medium", className)}
       {...props}
     />
-  )
+  );
 }
 
 // StepperDescription
@@ -259,7 +261,7 @@ function StepperDescription({
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
-  )
+  );
 }
 
 // StepperSeparator
@@ -276,7 +278,7 @@ function StepperSeparator({
       )}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -287,4 +289,4 @@ export {
   StepperSeparator,
   StepperTitle,
   StepperTrigger,
-}
+};

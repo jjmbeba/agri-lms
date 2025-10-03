@@ -19,7 +19,12 @@ import { Separator } from "@/components/ui/separator";
 
 type ActivityItem = {
   id: string;
-  type: "course_completed" | "lesson_completed" | "quiz_passed" | "certificate_earned" | "streak_milestone";
+  type:
+    | "course_completed"
+    | "lesson_completed"
+    | "quiz_passed"
+    | "certificate_earned"
+    | "streak_milestone";
   title: string;
   description: string;
   timestamp: string;
@@ -88,8 +93,10 @@ export function RecentActivity({ activities }: RecentActivityProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your learning activities will appear here</CardDescription>
+          <CardTitle>Recent Activity (dummy data)</CardTitle>
+          <CardDescription>
+            Your learning activities will appear here
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-8">
           <IconBook className="mb-2 h-8 w-8 text-muted-foreground" />
@@ -104,7 +111,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>Recent Activity (dummy data)</CardTitle>
         <CardDescription>
           Your latest learning achievements and progress
         </CardDescription>

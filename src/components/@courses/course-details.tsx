@@ -33,6 +33,7 @@ export const CourseDetails = ({ preloadedCourse }: Props) => {
       <CourseHeader course={course} />
       <CourseStats course={course} />
       <CourseContent
+        isEnrolled={course.isEnrolled}
         modules={modules ? [...modules] : []}
         modulesCount={course.modulesCount}
       />

@@ -65,7 +65,7 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Deadlines</CardTitle>
+          <CardTitle>Upcoming Deadlines (dummy data)</CardTitle>
           <CardDescription>No upcoming deadlines</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-8">
@@ -81,7 +81,7 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upcoming Deadlines</CardTitle>
+        <CardTitle>Upcoming Deadlines (dummy data)</CardTitle>
         <CardDescription>
           Stay on track with your assignments and assessments
         </CardDescription>

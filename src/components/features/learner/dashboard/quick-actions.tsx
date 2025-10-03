@@ -67,7 +67,7 @@ export function QuickActions({ actions = defaultActions }: QuickActionsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
+        <CardTitle>Quick Actions (1 out of 4 implemented)</CardTitle>
         <CardDescription>
           Jump into your learning journey with these quick actions
         </CardDescription>

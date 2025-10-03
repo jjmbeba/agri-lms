@@ -12,6 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "../../../../../convex/_generated/api";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 type EnrolledCourse = {
   id: string;
@@ -30,7 +33,11 @@ type EnrolledCoursesProps = {
   courses: EnrolledCourse[];
 };
 
-export function EnrolledCourses({ courses }: EnrolledCoursesProps) {
+export function EnrolledCourses() {
+  const { data: courses } = useSuspenseQuery(
+    convexQuery(api.enrollments.getUserEnrolledCourses, {})
+  );
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Beginner":
@@ -77,60 +84,74 @@ export function EnrolledCourses({ courses }: EnrolledCoursesProps) {
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-2">
-          {courses.map((course) => (
-            <Card
-              className="group transition-shadow hover:shadow-lg"
-              key={course.id}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="line-clamp-2 text-lg">
-                      {course.title}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2 text-sm">
-                      {course.description}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <IconStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium text-sm">{course.rating}</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">{course.progress}%</span>
-                </div>
-                <Progress className="h-2" value={course.progress} />
+          {courses.map((record) => {
+            const course = record.course;
+            const progress = record.progress;
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <IconClock className="h-4 w-4 text-muted-foreground" />
-                    <span>{course.duration}</span>
+            return (
+              <Card
+                className="group transition-shadow hover:shadow-lg"
+                key={course?._id}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="line-clamp-2 text-lg">
+                        {course?.title}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 text-sm">
+                        {course?.description}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <IconStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium text-sm">4.5</span>
+                    </div>
                   </div>
-                  <Badge
-                    className={getDifficultyColor(course.difficulty)}
-                    variant="secondary"
-                  >
-                    {course.difficulty}
-                  </Badge>
-                </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-medium">
+                      {progress?.progressPercentage}%
+                    </span>
+                  </div>
+                  <Progress
+                    className="h-2"
+                    value={progress?.progressPercentage}
+                  />
 
-                <div className="flex items-center justify-between text-muted-foreground text-sm">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <IconClock className="h-4 w-4 text-muted-foreground" />
+                      <span>{10} hours</span>
+                    </div>
+                    <Badge
+                      className={getDifficultyColor("Intermediate")}
+                      variant="secondary"
+                    >
+                      {/* {course.difficulty} */}
+                      Intermediate
+                    </Badge>
+                  </div>
+
+                  {/* <div className="flex items-center justify-between text-muted-foreground text-sm">
                   <span>by {course.instructor}</span>
-                </div>
+                </div> */}
 
-                <Button asChild className="w-full">
-                  <Link href={`/courses/${course.id}`}>
-                    <IconVideo className="mr-2 h-4 w-4" />
-                    {course.progress > 0 ? "Continue" : "Start Course"}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <Button asChild className="w-full">
+                    <Link href={`/courses/${course?._id}`}>
+                      <IconVideo className="mr-2 h-4 w-4" />
+                      {progress?.progressPercentage &&
+                      progress?.progressPercentage > 0
+                        ? "Continue"
+                        : "Start Course"}
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
