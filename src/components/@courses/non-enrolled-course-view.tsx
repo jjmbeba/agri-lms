@@ -52,11 +52,8 @@ export const NonEnrolledCourseView = ({
   const c = course.course;
   const d = course.department;
 
-  // Mock data for course preview
   const courseStats = {
     averageRating: 4.8,
-    totalStudents: 1250,
-    completionRate: 87,
     estimatedTimeHours: Math.max(1, course.modulesCount),
   };
 
@@ -85,14 +82,14 @@ export const NonEnrolledCourseView = ({
         </div>
 
         {/* Course Stats */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Star className="size-4 text-yellow-500" />
                 <span className="font-bold text-lg">{courseStats.averageRating}</span>
               </div>
-              <p className="text-muted-foreground text-sm">Average Rating</p>
+              <p className="text-muted-foreground text-sm">Average Rating (dummy data)</p>
             </CardContent>
           </Card>
           
@@ -100,19 +97,9 @@ export const NonEnrolledCourseView = ({
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Users className="size-4 text-blue-500" />
-                <span className="font-bold text-lg">{courseStats.totalStudents.toLocaleString()}</span>
+                <span className="font-bold text-lg">{course.modulesCount}</span>
               </div>
-              <p className="text-muted-foreground text-sm">Students</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Award className="size-4 text-green-500" />
-                <span className="font-bold text-lg">{courseStats.completionRate}%</span>
-              </div>
-              <p className="text-muted-foreground text-sm">Completion Rate</p>
+              <p className="text-muted-foreground text-sm">Modules</p>
             </CardContent>
           </Card>
           
@@ -122,7 +109,7 @@ export const NonEnrolledCourseView = ({
                 <Clock className="size-4 text-purple-500" />
                 <span className="font-bold text-lg">~{courseStats.estimatedTimeHours}h</span>
               </div>
-              <p className="text-muted-foreground text-sm">Duration</p>
+              <p className="text-muted-foreground text-sm">Duration (dummy data)</p>
             </CardContent>
           </Card>
         </div>
@@ -132,16 +119,6 @@ export const NonEnrolledCourseView = ({
           <div className="flex items-center gap-2">
             <span className="font-medium">Department:</span>
             <span>{d?.name || "Uncategorized"}</span>
-          </div>
-          <Separator className="h-4" orientation="vertical" />
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Modules:</span>
-            <span>{course.modulesCount}</span>
-          </div>
-          <Separator className="h-4" orientation="vertical" />
-          <div className="flex items-center gap-2">
-            <Clock className="size-4" />
-            <span>~{courseStats.estimatedTimeHours}h estimated</span>
           </div>
         </div>
       </div>
@@ -258,19 +235,15 @@ export const NonEnrolledCourseView = ({
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Users className="size-4 text-blue-500" />
-                  <span className="text-sm font-medium">{courseStats.totalStudents.toLocaleString()} students</span>
+                  <span className="text-sm font-medium">{course.modulesCount} modules</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="size-4 text-yellow-500" />
-                  <span className="text-sm font-medium">{courseStats.averageRating}/5 rating</span>
+                  <span className="text-sm font-medium">{courseStats.averageRating}/5 rating (dummy data)</span>
                 </div>
               </div>
               
-              <Button size="lg" className="flex items-center gap-2">
-                <BookOpen className="size-4" />
-                Enroll Now
-                <ArrowRight className="size-4" />
-              </Button>
+              <EnrollCourseBtn courseId={courseId} isEnrolled={false} />
             </div>
           </div>
         </CardContent>

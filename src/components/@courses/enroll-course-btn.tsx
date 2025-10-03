@@ -2,7 +2,7 @@
 
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { displayToastError } from "@/lib/utils";
@@ -32,8 +32,8 @@ const EnrollCourseBtn = ({ courseId, isEnrolled }: EnrollCourseBtnProps) => {
 
   return (
     <Button disabled={isEnrolling} onClick={() => enroll({ courseId })}>
-      {isEnrolling && <Loader2 className="mr-2 size-4 animate-spin" />}
-      {isEnrolling ? "Enrolling..." : "Enroll"}
+      {isEnrolling ? <Loader2 className="mr-2 size-4 animate-spin" /> : <BookOpen className="size-4" />}
+      {isEnrolling ? "Enrolling..." : "Enroll Now"}
     </Button>
   );
 };

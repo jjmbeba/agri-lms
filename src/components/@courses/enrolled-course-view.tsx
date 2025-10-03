@@ -266,29 +266,6 @@ export const EnrolledCourseView = ({
           )}
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Play className="size-4" />
-              Continue Learning
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <BookOpen className="size-4" />
-              View All Modules
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Users className="size-4" />
-              Course Community
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
