@@ -2,9 +2,10 @@
 
 import { type Preloaded, usePreloadedQuery, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { CourseContent } from "./course-content";
-import { CourseHeader } from "./course-header";
-import { CourseStats } from "./course-stats";
+import { EnrolledCourseView } from "./enrolled-course-view";
+import { NonEnrolledCourseView } from "./non-enrolled-course-view";
+import { convexQuery } from "@convex-dev/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 type Props = {
   preloadedCourse: Preloaded<typeof api.courses.getCourse>;
@@ -28,15 +29,28 @@ export const CourseDetails = ({ preloadedCourse }: Props) => {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <CourseHeader course={course} />
-      <CourseStats course={course} />
-      <CourseContent
-        isEnrolled={course.isEnrolled}
+  const {data: progress} = useSuspenseQuery(
+    convexQuery(api.enrollments.getUserCourseProgress, {
+      courseId: course.course._id,
+    })
+  )
+
+  if (course.isEnrolled) {
+    return (
+      <EnrolledCourseView
+        course={course}
         modules={modules ? [...modules] : []}
-        modulesCount={course.modulesCount}
+        progress={progress}
       />
-    </div>
+    );
+  }
+
+  return (
+    <NonEnrolledCourseView
+      course={course}
+      modules={modules ? [...modules] : []}
+      isEnrolled={course.isEnrolled}
+      courseId={course.course._id}
+    />
   );
 };

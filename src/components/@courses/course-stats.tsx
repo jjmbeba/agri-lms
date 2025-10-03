@@ -13,7 +13,7 @@ type CourseStatsProps = {
 
 export const CourseStats = ({ course }: CourseStatsProps) => {
   const stats = {
-    enrolledStudents: 0,
+    averageRating: 0,
     completionRate: 0,
     estimatedTimeHours: Math.max(1, course.modulesCount),
   } as const;
@@ -32,17 +32,17 @@ export const CourseStats = ({ course }: CourseStatsProps) => {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Enrolled</CardTitle>
+          <CardTitle className="text-base">Reviews (dummy data)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="font-bold text-2xl">{stats.enrolledStudents}</div>
-          <p className="text-muted-foreground text-sm">Learners enrolled</p>
+          <div className="font-bold text-2xl">{stats.averageRating}</div>
+          <p className="text-muted-foreground text-sm">Average rating</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Time</CardTitle>
+          <CardTitle className="text-base">Time (dummy data)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="font-bold text-2xl">~{stats.estimatedTimeHours}h</div>
