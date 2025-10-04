@@ -80,7 +80,7 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("file");
   const { startUpload, isUploading, routeConfig } = useUploadThing(
-    "pdfUploader",
+    "fileUploader",
     {
       onClientUploadComplete: (res) => {
         onChange(res?.[0].ufsUrl);
@@ -140,9 +140,7 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
         />
       ) : (
         <FileUploadInput
-          accept={generatePermittedFileTypes(routeConfig)
-            .fileTypes.map((type) => `.${type}`)
-            .join(",")}
+          accept={[".", ".pdf", ".docx", ".xlsx", ".pptx"].join(",")}
           isUploading={isUploading}
           maxSize={MAX_FILE_SIZE_MB}
           onFileRemove={handleFileRemove}
@@ -373,6 +371,8 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
     }
   };
 
+  console.log("accept", accept);
+
   return (
     <div className="space-y-2">
       {selectedFile ? (
@@ -476,11 +476,11 @@ const ContentForm: React.FC<ContentFormProps> = ({
                     Add Content
                   </Button>
                 </div>
-                <ScrollArea className="h-[200px] space-y-4 pb-2 md:h-[400px]">
+                <ScrollArea className="h-[200px] pb-2 md:h-[400px]">
                   {field.state.value.map((item: ContentItem, i: number) => {
                     return (
                       <div
-                        className="flex flex-col gap-4 rounded-lg border p-4 :first:mt-0"
+                        className="flex flex-col gap-4 rounded-lg border p-4 my-4 first:mt-0"
                         key={i}
                       >
                         <div className="flex items-center justify-between">

@@ -36,7 +36,7 @@ export function ProgressOverview({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IconTarget className="h-5 w-5" />
-            Weekly Progress
+            Weekly Progress (dummy data)
           </CardTitle>
           <CardDescription>
             {weeklyProgress} of {weeklyGoal} hours completed this week
@@ -67,7 +67,7 @@ export function ProgressOverview({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IconCalendar className="h-5 w-5" />
-            Monthly Progress
+            Monthly Progress (dummy data)
           </CardTitle>
           <CardDescription>
             {monthlyProgress} of {monthlyGoal} hours completed this month
@@ -98,11 +98,9 @@ export function ProgressOverview({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IconTrendingUp className="h-5 w-5" />
-            Learning Streak
+            Learning Streak (dummy data)
           </CardTitle>
-          <CardDescription>
-            Keep the momentum going!
-          </CardDescription>
+          <CardDescription>Keep the momentum going!</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center">
@@ -119,11 +117,9 @@ export function ProgressOverview({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IconCalendar className="h-5 w-5" />
-            Study Calendar
+            Study Calendar (dummy data)
           </CardTitle>
-          <CardDescription>
-            Track your learning schedule
-          </CardDescription>
+          <CardDescription>Track your learning schedule</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center">
@@ -131,9 +127,9 @@ export function ProgressOverview({
               {new Date().getDate()}
             </div>
             <div className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString("en-US", { 
-                month: "long", 
-                year: "numeric" 
+              {new Date().toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
               })}
             </div>
             <div className="mt-2 text-xs text-muted-foreground">

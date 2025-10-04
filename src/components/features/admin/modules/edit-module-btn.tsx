@@ -146,7 +146,9 @@ const EditModuleContent = ({
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
+    if (open) {
+      setCurrentStep(1); 
+    } else {
       setCurrentStep(1);
     }
   };
@@ -157,6 +159,7 @@ const EditModuleContent = ({
       "_id" in currentModuleData &&
       "title" in currentModuleData
     ) {
+      setCurrentStep(1); // Reset to first step
       initializeForm(currentModuleData);
       setIsOpen(true);
     }
@@ -173,12 +176,11 @@ const EditModuleContent = ({
           <DrawerTrigger asChild>
             <Button
               onClick={handleEditClick}
-              size="sm"
+              size="icon"
               type="button"
               variant="outline"
             >
-              <IconEdit className="mr-2 h-4 w-4" />
-              Edit
+              <IconEdit className="size-4" />
             </Button>
           </DrawerTrigger>
           <UIDrawerContent>

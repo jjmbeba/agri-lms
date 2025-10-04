@@ -48,4 +48,29 @@ export default defineSchema({
     content: v.string(),
     orderIndex: v.number(),
   }),
+  enrollment: defineTable({
+    courseId: v.id("course"),
+    userId: v.string(),
+    enrolledAt: v.string(),
+  }),
+  moduleProgress: defineTable({
+    moduleId: v.id("module"),
+    userId: v.string(),
+    enrollmentId: v.id("enrollment"),
+    status: v.union(
+      v.literal("inProgress"),
+      v.literal("completed"),
+      v.literal("notStarted")
+    ),
+    progressPercentage: v.number(),
+    completedAt: v.optional(v.string()),
+  }),
+  courseProgress: defineTable({
+    courseId: v.id("course"),
+    userId: v.string(),
+    enrollmentId: v.id("enrollment"),
+    status: v.union(v.literal("inProgress"), v.literal("completed")),
+    progressPercentage: v.number(),
+    completedAt: v.optional(v.string()),
+  }),
 });

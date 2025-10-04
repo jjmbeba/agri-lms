@@ -4,55 +4,14 @@ import { ProgressOverview } from "./progress-overview";
 import { QuickActions } from "./quick-actions";
 import { RecentActivity } from "./recent-activity";
 import { UpcomingDeadlines } from "./upcoming-deadlines";
+import WelcomeSection from "./welcome-section";
 
 // Mock data - in a real app, this would come from the database
 const mockStats = {
-  totalCourses: 8,
-  completedCourses: 3,
-  inProgressCourses: 5,
   totalStudyTime: "24h 30m",
   achievements: 12,
   averageScore: 87,
 };
-
-const mockCourses = [
-  {
-    id: "1",
-    title: "Sustainable Farming Practices",
-    description:
-      "Learn modern sustainable farming techniques that protect the environment while maximizing crop yield.",
-    instructor: "Dr. Sarah Johnson",
-    progress: 75,
-    duration: "8 weeks",
-    difficulty: "Intermediate" as const,
-    rating: 4.8,
-    lastAccessed: "2 days ago",
-  },
-  {
-    id: "2",
-    title: "Crop Rotation Techniques",
-    description:
-      "Master the art of crop rotation to improve soil health and prevent pest infestations.",
-    instructor: "Prof. Michael Chen",
-    progress: 100,
-    duration: "6 weeks",
-    difficulty: "Beginner" as const,
-    rating: 4.9,
-    lastAccessed: "1 week ago",
-  },
-  {
-    id: "3",
-    title: "Soil Health Assessment",
-    description:
-      "Comprehensive guide to assessing and improving soil health for better agricultural outcomes.",
-    instructor: "Dr. Emily Rodriguez",
-    progress: 45,
-    duration: "4 weeks",
-    difficulty: "Advanced" as const,
-    rating: 4.7,
-    lastAccessed: "1 day ago",
-  },
-];
 
 const mockProgress = {
   weeklyGoal: 10,
@@ -136,14 +95,7 @@ export function LearnerDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="px-4 lg:px-6">
-        <div className="py-6">
-          <h1 className="font-bold text-3xl tracking-tight">Welcome back!</h1>
-          <p className="text-muted-foreground">
-            Continue your learning journey and track your progress.
-          </p>
-        </div>
-      </div>
+      <WelcomeSection />
 
       {/* Stats Cards */}
       <LearnerDashboardStats {...mockStats} />
@@ -152,7 +104,7 @@ export function LearnerDashboard() {
       <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-3 lg:px-6">
         {/* Left Column */}
         <div className="grid gap-6 lg:col-span-2">
-          <EnrolledCourses courses={mockCourses} />
+          <EnrolledCourses />
           <ProgressOverview {...mockProgress} />
         </div>
 

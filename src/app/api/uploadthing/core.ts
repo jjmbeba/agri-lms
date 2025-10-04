@@ -7,7 +7,7 @@ const f = createUploadthing();
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
-  pdfUploader: f({
+  fileUploader: f({
     pdf: {
       /**
        * For full list of options and defaults, see the File Route API reference
@@ -16,6 +16,18 @@ export const ourFileRouter = {
       maxFileSize: "4MB",
       maxFileCount: 1,
     },
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    }
   })
 
     // Set permissions and file types for this FileRoute

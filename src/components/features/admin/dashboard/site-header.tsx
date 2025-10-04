@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { capitalize } from "@/lib/utils";
 import { getRouteBreadcrumbs } from "./utils";
@@ -50,7 +51,12 @@ export function SiteHeader() {
           </h1>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <UserButton />
+            <ClerkLoaded>
+              <UserButton />
+            </ClerkLoaded>
+            <ClerkLoading>
+              <Skeleton className="size-8 rounded-full" />
+            </ClerkLoading>
           </div>
         </div>
       </div>

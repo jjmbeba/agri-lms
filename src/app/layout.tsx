@@ -8,6 +8,8 @@ import { ConvexClientProvider } from "@/providers/convex-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import "./globals.css";
 import {
+  ClerkLoaded,
+  ClerkLoading,
   ClerkProvider,
   SignedIn,
   SignedOut,
@@ -16,6 +18,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -47,15 +50,20 @@ export default function RootLayout({
               enableSystem
             >
               <Navbar>
-                <SignedOut>
-                  <SignInButton />
-                  <SignUpButton>
-                    <Button size={"sm"}>Get Started</Button>
-                  </SignUpButton>
-                </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
+                <ClerkLoaded>
+                  <SignedOut>
+                    <SignInButton />
+                    <SignUpButton>
+                      <Button size={"sm"}>Get Started</Button>
+                    </SignUpButton>
+                  </SignedOut>
+                  <SignedIn>
+                    <UserButton />
+                  </SignedIn>
+                </ClerkLoaded>
+                <ClerkLoading>
+                  <Skeleton className="size-8 rounded-full" />
+                </ClerkLoading>
               </Navbar>
               <NuqsAdapter>{children}</NuqsAdapter>
               <Footer />

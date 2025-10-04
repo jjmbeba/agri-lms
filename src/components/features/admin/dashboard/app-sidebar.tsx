@@ -69,6 +69,11 @@ const data = {
       url: "/dashboard",
       icon: IconDashboard,
     },
+    {
+      title: "Courses",
+      url: "/courses",
+      icon: IconBook,
+    },
   ],
   navSecondary: [
     {
