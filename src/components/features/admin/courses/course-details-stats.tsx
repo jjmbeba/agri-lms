@@ -33,7 +33,7 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="font-medium text-sm">
-            Enrolled Students
+            Enrolled Students (dummy data)
           </CardTitle>
           <IconUsers className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
@@ -58,7 +58,7 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="font-medium text-sm">Average Rating</CardTitle>
+          <CardTitle className="font-medium text-sm">Average Rating (dummy data)</CardTitle>
           <IconBook className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -69,7 +69,7 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="font-medium text-sm">Course Duration</CardTitle>
+          <CardTitle className="font-medium text-sm">Course Duration (dummy data)</CardTitle>
           <IconClock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

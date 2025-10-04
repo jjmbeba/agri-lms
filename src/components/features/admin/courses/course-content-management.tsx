@@ -1,6 +1,28 @@
 "use client";
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { capitalize, cn, displayToastError } from "@/lib/utils";
+import {
   closestCenter,
   DndContext,
   type DragEndEvent,
@@ -26,28 +48,6 @@ import {
 } from "@tabler/icons-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { capitalize, cn, displayToastError } from "@/lib/utils";
 
 type SortableItemContextValue = {
   attributes: DraggableAttributes;
@@ -297,7 +297,7 @@ export function CourseContentManagement({
                           <h4 className="font-medium text-base sm:text-lg">
                             {module.title}
                           </h4>
-                          <p className="text-muted-foreground text-xs sm:text-sm">
+                          <p className="text-muted-foreground text-xs sm:text-sm max-w-2xl sm:max-w-lg">
                             {module.description}
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -318,9 +318,6 @@ export function CourseContentManagement({
                             onSuccess={onRefresh}
                           />
                         )}
-                        <Button size="sm" variant="outline">
-                          Preview
-                        </Button>
                         {/* Only show delete button for draft modules */}
                         {variant === "draft" && module.content && (
                           <AlertDialog>

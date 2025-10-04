@@ -45,9 +45,9 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
       <Tabs className="space-y-6" defaultValue="content">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="students">Students</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="students">Students (not implemented)</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics (not implemented)</TabsTrigger>
+          <TabsTrigger value="settings">Settings (not implemented)</TabsTrigger>
         </TabsList>
         <TabsContent className="space-y-6" value="content">
           <CourseContentTabs courseId={courseId} />

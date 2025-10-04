@@ -99,8 +99,8 @@ export const EnrolledCourseView = ({
                 <p className="text-muted-foreground text-sm">Modules Completed</p>
               </div>
               <div className="text-center">
-                <div className="font-bold text-2xl text-blue-600">{modulesCompleted}</div>
-                <p className="text-muted-foreground text-sm">Lessons Completed</p>
+                <div className="font-bold text-2xl text-blue-600">{totalModules}</div>
+                <p className="text-muted-foreground text-sm">Total Modules</p>
               </div>
             </div>
           </CardContent>

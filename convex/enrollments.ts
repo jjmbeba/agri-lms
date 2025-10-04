@@ -12,19 +12,54 @@ export const createEnrollment = mutation({
       throw new Error("Not authenticated");
     }
 
+
+    const existingEnrollment = await ctx.db
+      .query("enrollment")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("courseId"), args.courseId),
+          q.eq(q.field("userId"), identity.subject)
+        )
+      )
+      .first();
+
+    if (existingEnrollment) {
+      const existingProgress = await ctx.db
+        .query("courseProgress")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("userId"), identity.subject),
+            q.eq(q.field("courseId"), args.courseId),
+            q.eq(q.field("enrollmentId"), existingEnrollment._id)
+          )
+        )
+        .first();
+
+      if (!existingProgress) {
+        await ctx.db.insert("courseProgress", {
+          courseId: args.courseId,
+          userId: identity.subject,
+          enrollmentId: existingEnrollment._id,
+          status: "inProgress",
+          progressPercentage: 0,
+        });
+      }
+      return;
+    }
+
     const enrollment = await ctx.db.insert("enrollment", {
-      courseId: args.courseId,
-      userId: identity.subject,
-      enrolledAt: new Date().toISOString(),
-    });
+       courseId: args.courseId,
+       userId: identity.subject,
+       enrolledAt: new Date().toISOString(),
+     });
 
     await ctx.db.insert("courseProgress", {
-      courseId: args.courseId,
-      userId: identity.subject,
-      enrollmentId: enrollment,
-      status: "inProgress",
-      progressPercentage: 0,
-    });
+       courseId: args.courseId,
+       userId: identity.subject,
+       enrollmentId: enrollment,
+       status: "inProgress",
+       progressPercentage: 0,
+     });
   },
 });
 
@@ -277,24 +312,39 @@ export const updateModuleProgress = mutation({
       )
       .first();
 
-    const completedAt = args.status === "completed" ? new Date().toISOString() : undefined;
+     const normalizedProgress =
+      args.status === "completed"
+        ? 100
+        : args.status === "notStarted"
+          ? 0
+          : args.progressPercentage;
+
+    if (normalizedProgress < 0 || normalizedProgress > 100) {
+      throw new Error("progressPercentage must be between 0 and 100");
+    }
+
+    const patch: Record<string, unknown> = {
+      status: args.status,
+      progressPercentage: normalizedProgress,
+    };
+
+    if (args.status === "completed") {
+      patch.completedAt = new Date().toISOString();
+    } else if (existingProgress?.completedAt) {
+      patch.completedAt = undefined;
+    }
 
     if (existingProgress) {
-      // Update existing progress
-      await ctx.db.patch(existingProgress._id, {
-        status: args.status,
-        progressPercentage: args.progressPercentage,
-        completedAt,
-      });
+      await ctx.db.patch(existingProgress._id, patch);
+
     } else {
-      // Create new progress record
       await ctx.db.insert("moduleProgress", {
         moduleId: args.moduleId,
         userId: identity.subject,
         enrollmentId: enrollment._id,
         status: args.status,
-        progressPercentage: args.progressPercentage,
-        completedAt,
+        progressPercentage: normalizedProgress,
+        completedAt: args.status === "completed" ? new Date().toISOString() : undefined,
       });
     }
 
@@ -358,16 +408,24 @@ async function updateCourseProgress(
     .filter((q: any) => 
       q.and(
         q.eq(q.field("userId"), userId),
-        q.eq(q.field("courseId"), courseId)
+        q.eq(q.field("courseId"), courseId),
+        q.eq(q.field("enrollmentId"), enrollmentId)
       )
     )
     .first();
 
   if (courseProgress) {
-    await ctx.db.patch(courseProgress._id, {
+   const patch: Record<string, unknown> = {
       status: courseStatus,
       progressPercentage,
-      completedAt,
-    });
+    };
+
+    if (courseStatus === "completed") {
+      patch.completedAt = new Date().toISOString();
+    } else if (courseProgress.completedAt) {
+      patch.completedAt = undefined;
+    }
+
+    await ctx.db.patch(courseProgress._id, patch);
   }
 }

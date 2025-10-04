@@ -83,18 +83,23 @@ const FormDialog = ({
   );
 };
 
-const CreateModuleBtn = ({
+// Component that handles the form logic inside the provider
+const CreateModuleForm = ({
   showText = true,
   courseId,
 }: CreateModuleBtnProps) => {
   const isMobile = useIsMobile();
   const [currentStep, setCurrentStep] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
+  const { clearForm } = useModuleFormContext();
+  
   const { mutate: createDraftModule, isPending: isCreatingDraftModule } =
     useMutation({
       mutationFn: useConvexMutation(api.modules.createDraftModule),
       onSuccess: () => {
         setIsOpen(false);
+        setCurrentStep(1);
+        clearForm();
         toast.success("Draft module created successfully");
       },
       onError: (error) => {
@@ -128,19 +133,18 @@ const CreateModuleBtn = ({
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      // Reset form when dialog closes
+    if (open) {
+      // Reset to first step when dialog opens
       setCurrentStep(1);
     }
   };
 
   return (
-    <ModuleFormProvider>
-      <FormDialog
-        isMobile={isMobile}
-        isOpen={isOpen}
-        onOpenChange={handleDialogOpenChange}
-      >
+    <FormDialog
+      isMobile={isMobile}
+      isOpen={isOpen}
+      onOpenChange={handleDialogOpenChange}
+    >
         {isMobile ? (
           <>
             <DrawerTrigger asChild>
@@ -270,6 +274,13 @@ const CreateModuleBtn = ({
           </>
         )}
       </FormDialog>
+  );
+};
+
+const CreateModuleBtn = (props: CreateModuleBtnProps) => {
+  return (
+    <ModuleFormProvider>
+      <CreateModuleForm {...props} />
     </ModuleFormProvider>
   );
 };
