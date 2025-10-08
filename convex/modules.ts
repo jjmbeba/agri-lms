@@ -12,11 +12,21 @@ const basicInformationValidator = v.object({
   description: v.string(),
 });
 
+// Constants
+const DEFAULT_MAX_SCORE = 100;
+const DEFAULT_SUBMISSION_TYPE = "file" as const;
+
 const contentItemValidator = v.object({
   type: v.string(),
   title: v.string(),
   content: v.string(),
   metadata: v.optional(v.any()),
+  // Assignment-specific fields (optional)
+  dueDate: v.optional(v.string()),
+  maxScore: v.optional(v.number()),
+  submissionType: v.optional(
+    v.union(v.literal("file"), v.literal("text"), v.literal("url"))
+  ),
 });
 
 const contentValidator = v.object({
@@ -259,7 +269,28 @@ export const getDraftModulesByCourseId = query({
           .filter((q) => q.eq(q.field("draftModuleId"), m._id))
           .collect();
         content.sort((a, b) => a.orderIndex - b.orderIndex);
-        return { ...m, content };
+
+        // Fetch assignment data for assignment content items
+        const contentWithAssignments = await Promise.all(
+          content.map(async (item) => {
+            if (item.type === "assignment") {
+              const assignment = await ctx.db
+                .query("draftAssignment")
+                .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+                .first();
+
+              return {
+                ...item,
+                dueDate: assignment?.dueDate,
+                maxScore: assignment?.maxScore,
+                submissionType: assignment?.submissionType,
+              };
+            }
+            return item;
+          })
+        );
+
+        return { ...m, content: contentWithAssignments };
       })
     );
 
@@ -345,9 +376,9 @@ export const createDraftModule = mutation({
         await ctx.db.insert("draftAssignment", {
           draftModuleContentId,
           instructions: item.content,
-          maxScore: 100,
-          submissionType: "file",
-          dueDate: new Date().toISOString(),
+          maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
+          submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
+          dueDate: item.dueDate ?? new Date().toISOString(),
         });
       } else {
         await ctx.db.insert("draftModuleContent", {
@@ -424,7 +455,28 @@ export const getDraftModuleById = query({
       .filter((q) => q.eq(q.field("draftModuleId"), args.id))
       .collect();
     content.sort((a, b) => a.orderIndex - b.orderIndex);
-    return { ...m, content };
+
+    // Fetch assignment data for assignment content items
+    const contentWithAssignments = await Promise.all(
+      content.map(async (item) => {
+        if (item.type === "assignment") {
+          const assignment = await ctx.db
+            .query("draftAssignment")
+            .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+            .first();
+
+          return {
+            ...item,
+            dueDate: assignment?.dueDate,
+            maxScore: assignment?.maxScore,
+            submissionType: assignment?.submissionType,
+          };
+        }
+        return item;
+      })
+    );
+
+    return { ...m, content: contentWithAssignments };
   },
 });
 
@@ -484,9 +536,9 @@ export const updateDraftModule = mutation({
         await ctx.db.insert("draftAssignment", {
           draftModuleContentId,
           instructions: item.content,
-          maxScore: 100,
-          submissionType: "file",
-          dueDate: new Date().toISOString(),
+          maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
+          submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
+          dueDate: item.dueDate ?? new Date().toISOString(),
         });
       } else {
         await ctx.db.insert("draftModuleContent", {

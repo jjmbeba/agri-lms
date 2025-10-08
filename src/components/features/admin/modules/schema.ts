@@ -25,6 +25,10 @@ const contentItemSchema = z.object({
   title: z.string().min(1, {
     message: "Title is required",
   }),
+  // Assignment-specific fields (optional)
+  dueDate: z.string().optional(),
+  maxScore: z.number().optional(),
+  submissionType: z.enum(["file", "text", "url"]).optional(),
   //   orderIndex: z.number().min(0),
 });
 

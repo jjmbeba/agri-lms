@@ -214,19 +214,21 @@ const renderContentInput = (
 
     case "assignment":
       return (
-        <div className="space-y-2">
-          <Textarea
-            onChange={(e) => field.onChange(e.target.value)}
-            placeholder="Enter assignment instructions..."
-            rows={QUIZ_ROWS}
-            value={field.value}
-          />
-          <p className="text-muted-foreground text-xs">
-            Include submission requirements and due dates
-          </p>
-          {field.errors.map((error) => (
-            <FormError key={error} message={error} />
-          ))}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Textarea
+              onChange={(e) => field.onChange(e.target.value)}
+              placeholder="Enter assignment instructions..."
+              rows={QUIZ_ROWS}
+              value={field.value}
+            />
+            <p className="text-muted-foreground text-xs">
+              Include submission requirements and due dates
+            </p>
+            {field.errors.map((error) => (
+              <FormError key={error} message={error} />
+            ))}
+          </div>
         </div>
       );
 
@@ -585,6 +587,104 @@ const ContentForm: React.FC<ContentFormProps> = ({
                             </div>
                           )}
                         </form.Field>
+
+                        {/* Assignment-specific fields - only show for assignment type */}
+                        {item.type === "assignment" && (
+                          <>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <form.Field name={`content[${i}].dueDate`}>
+                                {(subField) => (
+                                  <div className="flex flex-col gap-2">
+                                    <Label>Due Date</Label>
+                                    <Input
+                                      onChange={(e) =>
+                                        subField.handleChange(e.target.value)
+                                      }
+                                      placeholder="Select due date"
+                                      type="datetime-local"
+                                      value={subField.state.value || ""}
+                                    />
+                                    {subField.state.meta.errors.map(
+                                      (error, index) => (
+                                        <FormError
+                                          key={index}
+                                          message={error?.message ?? ""}
+                                        />
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </form.Field>
+
+                              <form.Field name={`content[${i}].maxScore`}>
+                                {(subField) => (
+                                  <div className="flex flex-col gap-2">
+                                    <Label>Max Score</Label>
+                                    <Input
+                                      onChange={(e) =>
+                                        subField.handleChange(
+                                          Number(e.target.value)
+                                        )
+                                      }
+                                      placeholder="Enter max score"
+                                      type="number"
+                                      value={subField.state.value || ""}
+                                    />
+                                    {subField.state.meta.errors.map(
+                                      (error, index) => (
+                                        <FormError
+                                          key={index}
+                                          message={error?.message ?? ""}
+                                        />
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </form.Field>
+                            </div>
+
+                            <form.Field name={`content[${i}].submissionType`}>
+                              {(subField) => (
+                                <div className="flex flex-col gap-2">
+                                  <Label>Submission Type</Label>
+                                  <Select
+                                    defaultValue={
+                                      subField.state.value || "file"
+                                    }
+                                    onValueChange={(value) =>
+                                      subField.handleChange(
+                                        value as "file" | "text" | "url"
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select submission type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="file">
+                                        File Upload
+                                      </SelectItem>
+                                      <SelectItem value="text">
+                                        Text Submission
+                                      </SelectItem>
+                                      <SelectItem value="url">
+                                        URL Submission
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  {subField.state.meta.errors.map(
+                                    (error, index) => (
+                                      <FormError
+                                        key={index}
+                                        message={error?.message ?? ""}
+                                      />
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </form.Field>
+                          </>
+                        )}
                       </div>
                     );
                   })}

@@ -45,7 +45,11 @@ import type { ModuleFormData } from "./types";
 type EditModuleBtnProps = {
   moduleId: string;
   moduleData: Doc<"draftModule"> & {
-    content: Doc<"draftModuleContent">[];
+    content: (Doc<"draftModuleContent"> & {
+      dueDate?: string;
+      maxScore?: number;
+      submissionType?: "file" | "text" | "url";
+    })[];
   };
   onSuccess?: () => void;
 };
@@ -94,7 +98,11 @@ const EditModuleContent = ({
 }: {
   moduleId: string;
   moduleData: Doc<"draftModule"> & {
-    content: Doc<"draftModuleContent">[];
+    content: (Doc<"draftModuleContent"> & {
+      dueDate?: string;
+      maxScore?: number;
+      submissionType?: "file" | "text" | "url";
+    })[];
   };
   onSuccess?: () => void;
 }) => {
@@ -147,7 +155,7 @@ const EditModuleContent = ({
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      setCurrentStep(1); 
+      setCurrentStep(1);
     } else {
       setCurrentStep(1);
     }
