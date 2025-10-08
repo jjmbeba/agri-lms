@@ -8,7 +8,11 @@ import type {
 } from "./types";
 
 type ModuleWithContent = Doc<"draftModule"> & {
-  content: Doc<"draftModuleContent">[];
+  content: (Doc<"draftModuleContent"> & {
+    dueDate?: string;
+    maxScore?: number;
+    submissionType?: "file" | "text" | "url";
+  })[];
 };
 
 type ModuleFormContextType = {
@@ -77,11 +81,25 @@ export const ModuleFormProvider = ({ children }: ModuleFormProviderProps) => {
 
   const initializeForm = (moduleData: ModuleWithContent) => {
     // Convert database content items to ContentItem format
-    const contentItems: ContentItem[] = moduleData.content.map((item) => ({
-      type: item.type as ContentType,
-      content: item.content,
-      title: item.title,
-    }));
+    const contentItems: ContentItem[] = moduleData.content.map((item) => {
+      const baseItem = {
+        type: item.type as ContentType,
+        content: item.content,
+        title: item.title,
+      };
+
+      // Add assignment-specific fields if this is an assignment
+      if (item.type === "assignment" && "dueDate" in item) {
+        return {
+          ...baseItem,
+          dueDate: item.dueDate,
+          maxScore: item.maxScore,
+          submissionType: item.submissionType,
+        };
+      }
+
+      return baseItem;
+    });
 
     setFormData({
       basicInfo: {

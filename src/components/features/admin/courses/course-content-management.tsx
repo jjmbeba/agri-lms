@@ -1,28 +1,6 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { capitalize, cn, displayToastError } from "@/lib/utils";
-import {
   closestCenter,
   DndContext,
   type DragEndEvent,
@@ -48,6 +26,28 @@ import {
 } from "@tabler/icons-react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { capitalize, cn, displayToastError } from "@/lib/utils";
 
 type SortableItemContextValue = {
   attributes: DraggableAttributes;
@@ -156,7 +156,11 @@ const getLessonTypeColor = (type: string) => {
 };
 
 type DraftModuleWithContent = Doc<"draftModule"> & {
-  content: Doc<"draftModuleContent">[];
+  content: (Doc<"draftModuleContent"> & {
+    dueDate?: string;
+    maxScore?: number;
+    submissionType?: "file" | "text" | "url";
+  })[];
 };
 type ModuleWithContent = Doc<"module"> & {
   content: Doc<"moduleContent">[];
@@ -297,7 +301,7 @@ export function CourseContentManagement({
                           <h4 className="font-medium text-base sm:text-lg">
                             {module.title}
                           </h4>
-                          <p className="text-muted-foreground text-xs sm:text-sm max-w-2xl sm:max-w-lg">
+                          <p className="max-w-2xl text-muted-foreground text-xs sm:max-w-lg sm:text-sm">
                             {module.description}
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">

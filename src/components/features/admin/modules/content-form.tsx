@@ -1,14 +1,15 @@
 /** biome-ignore-all lint/suspicious/noArrayIndexKey: Have to do this because of the dynamic array */
 
 import { revalidateLogic, useForm } from "@tanstack/react-form";
+import { parseDate } from "chrono-node";
 import { Loader2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { generatePermittedFileTypes } from "uploadthing/client";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NaturalDayPicker } from "@/components/ui/natural-day-picker";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -79,22 +80,19 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("file");
-  const { startUpload, isUploading, routeConfig } = useUploadThing(
-    "fileUploader",
-    {
-      onClientUploadComplete: (res) => {
-        onChange(res?.[0].ufsUrl);
-      },
-      onUploadError: (error) => {
-        if (error.message.includes("FileSizeMismatch")) {
-          toast.error("File size exceeds the maximum allowed size");
-          return;
-        }
+  const { startUpload, isUploading } = useUploadThing("fileUploader", {
+    onClientUploadComplete: (res) => {
+      onChange(res?.[0].ufsUrl);
+    },
+    onUploadError: (error) => {
+      if (error.message.includes("FileSizeMismatch")) {
+        toast.error("File size exceeds the maximum allowed size");
+        return;
+      }
 
-        toast.error(error.message);
-      },
-    }
-  );
+      toast.error(error.message);
+    },
+  });
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -218,19 +216,21 @@ const renderContentInput = (
 
     case "assignment":
       return (
-        <div className="space-y-2">
-          <Textarea
-            onChange={(e) => field.onChange(e.target.value)}
-            placeholder="Enter assignment instructions..."
-            rows={QUIZ_ROWS}
-            value={field.value}
-          />
-          <p className="text-muted-foreground text-xs">
-            Include submission requirements and due dates
-          </p>
-          {field.errors.map((error) => (
-            <FormError key={error} message={error} />
-          ))}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Textarea
+              onChange={(e) => field.onChange(e.target.value)}
+              placeholder="Enter assignment instructions..."
+              rows={QUIZ_ROWS}
+              value={field.value}
+            />
+            <p className="text-muted-foreground text-xs">
+              Include submission requirements and due dates
+            </p>
+            {field.errors.map((error) => (
+              <FormError key={error} message={error} />
+            ))}
+          </div>
         </div>
       );
 
@@ -371,8 +371,6 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
     }
   };
 
-  console.log("accept", accept);
-
   return (
     <div className="space-y-2">
       {selectedFile ? (
@@ -429,7 +427,17 @@ const ContentForm: React.FC<ContentFormProps> = ({
       onDynamic: contentSchema,
     },
     onSubmit: ({ value }) => {
-      setContent(value.content);
+      const content = value.content.map((item) => {
+        if (item.type === "assignment" && item.dueDate) {
+          const parsedDate = parseDate(item.dueDate);
+          return {
+            ...item,
+            dueDate: parsedDate ? parsedDate.toString() : item.dueDate,
+          };
+        }
+        return item;
+      });
+      setContent(content);
       handleNextStep();
     },
   });
@@ -480,7 +488,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
                   {field.state.value.map((item: ContentItem, i: number) => {
                     return (
                       <div
-                        className="flex flex-col gap-4 rounded-lg border p-4 my-4 first:mt-0"
+                        className="my-4 flex flex-col gap-4 rounded-lg border p-4 first:mt-0"
                         key={i}
                       >
                         <div className="flex items-center justify-between">
@@ -591,6 +599,104 @@ const ContentForm: React.FC<ContentFormProps> = ({
                             </div>
                           )}
                         </form.Field>
+
+                        {/* Assignment-specific fields - only show for assignment type */}
+                        {item.type === "assignment" && (
+                          <>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <form.Field name={`content[${i}].dueDate`}>
+                                {(subField) => (
+                                  <div className="flex flex-col gap-2">
+                                    <Label>Due Date</Label>
+                                    <NaturalDayPicker
+                                      label="Assignment will be due on "
+                                      onValueChange={subField.handleChange}
+                                      value={subField.state.value || ""}
+                                    />
+                                    {subField.state.meta.errors.map(
+                                      (error, index) => (
+                                        <FormError
+                                          key={index}
+                                          message={error?.message ?? ""}
+                                        />
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </form.Field>
+                              <form.Field name={`content[${i}].maxScore`}>
+                                {(subField) => (
+                                  <div className="flex flex-col gap-2">
+                                    <Label>Max Score</Label>
+                                    <Input
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        subField.handleChange(
+                                          value === ""
+                                            ? undefined
+                                            : Number(value)
+                                        );
+                                      }}
+                                      placeholder="Enter max score"
+                                      type="number"
+                                      value={subField.state.value ?? ""}
+                                    />
+                                    {subField.state.meta.errors.map(
+                                      (error, index) => (
+                                        <FormError
+                                          key={index}
+                                          message={error?.message ?? ""}
+                                        />
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </form.Field>
+                            </div>
+
+                            <form.Field name={`content[${i}].submissionType`}>
+                              {(subField) => (
+                                <div className="flex flex-col gap-2">
+                                  <Label>Submission Type</Label>
+                                  <Select
+                                    defaultValue={
+                                      subField.state.value || "file"
+                                    }
+                                    onValueChange={(value) =>
+                                      subField.handleChange(
+                                        value as "file" | "text" | "url"
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select submission type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="file">
+                                        File Upload
+                                      </SelectItem>
+                                      <SelectItem value="text">
+                                        Text Submission
+                                      </SelectItem>
+                                      <SelectItem value="url">
+                                        URL Submission
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  {subField.state.meta.errors.map(
+                                    (error, index) => (
+                                      <FormError
+                                        key={index}
+                                        message={error?.message ?? ""}
+                                      />
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </form.Field>
+                          </>
+                        )}
                       </div>
                     );
                   })}

@@ -1,4 +1,5 @@
-import { z } from "zod";
+// biome-ignore lint/performance/noNamespaceImport: Recommended by Zod
+import * as z from "zod";
 
 export const createDepartmentSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),

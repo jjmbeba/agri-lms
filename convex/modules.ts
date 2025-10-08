@@ -12,11 +12,21 @@ const basicInformationValidator = v.object({
   description: v.string(),
 });
 
+// Constants
+const DEFAULT_MAX_SCORE = 100;
+const DEFAULT_SUBMISSION_TYPE = "file" as const;
+
 const contentItemValidator = v.object({
   type: v.string(),
   title: v.string(),
   content: v.string(),
   metadata: v.optional(v.any()),
+  // Assignment-specific fields (optional)
+  dueDate: v.optional(v.string()),
+  maxScore: v.optional(v.number()),
+  submissionType: v.optional(
+    v.union(v.literal("file"), v.literal("text"), v.literal("url"))
+  ),
 });
 
 const contentValidator = v.object({
@@ -97,14 +107,42 @@ async function publishModuleContent(
 
   for (let i = 0; i < draftContent.length; i++) {
     const item = draftContent[i];
-    await ctx.db.insert("moduleContent", {
-      moduleId: publishedModuleId,
-      type: item.type,
-      title: item.title,
-      content: item.content,
-      orderIndex: item.orderIndex,
-      position: i + 1,
-    });
+
+    if (item.type === "assignment") {
+      const moduleContentId = await ctx.db.insert("moduleContent", {
+        moduleId: publishedModuleId,
+        type: item.type,
+        title: item.title,
+        content: item.content,
+        orderIndex: item.orderIndex,
+        position: i + 1,
+      });
+
+      // Get the corresponding draftAssignment
+      const draftAssignment = await ctx.db
+        .query("draftAssignment")
+        .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+        .first();
+
+      if (draftAssignment) {
+        await ctx.db.insert("assignment", {
+          moduleContentId,
+          instructions: draftAssignment.instructions,
+          maxScore: draftAssignment.maxScore,
+          submissionType: draftAssignment.submissionType,
+          dueDate: draftAssignment.dueDate,
+        });
+      }
+    } else {
+      await ctx.db.insert("moduleContent", {
+        moduleId: publishedModuleId,
+        type: item.type,
+        title: item.title,
+        content: item.content,
+        orderIndex: item.orderIndex,
+        position: i + 1,
+      });
+    }
   }
 }
 
@@ -137,14 +175,41 @@ async function reseedModuleContent(
   publishedContent.sort((a, b) => a.orderIndex - b.orderIndex);
 
   for (const c of publishedContent) {
-    await ctx.db.insert("draftModuleContent", {
-      draftModuleId,
-      type: c.type,
-      title: c.title,
-      content: c.content,
-      orderIndex: c.orderIndex,
-      position: c.position,
-    });
+    if (c.type === "assignment") {
+      const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+        draftModuleId,
+        type: c.type,
+        title: c.title,
+        content: c.content,
+        orderIndex: c.orderIndex,
+        position: c.position,
+      });
+
+      // Get the corresponding published assignment
+      const publishedAssignment = await ctx.db
+        .query("assignment")
+        .filter((q) => q.eq(q.field("moduleContentId"), c._id))
+        .first();
+
+      if (publishedAssignment) {
+        await ctx.db.insert("draftAssignment", {
+          draftModuleContentId,
+          instructions: publishedAssignment.instructions,
+          maxScore: publishedAssignment.maxScore,
+          submissionType: publishedAssignment.submissionType,
+          dueDate: publishedAssignment.dueDate,
+        });
+      }
+    } else {
+      await ctx.db.insert("draftModuleContent", {
+        draftModuleId,
+        type: c.type,
+        title: c.title,
+        content: c.content,
+        orderIndex: c.orderIndex,
+        position: c.position,
+      });
+    }
   }
 }
 
@@ -204,7 +269,28 @@ export const getDraftModulesByCourseId = query({
           .filter((q) => q.eq(q.field("draftModuleId"), m._id))
           .collect();
         content.sort((a, b) => a.orderIndex - b.orderIndex);
-        return { ...m, content };
+
+        // Fetch assignment data for assignment content items
+        const contentWithAssignments = await Promise.all(
+          content.map(async (item) => {
+            if (item.type === "assignment") {
+              const assignment = await ctx.db
+                .query("draftAssignment")
+                .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+                .first();
+
+              return {
+                ...item,
+                dueDate: assignment?.dueDate,
+                maxScore: assignment?.maxScore,
+                submissionType: assignment?.submissionType,
+              };
+            }
+            return item;
+          })
+        );
+
+        return { ...m, content: contentWithAssignments };
       })
     );
 
@@ -276,14 +362,34 @@ export const createDraftModule = mutation({
     const items = args.content.content ?? [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      await ctx.db.insert("draftModuleContent", {
-        draftModuleId,
-        type: item.type,
-        title: item.title,
-        content: item.content,
-        orderIndex: i,
-        position: i + 1,
-      });
+
+      if (item.type === "assignment") {
+        const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+          draftModuleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+
+        await ctx.db.insert("draftAssignment", {
+          draftModuleContentId,
+          instructions: item.content,
+          maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
+          submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
+          dueDate: item.dueDate,
+        });
+      } else {
+        await ctx.db.insert("draftModuleContent", {
+          draftModuleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+      }
     }
 
     return await ctx.db.get(draftModuleId);
@@ -349,7 +455,28 @@ export const getDraftModuleById = query({
       .filter((q) => q.eq(q.field("draftModuleId"), args.id))
       .collect();
     content.sort((a, b) => a.orderIndex - b.orderIndex);
-    return { ...m, content };
+
+    // Fetch assignment data for assignment content items
+    const contentWithAssignments = await Promise.all(
+      content.map(async (item) => {
+        if (item.type === "assignment") {
+          const assignment = await ctx.db
+            .query("draftAssignment")
+            .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+            .first();
+
+          return {
+            ...item,
+            dueDate: assignment?.dueDate,
+            maxScore: assignment?.maxScore,
+            submissionType: assignment?.submissionType,
+          };
+        }
+        return item;
+      })
+    );
+
+    return { ...m, content: contentWithAssignments };
   },
 });
 
@@ -377,21 +504,52 @@ export const updateDraftModule = mutation({
       .query("draftModuleContent")
       .filter((q) => q.eq(q.field("draftModuleId"), args.moduleId))
       .collect();
+
+    // Delete existing draftAssignment records for assignment content items
     for (const c of oldContent) {
+      if (c.type === "assignment") {
+        const existingAssignment = await ctx.db
+          .query("draftAssignment")
+          .filter((q) => q.eq(q.field("draftModuleContentId"), c._id))
+          .first();
+        if (existingAssignment) {
+          await ctx.db.delete(existingAssignment._id);
+        }
+      }
       await ctx.db.delete(c._id);
     }
 
     const items = args.content.content ?? [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      await ctx.db.insert("draftModuleContent", {
-        draftModuleId: args.moduleId,
-        type: item.type,
-        title: item.title,
-        content: item.content,
-        orderIndex: i,
-        position: i + 1,
-      });
+
+      if (item.type === "assignment") {
+        const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+          draftModuleId: args.moduleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+
+        await ctx.db.insert("draftAssignment", {
+          draftModuleContentId,
+          instructions: item.content,
+          maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
+          submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
+          dueDate: item.dueDate,
+        });
+      } else {
+        await ctx.db.insert("draftModuleContent", {
+          draftModuleId: args.moduleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+      }
     }
 
     return await ctx.db.get(args.moduleId);

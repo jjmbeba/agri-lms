@@ -12,6 +12,10 @@ export type ContentItem = {
   content: string;
   file?: File;
   metadata?: Record<string, unknown>;
+  // Assignment-specific fields
+  dueDate?: string;
+  maxScore?: number;
+  submissionType?: "file" | "text" | "url";
 };
 
 export type ContentFormData = {
