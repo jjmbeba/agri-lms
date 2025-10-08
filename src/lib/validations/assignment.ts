@@ -9,7 +9,7 @@ export const assignmentSubmissionSchema = z.object({
 });
 
 export const fileSubmissionSchema = z.object({
-  content: z.string().url("Invalid file URL"),
+  content: z.url("Invalid file URL"),
 });
 
 const MAX_TEXT_LENGTH = 10_000;
