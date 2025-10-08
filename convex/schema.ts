@@ -48,6 +48,17 @@ export default defineSchema({
     content: v.string(),
     orderIndex: v.number(),
   }),
+  draftAssignment: defineTable({
+    draftModuleContentId: v.id("draftModuleContent"),
+    instructions: v.string(),
+    dueDate: v.string(),
+    maxScore: v.number(),
+    submissionType: v.union(
+      v.literal("file"),
+      v.literal("text"),
+      v.literal("url")
+    ),
+  }),
   enrollment: defineTable({
     courseId: v.id("course"),
     userId: v.string(),

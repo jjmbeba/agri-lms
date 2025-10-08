@@ -276,14 +276,34 @@ export const createDraftModule = mutation({
     const items = args.content.content ?? [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      await ctx.db.insert("draftModuleContent", {
-        draftModuleId,
-        type: item.type,
-        title: item.title,
-        content: item.content,
-        orderIndex: i,
-        position: i + 1,
-      });
+
+      if (item.type === "assignment") {
+        const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+          draftModuleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+
+        await ctx.db.insert("draftAssignment", {
+          draftModuleContentId,
+          instructions: item.content,
+          maxScore: 100,
+          submissionType: "file",
+          dueDate: new Date().toISOString(),
+        });
+      } else {
+        await ctx.db.insert("draftModuleContent", {
+          draftModuleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+      }
     }
 
     return await ctx.db.get(draftModuleId);
@@ -377,21 +397,52 @@ export const updateDraftModule = mutation({
       .query("draftModuleContent")
       .filter((q) => q.eq(q.field("draftModuleId"), args.moduleId))
       .collect();
+
+    // Delete existing draftAssignment records for assignment content items
     for (const c of oldContent) {
+      if (c.type === "assignment") {
+        const existingAssignment = await ctx.db
+          .query("draftAssignment")
+          .filter((q) => q.eq(q.field("draftModuleContentId"), c._id))
+          .first();
+        if (existingAssignment) {
+          await ctx.db.delete(existingAssignment._id);
+        }
+      }
       await ctx.db.delete(c._id);
     }
 
     const items = args.content.content ?? [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      await ctx.db.insert("draftModuleContent", {
-        draftModuleId: args.moduleId,
-        type: item.type,
-        title: item.title,
-        content: item.content,
-        orderIndex: i,
-        position: i + 1,
-      });
+
+      if (item.type === "assignment") {
+        const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+          draftModuleId: args.moduleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+
+        await ctx.db.insert("draftAssignment", {
+          draftModuleContentId,
+          instructions: item.content,
+          maxScore: 100,
+          submissionType: "file",
+          dueDate: new Date().toISOString(),
+        });
+      } else {
+        await ctx.db.insert("draftModuleContent", {
+          draftModuleId: args.moduleId,
+          type: item.type,
+          title: item.title,
+          content: item.content,
+          orderIndex: i,
+          position: i + 1,
+        });
+      }
     }
 
     return await ctx.db.get(args.moduleId);
