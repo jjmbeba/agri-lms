@@ -1,6 +1,8 @@
 "use client";
 
+import { convexQuery } from "@convex-dev/react-query";
 import { IconBook, IconClock, IconStar, IconVideo } from "@tabler/icons-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,26 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../../../convex/_generated/api";
-import { useSuspenseQuery } from "@tanstack/react-query";
-
-type EnrolledCourse = {
-  id: string;
-  title: string;
-  description: string;
-  instructor: string;
-  progress: number;
-  duration: string;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  rating: number;
-  lastAccessed: string;
-  thumbnail?: string;
-};
-
-type EnrolledCoursesProps = {
-  courses: EnrolledCourse[];
-};
 
 export function EnrolledCourses() {
   const { data: courses } = useSuspenseQuery(

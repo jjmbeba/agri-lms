@@ -270,25 +270,52 @@ export const getDraftModulesByCourseId = query({
           .collect();
         content.sort((a, b) => a.orderIndex - b.orderIndex);
 
-        // Fetch assignment data for assignment content items
-        const contentWithAssignments = await Promise.all(
-          content.map(async (item) => {
-            if (item.type === "assignment") {
-              const assignment = await ctx.db
-                .query("draftAssignment")
-                .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
-                .first();
+        // Batch fetch all draft assignments for assignment content items
+        const assignmentContentIds = content
+          .filter((item) => item.type === "assignment")
+          .map((item) => item._id);
 
-              return {
-                ...item,
-                dueDate: assignment?.dueDate,
-                maxScore: assignment?.maxScore,
-                submissionType: assignment?.submissionType,
-              };
-            }
-            return item;
-          })
+        const draftAssignments =
+          assignmentContentIds.length > 0
+            ? await ctx.db
+                .query("draftAssignment")
+                .filter((q) =>
+                  q.or(
+                    ...assignmentContentIds.map((id) =>
+                      q.eq(q.field("draftModuleContentId"), id)
+                    )
+                  )
+                )
+                .collect()
+            : [];
+
+        // Create a map of draftModuleContentId to draft assignment for quick lookup
+        const assignmentMap = new Map(
+          draftAssignments.map((assignment) => [
+            assignment.draftModuleContentId,
+            assignment,
+          ])
         );
+
+        // Merge assignment data with content items
+        const contentWithAssignments = content.map((item) => {
+          if (item.type === "assignment") {
+            const assignment = assignmentMap.get(item._id);
+            if (!assignment) {
+              throw new Error(
+                `Draft assignment not found for module content ${item._id}`
+              );
+            }
+
+            return {
+              ...item,
+              dueDate: assignment.dueDate,
+              maxScore: assignment.maxScore,
+              submissionType: assignment.submissionType,
+            };
+          }
+          return item;
+        });
 
         return { ...m, content: contentWithAssignments };
       })
@@ -324,7 +351,57 @@ export const getModulesByLatestVersionId = query({
           .filter((q) => q.eq(q.field("moduleId"), m._id))
           .collect();
         content.sort((a, b) => a.orderIndex - b.orderIndex);
-        return { ...m, content };
+
+        // Batch fetch all assignments for assignment content items
+        const assignmentContentIds = content
+          .filter((item) => item.type === "assignment")
+          .map((item) => item._id);
+
+        const assignments =
+          assignmentContentIds.length > 0
+            ? await ctx.db
+                .query("assignment")
+                .filter((q) =>
+                  q.or(
+                    ...assignmentContentIds.map((id) =>
+                      q.eq(q.field("moduleContentId"), id)
+                    )
+                  )
+                )
+                .collect()
+            : [];
+
+        // Create a map of moduleContentId to assignment for quick lookup
+        const assignmentMap = new Map(
+          assignments.map((assignment) => [
+            assignment.moduleContentId,
+            assignment,
+          ])
+        );
+
+        // Merge assignment data with content items
+        const contentWithAssignments = content.map((item) => {
+          if (item.type === "assignment") {
+            const assignment = assignmentMap.get(item._id);
+            if (!assignment) {
+              throw new Error(
+                `Assignment not found for module content ${item._id}`
+              );
+            }
+
+            return {
+              ...item,
+              assignmentId: assignment._id,
+              dueDate: assignment.dueDate,
+              maxScore: assignment.maxScore,
+              submissionType: assignment.submissionType,
+              instructions: assignment.instructions,
+            };
+          }
+          return item;
+        });
+
+        return { ...m, content: contentWithAssignments };
       })
     );
     return modulesWithContent;
@@ -456,25 +533,52 @@ export const getDraftModuleById = query({
       .collect();
     content.sort((a, b) => a.orderIndex - b.orderIndex);
 
-    // Fetch assignment data for assignment content items
-    const contentWithAssignments = await Promise.all(
-      content.map(async (item) => {
-        if (item.type === "assignment") {
-          const assignment = await ctx.db
-            .query("draftAssignment")
-            .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
-            .first();
+    // Batch fetch all draft assignments for assignment content items
+    const assignmentContentIds = content
+      .filter((item) => item.type === "assignment")
+      .map((item) => item._id);
 
-          return {
-            ...item,
-            dueDate: assignment?.dueDate,
-            maxScore: assignment?.maxScore,
-            submissionType: assignment?.submissionType,
-          };
-        }
-        return item;
-      })
+    const draftAssignments =
+      assignmentContentIds.length > 0
+        ? await ctx.db
+            .query("draftAssignment")
+            .filter((q) =>
+              q.or(
+                ...assignmentContentIds.map((id) =>
+                  q.eq(q.field("draftModuleContentId"), id)
+                )
+              )
+            )
+            .collect()
+        : [];
+
+    // Create a map of draftModuleContentId to draft assignment for quick lookup
+    const assignmentMap = new Map(
+      draftAssignments.map((assignment) => [
+        assignment.draftModuleContentId,
+        assignment,
+      ])
     );
+
+    // Merge assignment data with content items
+    const contentWithAssignments = content.map((item) => {
+      if (item.type === "assignment") {
+        const assignment = assignmentMap.get(item._id);
+        if (!assignment) {
+          throw new Error(
+            `Draft assignment not found for module content ${item._id}`
+          );
+        }
+
+        return {
+          ...item,
+          dueDate: assignment.dueDate,
+          maxScore: assignment.maxScore,
+          submissionType: assignment.submissionType,
+        };
+      }
+      return item;
+    });
 
     return { ...m, content: contentWithAssignments };
   },

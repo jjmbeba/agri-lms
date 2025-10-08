@@ -20,14 +20,15 @@ export const ourFileRouter = {
       maxFileSize: "4MB",
       maxFileCount: 1,
     },
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
       maxFileSize: "4MB",
       maxFileCount: 1,
     },
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
-      maxFileSize: "4MB",
-      maxFileCount: 1,
-    }
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      {
+        maxFileSize: "4MB",
+        maxFileCount: 1,
+      },
   })
 
     // Set permissions and file types for this FileRoute
@@ -64,6 +65,37 @@ export const ourFileRouter = {
       }
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
+      return { userId: session.userId };
+    })
+    .onUploadComplete(({ metadata }) => {
+      return { uploadedBy: metadata.userId };
+    }),
+  assignmentUploader: f({
+    pdf: {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      {
+        maxFileSize: "4MB",
+        maxFileCount: 1,
+      },
+  })
+    .middleware(async () => {
+      const session = await auth();
+
+      if (!session.userId) {
+        throw new UploadThingError("Unauthorized");
+      }
+
       return { userId: session.userId };
     })
     .onUploadComplete(({ metadata }) => {

@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 
 type CourseContentItem = {
   _id: Id<"module">;
