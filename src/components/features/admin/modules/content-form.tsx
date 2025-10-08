@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noArrayIndexKey: Have to do this because of the dynamic array */
 
 import { revalidateLogic, useForm } from "@tanstack/react-form";
+import { parseDate } from "chrono-node";
 import { Loader2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NaturalDayPicker } from "@/components/ui/natural-day-picker";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -425,7 +427,16 @@ const ContentForm: React.FC<ContentFormProps> = ({
       onDynamic: contentSchema,
     },
     onSubmit: ({ value }) => {
-      setContent(value.content);
+      const content = value.content.map((item) => {
+        if (item.type === "assignment" && item.dueDate) {
+          return {
+            ...item,
+            dueDate: parseDate(item.dueDate)?.toString(),
+          };
+        }
+        return item;
+      });
+      setContent(content);
       handleNextStep();
     },
   });
@@ -596,12 +607,17 @@ const ContentForm: React.FC<ContentFormProps> = ({
                                 {(subField) => (
                                   <div className="flex flex-col gap-2">
                                     <Label>Due Date</Label>
-                                    <Input
+                                    {/* <Input
                                       onChange={(e) =>
                                         subField.handleChange(e.target.value)
                                       }
                                       placeholder="Select due date"
                                       type="datetime-local"
+                                      value={subField.state.value || ""}
+                                    /> */}
+                                    <NaturalDayPicker
+                                      label="Assignment will be due on "
+                                      onValueChange={subField.handleChange}
                                       value={subField.state.value || ""}
                                     />
                                     {subField.state.meta.errors.map(
@@ -615,7 +631,6 @@ const ContentForm: React.FC<ContentFormProps> = ({
                                   </div>
                                 )}
                               </form.Field>
-
                               <form.Field name={`content[${i}].maxScore`}>
                                 {(subField) => (
                                   <div className="flex flex-col gap-2">
