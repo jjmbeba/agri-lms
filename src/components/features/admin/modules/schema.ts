@@ -1,4 +1,5 @@
-import { z } from "zod";
+// biome-ignore lint/performance/noNamespaceImport: Recommended by Zod
+import * as z from "zod";
 
 export const basicInformationSchema = z.object({
   title: z.string().min(1, {

@@ -4,7 +4,6 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { Loader2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { generatePermittedFileTypes } from "uploadthing/client";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
@@ -79,22 +78,19 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("file");
-  const { startUpload, isUploading, routeConfig } = useUploadThing(
-    "fileUploader",
-    {
-      onClientUploadComplete: (res) => {
-        onChange(res?.[0].ufsUrl);
-      },
-      onUploadError: (error) => {
-        if (error.message.includes("FileSizeMismatch")) {
-          toast.error("File size exceeds the maximum allowed size");
-          return;
-        }
+  const { startUpload, isUploading } = useUploadThing("fileUploader", {
+    onClientUploadComplete: (res) => {
+      onChange(res?.[0].ufsUrl);
+    },
+    onUploadError: (error) => {
+      if (error.message.includes("FileSizeMismatch")) {
+        toast.error("File size exceeds the maximum allowed size");
+        return;
+      }
 
-        toast.error(error.message);
-      },
-    }
-  );
+      toast.error(error.message);
+    },
+  });
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -371,8 +367,6 @@ const FileUploadInput: React.FC<FileUploadProps> = ({
     }
   };
 
-  console.log("accept", accept);
-
   return (
     <div className="space-y-2">
       {selectedFile ? (
@@ -480,7 +474,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
                   {field.state.value.map((item: ContentItem, i: number) => {
                     return (
                       <div
-                        className="flex flex-col gap-4 rounded-lg border p-4 my-4 first:mt-0"
+                        className="my-4 flex flex-col gap-4 rounded-lg border p-4 first:mt-0"
                         key={i}
                       >
                         <div className="flex items-center justify-between">
