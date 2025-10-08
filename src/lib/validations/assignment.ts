@@ -88,7 +88,9 @@ export function formatDueDate(dueDate: string | undefined): string {
   const date = new Date(dueDate);
   const now = new Date();
   const diffTime = date.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / MILLISECONDS_PER_DAY);
+  const diffDaysRaw = diffTime / MILLISECONDS_PER_DAY;
+  const diffDays =
+    diffTime < 0 ? Math.floor(diffDaysRaw) : Math.ceil(diffDaysRaw);
 
   if (diffDays < 0) {
     return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? "" : "s"}`;
