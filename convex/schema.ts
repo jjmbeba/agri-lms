@@ -95,4 +95,24 @@ export default defineSchema({
     progressPercentage: v.number(),
     completedAt: v.optional(v.string()),
   }),
+  assignmentSubmission: defineTable({
+    assignmentId: v.id("assignment"),
+    userId: v.string(),
+    enrollmentId: v.id("enrollment"),
+    submissionType: v.union(
+      v.literal("file"),
+      v.literal("text"),
+      v.literal("url")
+    ),
+    content: v.string(), // File URL, text content, or URL
+    submittedAt: v.string(),
+    isLate: v.boolean(),
+    attemptNumber: v.number(),
+    status: v.union(v.literal("submitted"), v.literal("graded")),
+    // Optional grading fields for future implementation
+    score: v.optional(v.number()),
+    feedback: v.optional(v.string()),
+    gradedAt: v.optional(v.string()),
+    gradedBy: v.optional(v.string()),
+  }),
 });

@@ -135,7 +135,8 @@ export const getUserCourseProgress = query({
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
-      throw new Error("Not authenticated");
+      // throw new Error("Not authenticated");
+      return null;
     }
 
     // Get course progress

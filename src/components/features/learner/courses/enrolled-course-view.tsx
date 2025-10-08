@@ -1,5 +1,7 @@
 "use client";
 
+import { BookOpen, Clock, Play, Users } from "lucide-react";
+import { AssignmentItem } from "@/components/features/learner/assignments/assignment-item";
 import {
   Accordion,
   AccordionContent,
@@ -11,9 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, Clock, Play, Users } from "lucide-react";
-import type { Id } from "../../../convex/_generated/dataModel";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 
 type CourseContentItem = {
   _id: Id<"module">;
@@ -26,6 +26,12 @@ type CourseContentItem = {
     content?: string;
     orderIndex: number;
     position: number;
+    // Assignment-specific fields
+    assignmentId?: Id<"assignment">;
+    dueDate?: string;
+    maxScore?: number;
+    submissionType?: "file" | "text" | "url";
+    instructions?: string;
   }>;
 };
 
@@ -41,14 +47,14 @@ type EnrolledCourseViewProps = {
     modulesCompleted: number;
     totalModules: number;
     modulesProgress: {
-        moduleId: Id<"module">;
-        title: string;
-        position: number;
-        status: "inProgress" | "completed" | "notStarted";
-        progressPercentage: number;
-        completedAt: string | undefined;
+      moduleId: Id<"module">;
+      title: string;
+      position: number;
+      status: "inProgress" | "completed" | "notStarted";
+      progressPercentage: number;
+      completedAt: string | undefined;
     }[];
-}
+  };
 };
 
 export const EnrolledCourseView = ({
@@ -58,7 +64,12 @@ export const EnrolledCourseView = ({
 }: EnrolledCourseViewProps) => {
   const c = course.course;
   const d = course.department;
-  const {progressPercentage, modulesCompleted, totalModules, modulesProgress} = progress;
+  const {
+    progressPercentage,
+    modulesCompleted,
+    totalModules,
+    modulesProgress,
+  } = progress;
 
   return (
     <div className="space-y-6">
@@ -68,7 +79,10 @@ export const EnrolledCourseView = ({
           <div className="flex-1">
             <div className="mb-2 flex items-center gap-3">
               <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge
+                className="border-green-200 bg-green-50 text-green-700"
+                variant="outline"
+              >
                 Enrolled
               </Badge>
             </div>
@@ -90,16 +104,22 @@ export const EnrolledCourseView = ({
                 <span>Overall Progress</span>
                 <span className="font-medium">{progressPercentage}%</span>
               </div>
-              <Progress value={progressPercentage} className="h-2" />
+              <Progress className="h-2" value={progressPercentage} />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div className="text-center">
-                <div className="font-bold text-2xl text-green-600">{modulesCompleted}</div>
-                <p className="text-muted-foreground text-sm">Modules Completed</p>
+                <div className="font-bold text-2xl text-green-600">
+                  {modulesCompleted}
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  Modules Completed
+                </p>
               </div>
               <div className="text-center">
-                <div className="font-bold text-2xl text-blue-600">{totalModules}</div>
+                <div className="font-bold text-2xl text-blue-600">
+                  {totalModules}
+                </div>
                 <p className="text-muted-foreground text-sm">Total Modules</p>
               </div>
             </div>
@@ -150,13 +170,15 @@ export const EnrolledCourseView = ({
                   const items = (m.content ?? [])
                     .slice()
                     .sort((a, b) => a.position - b.position);
-                  
-                  const isCompleted = modulesProgress.find(mp => mp.moduleId === m._id)?.status === "completed";
-                  
+
+                  const isCompleted =
+                    modulesProgress.find((mp) => mp.moduleId === m._id)
+                      ?.status === "completed";
+
                   return (
                     <AccordionItem
                       className={`rounded-md border ${
-                        isCompleted ? "bg-green-50 border-green-200" : ""
+                        isCompleted ? "border-green-200 bg-green-50" : ""
                       }`}
                       key={m._id}
                       value={m._id}
@@ -165,16 +187,16 @@ export const EnrolledCourseView = ({
                         <div className="min-w-0 flex-1">
                           <AccordionTrigger className="text-left">
                             <div className="flex items-center gap-3">
-                              <div className={`flex size-8 items-center justify-center rounded-full text-xs font-medium ${
-                                isCompleted 
-                                  ? "bg-green-100 text-green-700" 
-                                  : "bg-gray-100 text-gray-600"
-                              }`}>
+                              <div
+                                className={`flex size-8 items-center justify-center rounded-full font-medium text-xs ${
+                                  isCompleted
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-gray-100 text-gray-600"
+                                }`}
+                              >
                                 {isCompleted ? "✓" : m.position}
                               </div>
-                              <h3 className="font-medium text-sm">
-                                {m.title}
-                              </h3>
+                              <h3 className="font-medium text-sm">{m.title}</h3>
                             </div>
                           </AccordionTrigger>
                           {m.description && (
@@ -188,7 +210,10 @@ export const EnrolledCourseView = ({
                             {items.length} lesson{items.length === 1 ? "" : "s"}
                           </span>
                           {isCompleted && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge
+                              className="border-green-200 bg-green-50 text-green-700"
+                              variant="outline"
+                            >
                               Completed
                             </Badge>
                           )}
@@ -202,7 +227,23 @@ export const EnrolledCourseView = ({
                           >
                             {items.map((it) => {
                               const isItemCompleted = false; // This would come from progress data
-                              
+
+                              // Render assignment items with special component
+                              if (it.type === "assignment" && it.assignmentId) {
+                                return (
+                                  <AssignmentItem
+                                    assignmentId={it.assignmentId}
+                                    content={it.content || ""}
+                                    isCompleted={isItemCompleted}
+                                    key={`${m._id}-${it.position}`}
+                                    orderIndex={it.orderIndex}
+                                    position={it.position}
+                                    title={it.title}
+                                  />
+                                );
+                              }
+
+                              // Render other content types normally
                               return (
                                 <li
                                   className={`flex items-start justify-between gap-3 px-4 py-3 ${
@@ -212,12 +253,16 @@ export const EnrolledCourseView = ({
                                 >
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
-                                      <div className={`flex size-6 items-center justify-center rounded-full text-xs ${
-                                        isItemCompleted 
-                                          ? "bg-green-100 text-green-700" 
-                                          : "bg-gray-100 text-gray-600"
-                                      }`}>
-                                        {isItemCompleted ? "✓" : it.orderIndex + 1}
+                                      <div
+                                        className={`flex size-6 items-center justify-center rounded-full text-xs ${
+                                          isItemCompleted
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-gray-100 text-gray-600"
+                                        }`}
+                                      >
+                                        {isItemCompleted
+                                          ? "✓"
+                                          : it.orderIndex + 1}
                                       </div>
                                       <p className="text-sm">
                                         <span className="font-medium">
@@ -236,7 +281,10 @@ export const EnrolledCourseView = ({
                                       {it.type}
                                     </span>
                                     {isItemCompleted && (
-                                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                                      <Badge
+                                        className="border-green-200 bg-green-50 text-green-700 text-xs"
+                                        variant="outline"
+                                      >
                                         Done
                                       </Badge>
                                     )}
@@ -259,8 +307,8 @@ export const EnrolledCourseView = ({
                 })}
             </Accordion>
           ) : (
-            <div className="text-center py-8">
-              <BookOpen className="mx-auto size-12 text-muted-foreground mb-4" />
+            <div className="py-8 text-center">
+              <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
               <p className="text-muted-foreground">No modules available yet.</p>
             </div>
           )}

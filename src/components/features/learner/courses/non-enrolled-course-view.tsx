@@ -1,21 +1,20 @@
 "use client";
 
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  Play,
+  Star,
+  Users,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { 
-  BookOpen, 
-  Clock, 
-  Star, 
-  Users, 
-  CheckCircle, 
-  ArrowRight,
-  Play,
-  Award
-} from "lucide-react";
-import type { Id } from "../../../convex/_generated/dataModel";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import EnrollCourseBtn from "./enroll-course-btn";
 
 type CourseContentItem = {
@@ -59,11 +58,11 @@ export const NonEnrolledCourseView = ({
 
   const courseFeatures = [
     "Interactive lessons with real-world examples",
-    "Hands-on projects and assignments", 
+    "Hands-on projects and assignments",
     "Expert instructor guidance",
     "Certificate of completion",
     "Lifetime access to course materials",
-    "Community support and discussions"
+    "Community support and discussions",
   ];
 
   return (
@@ -87,12 +86,16 @@ export const NonEnrolledCourseView = ({
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Star className="size-4 text-yellow-500" />
-                <span className="font-bold text-lg">{courseStats.averageRating}</span>
+                <span className="font-bold text-lg">
+                  {courseStats.averageRating}
+                </span>
               </div>
-              <p className="text-muted-foreground text-sm">Average Rating (dummy data)</p>
+              <p className="text-muted-foreground text-sm">
+                Average Rating (dummy data)
+              </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
@@ -102,14 +105,18 @@ export const NonEnrolledCourseView = ({
               <p className="text-muted-foreground text-sm">Modules</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Clock className="size-4 text-purple-500" />
-                <span className="font-bold text-lg">~{courseStats.estimatedTimeHours}h</span>
+                <span className="font-bold text-lg">
+                  ~{courseStats.estimatedTimeHours}h
+                </span>
               </div>
-              <p className="text-muted-foreground text-sm">Duration (dummy data)</p>
+              <p className="text-muted-foreground text-sm">
+                Duration (dummy data)
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -134,8 +141,8 @@ export const NonEnrolledCourseView = ({
         <CardContent>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {courseFeatures.map((feature, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <CheckCircle className="size-5 text-green-500 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-3" key={index}>
+                <CheckCircle className="mt-0.5 size-5 shrink-0 text-green-500" />
                 <span className="text-sm">{feature}</span>
               </div>
             ))}
@@ -157,9 +164,10 @@ export const NonEnrolledCourseView = ({
         <CardContent>
           <div className="space-y-4">
             <p className="text-muted-foreground text-sm">
-              This course contains {course.modulesCount} module{course.modulesCount === 1 ? "" : "s"}.
+              This course contains {course.modulesCount} module
+              {course.modulesCount === 1 ? "" : "s"}.
             </p>
-            
+
             {modules.length > 0 ? (
               <div className="space-y-3">
                 {modules.slice(0, 3).map((m) => {
@@ -171,13 +179,11 @@ export const NonEnrolledCourseView = ({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-3">
-                          <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                          <div className="flex size-8 items-center justify-center rounded-full bg-muted font-medium text-xs">
                             {m.position}
                           </div>
                           <div>
-                            <p className="font-medium text-sm">
-                              {m.title}
-                            </p>
+                            <p className="font-medium text-sm">{m.title}</p>
                             {m.description && (
                               <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
                                 {m.description}
@@ -190,26 +196,29 @@ export const NonEnrolledCourseView = ({
                         <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
                           {itemsCount} lesson{itemsCount === 1 ? "" : "s"}
                         </span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="text-xs" variant="outline">
                           Preview
                         </Badge>
                       </div>
                     </div>
                   );
                 })}
-                
+
                 {modules.length > 3 && (
-                  <div className="text-center py-4">
+                  <div className="py-4 text-center">
                     <p className="text-muted-foreground text-sm">
-                      +{modules.length - 3} more modules available after enrollment
+                      +{modules.length - 3} more modules available after
+                      enrollment
                     </p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <BookOpen className="mx-auto size-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Course content will be available after enrollment.</p>
+              <div className="py-8 text-center">
+                <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Course content will be available after enrollment.
+                </p>
               </div>
             )}
           </div>
@@ -227,22 +236,27 @@ export const NonEnrolledCourseView = ({
         <CardContent>
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              Join thousands of students who have already enrolled in this course. 
-              Start your learning journey today and gain valuable skills.
+              Join thousands of students who have already enrolled in this
+              course. Start your learning journey today and gain valuable
+              skills.
             </p>
-            
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Users className="size-4 text-blue-500" />
-                  <span className="text-sm font-medium">{course.modulesCount} modules</span>
+                  <span className="font-medium text-sm">
+                    {course.modulesCount} modules
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="size-4 text-yellow-500" />
-                  <span className="text-sm font-medium">{courseStats.averageRating}/5 rating (dummy data)</span>
+                  <span className="font-medium text-sm">
+                    {courseStats.averageRating}/5 rating (dummy data)
+                  </span>
                 </div>
               </div>
-              
+
               <EnrollCourseBtn courseId={courseId} isEnrolled={false} />
             </div>
           </div>

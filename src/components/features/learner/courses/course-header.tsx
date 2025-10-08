@@ -1,5 +1,5 @@
 import { Separator } from "@/components/ui/separator";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import type { Doc } from "../../../../../convex/_generated/dataModel";
 import EnrollCourseBtn from "./enroll-course-btn";
 
 type CourseHeaderProps = {

@@ -324,7 +324,30 @@ export const getModulesByLatestVersionId = query({
           .filter((q) => q.eq(q.field("moduleId"), m._id))
           .collect();
         content.sort((a, b) => a.orderIndex - b.orderIndex);
-        return { ...m, content };
+
+        // Fetch assignment data for assignment content items
+        const contentWithAssignments = await Promise.all(
+          content.map(async (item) => {
+            if (item.type === "assignment") {
+              const assignment = await ctx.db
+                .query("assignment")
+                .filter((q) => q.eq(q.field("moduleContentId"), item._id))
+                .first();
+
+              return {
+                ...item,
+                assignmentId: assignment?._id,
+                dueDate: assignment?.dueDate,
+                maxScore: assignment?.maxScore,
+                submissionType: assignment?.submissionType,
+                instructions: assignment?.instructions,
+              };
+            }
+            return item;
+          })
+        );
+
+        return { ...m, content: contentWithAssignments };
       })
     );
     return modulesWithContent;
