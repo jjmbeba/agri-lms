@@ -80,7 +80,9 @@ function calculateIsLate(
   dueDate: string | undefined,
   submittedAt: string
 ): boolean {
-  if (!dueDate) return false;
+  if (!dueDate) {
+    return false;
+  }
   return new Date(submittedAt) > new Date(dueDate);
 }
 
@@ -100,6 +102,65 @@ async function getNextAttemptNumber(
     .collect();
 
   return submissions.length + 1;
+}
+
+async function getUserRole(ctx: QueryCtx | MutationCtx): Promise<string> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Not authenticated");
+  }
+  return (identity.metadata as { role?: string })?.role ?? "learner";
+}
+
+async function isInstructorOrAdmin(
+  ctx: QueryCtx | MutationCtx
+): Promise<boolean> {
+  const role = await getUserRole(ctx);
+  return role === "instructor" || role === "admin";
+}
+
+async function getSubmissionWithCourseData(
+  ctx: QueryCtx | MutationCtx,
+  submissionId: Id<"assignmentSubmission">
+) {
+  const submission = await ctx.db.get(submissionId);
+  if (!submission) {
+    throw new Error("Submission not found");
+  }
+
+  const assignment = await ctx.db.get(submission.assignmentId);
+  if (!assignment) {
+    throw new Error("Assignment not found");
+  }
+
+  const moduleContent = await ctx.db.get(assignment.moduleContentId);
+  if (!moduleContent) {
+    throw new Error("Module content not found");
+  }
+
+  const module = await ctx.db.get(moduleContent.moduleId);
+  if (!module) {
+    throw new Error("Module not found");
+  }
+
+  const courseVersion = await ctx.db.get(module.courseVersionId);
+  if (!courseVersion) {
+    throw new Error("Course version not found");
+  }
+
+  const enrollment = await ctx.db.get(submission.enrollmentId);
+  if (!enrollment) {
+    throw new Error("Enrollment not found");
+  }
+
+  return {
+    submission,
+    assignment,
+    moduleContent,
+    module,
+    courseVersion,
+    enrollment,
+  };
 }
 
 // -----------------------------
@@ -290,6 +351,40 @@ export const submitAssignment = mutation({
   },
 });
 
+async function validateSubmissionAuthorization(
+  ctx: MutationCtx,
+  submissionId: Id<"assignmentSubmission">,
+  status: "submitted" | "graded",
+  currentUserId: string
+) {
+  const isGrader = await isInstructorOrAdmin(ctx);
+  const { submission } = await getSubmissionWithCourseData(ctx, submissionId);
+
+  if (status === "submitted" && submission.userId !== currentUserId) {
+    // Only the submission owner (student) can revert to "submitted"
+    throw new Error("Only the submission owner can revert to submitted status");
+  }
+
+  if (status === "graded" && !isGrader) {
+    // Only instructors/admins can mark as "graded"
+    throw new Error(
+      "Only instructors and admins can mark submissions as graded"
+    );
+  }
+
+  return { isGrader };
+}
+
+function validateGradingFields(
+  status: "submitted" | "graded",
+  hasGradingFields: boolean,
+  isGrader: boolean
+) {
+  if (status === "graded" && hasGradingFields && !isGrader) {
+    throw new Error("Only instructors and admins can set grading fields");
+  }
+}
+
 export const updateSubmissionStatus = mutation({
   args: {
     submissionId: v.id("assignmentSubmission"),
@@ -304,10 +399,20 @@ export const updateSubmissionStatus = mutation({
       throw new Error("Not authenticated");
     }
 
-    const submission = await ctx.db.get(args.submissionId);
-    if (!submission) {
-      throw new Error("Submission not found");
-    }
+    const currentUserId = identity.subject;
+
+    // Validate authorization
+    const { isGrader } = await validateSubmissionAuthorization(
+      ctx,
+      args.submissionId,
+      args.status,
+      currentUserId
+    );
+
+    // Validate grading fields
+    const hasGradingFields =
+      args.score !== undefined || !!args.feedback || !!args.gradedBy;
+    validateGradingFields(args.status, hasGradingFields, isGrader);
 
     const updateData: Partial<Doc<"assignmentSubmission">> = {
       status: args.status,
@@ -315,14 +420,17 @@ export const updateSubmissionStatus = mutation({
 
     if (args.status === "graded") {
       updateData.gradedAt = new Date().toISOString();
-      if (args.score !== undefined) {
-        updateData.score = args.score;
-      }
-      if (args.feedback) {
-        updateData.feedback = args.feedback;
-      }
-      if (args.gradedBy) {
-        updateData.gradedBy = args.gradedBy;
+
+      // Only graders can set grading fields
+      if (isGrader) {
+        if (args.score !== undefined) {
+          updateData.score = args.score;
+        }
+        if (args.feedback) {
+          updateData.feedback = args.feedback;
+        }
+        // Set gradedBy to current user if not provided, or use provided value
+        updateData.gradedBy = args.gradedBy || currentUserId;
       }
     }
 
