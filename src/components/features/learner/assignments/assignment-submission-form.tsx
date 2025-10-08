@@ -177,6 +177,11 @@ export function AssignmentSubmissionForm({
                 {errors.file && (
                   <p className="mt-1 text-red-600 text-sm">{errors.file}</p>
                 )}
+                {form.getFieldMeta("content")?.errors?.map((error) => (
+                  <p className="mt-1 text-red-600 text-sm" key={error}>
+                    {error}
+                  </p>
+                ))}
               </div>
 
               {selectedFile && (
@@ -184,7 +189,10 @@ export function AssignmentSubmissionForm({
                   <FileText className="h-4 w-4" />
                   <span className="flex-1 text-sm">{selectedFile.name}</span>
                   <Button
-                    onClick={() => setSelectedFile(null)}
+                    onClick={() => {
+                      setSelectedFile(null);
+                      form.setFieldValue("content", "");
+                    }}
                     size="sm"
                     variant="ghost"
                   >
@@ -209,6 +217,11 @@ export function AssignmentSubmissionForm({
               {errors.content && (
                 <p className="mt-1 text-red-600 text-sm">{errors.content}</p>
               )}
+              {form.getFieldMeta("content")?.errors?.map((error) => (
+                <p className="mt-1 text-red-600 text-sm" key={error}>
+                  {error}
+                </p>
+              ))}
             </div>
           )}
 
@@ -226,6 +239,11 @@ export function AssignmentSubmissionForm({
               {errors.content && (
                 <p className="mt-1 text-red-600 text-sm">{errors.content}</p>
               )}
+              {form.getFieldMeta("content")?.errors?.map((error) => (
+                <p className="mt-1 text-red-600 text-sm" key={error}>
+                  {error}
+                </p>
+              ))}
             </div>
           )}
 

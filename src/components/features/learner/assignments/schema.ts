@@ -2,7 +2,9 @@
 import * as z from "zod";
 
 export const assignmentSubmissionSchema = z.object({
-  content: z.string(),
+  content: z.string().trim().min(1, {
+    message: "Content is required",
+  }),
 });
 
 export const assignmentSubmissionHistorySchema = z.object({
