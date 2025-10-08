@@ -3,15 +3,7 @@
 import { useConvexMutation } from "@convex-dev/react-query";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  FileText,
-  Link,
-  Upload,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Clock, FileText, Link, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
