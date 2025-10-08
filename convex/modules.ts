@@ -378,7 +378,7 @@ export const createDraftModule = mutation({
           instructions: item.content,
           maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
           submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
-          dueDate: item.dueDate ?? new Date().toISOString(),
+          dueDate: item.dueDate,
         });
       } else {
         await ctx.db.insert("draftModuleContent", {
@@ -538,7 +538,7 @@ export const updateDraftModule = mutation({
           instructions: item.content,
           maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
           submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
-          dueDate: item.dueDate ?? new Date().toISOString(),
+          dueDate: item.dueDate,
         });
       } else {
         await ctx.db.insert("draftModuleContent", {

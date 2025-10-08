@@ -51,7 +51,7 @@ export default defineSchema({
   draftAssignment: defineTable({
     draftModuleContentId: v.id("draftModuleContent"),
     instructions: v.string(),
-    dueDate: v.string(),
+    dueDate: v.optional(v.string()),
     maxScore: v.number(),
     submissionType: v.union(
       v.literal("file"),
@@ -62,7 +62,7 @@ export default defineSchema({
   assignment: defineTable({
     moduleContentId: v.id("moduleContent"),
     instructions: v.string(),
-    dueDate: v.string(),
+    dueDate: v.optional(v.string()),
     maxScore: v.number(),
     submissionType: v.union(
       v.literal("file"),

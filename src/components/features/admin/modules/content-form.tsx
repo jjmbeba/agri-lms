@@ -429,9 +429,10 @@ const ContentForm: React.FC<ContentFormProps> = ({
     onSubmit: ({ value }) => {
       const content = value.content.map((item) => {
         if (item.type === "assignment" && item.dueDate) {
+          const parsedDate = parseDate(item.dueDate);
           return {
             ...item,
-            dueDate: parseDate(item.dueDate)?.toString(),
+            dueDate: parsedDate ? parsedDate.toString() : item.dueDate,
           };
         }
         return item;
@@ -607,14 +608,6 @@ const ContentForm: React.FC<ContentFormProps> = ({
                                 {(subField) => (
                                   <div className="flex flex-col gap-2">
                                     <Label>Due Date</Label>
-                                    {/* <Input
-                                      onChange={(e) =>
-                                        subField.handleChange(e.target.value)
-                                      }
-                                      placeholder="Select due date"
-                                      type="datetime-local"
-                                      value={subField.state.value || ""}
-                                    /> */}
                                     <NaturalDayPicker
                                       label="Assignment will be due on "
                                       onValueChange={subField.handleChange}
@@ -636,14 +629,18 @@ const ContentForm: React.FC<ContentFormProps> = ({
                                   <div className="flex flex-col gap-2">
                                     <Label>Max Score</Label>
                                     <Input
-                                      onChange={(e) =>
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+
                                         subField.handleChange(
-                                          Number(e.target.value)
-                                        )
-                                      }
+                                          value === ""
+                                            ? undefined
+                                            : Number(value)
+                                        );
+                                      }}
                                       placeholder="Enter max score"
                                       type="number"
-                                      value={subField.state.value || ""}
+                                      value={subField.state.value ?? ""}
                                     />
                                     {subField.state.meta.errors.map(
                                       (error, index) => (

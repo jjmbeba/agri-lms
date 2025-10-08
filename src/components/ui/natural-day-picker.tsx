@@ -53,7 +53,7 @@ export function NaturalDayPicker({
             const parsedDate = parseDate(e.target.value);
             if (parsedDate) {
               setDate(parsedDate);
-              setMonth(date);
+              setMonth(parsedDate);
             }
           }}
           onKeyDown={(e) => {
