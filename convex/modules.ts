@@ -97,14 +97,42 @@ async function publishModuleContent(
 
   for (let i = 0; i < draftContent.length; i++) {
     const item = draftContent[i];
-    await ctx.db.insert("moduleContent", {
-      moduleId: publishedModuleId,
-      type: item.type,
-      title: item.title,
-      content: item.content,
-      orderIndex: item.orderIndex,
-      position: i + 1,
-    });
+
+    if (item.type === "assignment") {
+      const moduleContentId = await ctx.db.insert("moduleContent", {
+        moduleId: publishedModuleId,
+        type: item.type,
+        title: item.title,
+        content: item.content,
+        orderIndex: item.orderIndex,
+        position: i + 1,
+      });
+
+      // Get the corresponding draftAssignment
+      const draftAssignment = await ctx.db
+        .query("draftAssignment")
+        .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+        .first();
+
+      if (draftAssignment) {
+        await ctx.db.insert("assignment", {
+          moduleContentId,
+          instructions: draftAssignment.instructions,
+          maxScore: draftAssignment.maxScore,
+          submissionType: draftAssignment.submissionType,
+          dueDate: draftAssignment.dueDate,
+        });
+      }
+    } else {
+      await ctx.db.insert("moduleContent", {
+        moduleId: publishedModuleId,
+        type: item.type,
+        title: item.title,
+        content: item.content,
+        orderIndex: item.orderIndex,
+        position: i + 1,
+      });
+    }
   }
 }
 
@@ -137,14 +165,41 @@ async function reseedModuleContent(
   publishedContent.sort((a, b) => a.orderIndex - b.orderIndex);
 
   for (const c of publishedContent) {
-    await ctx.db.insert("draftModuleContent", {
-      draftModuleId,
-      type: c.type,
-      title: c.title,
-      content: c.content,
-      orderIndex: c.orderIndex,
-      position: c.position,
-    });
+    if (c.type === "assignment") {
+      const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+        draftModuleId,
+        type: c.type,
+        title: c.title,
+        content: c.content,
+        orderIndex: c.orderIndex,
+        position: c.position,
+      });
+
+      // Get the corresponding published assignment
+      const publishedAssignment = await ctx.db
+        .query("assignment")
+        .filter((q) => q.eq(q.field("moduleContentId"), c._id))
+        .first();
+
+      if (publishedAssignment) {
+        await ctx.db.insert("draftAssignment", {
+          draftModuleContentId,
+          instructions: publishedAssignment.instructions,
+          maxScore: publishedAssignment.maxScore,
+          submissionType: publishedAssignment.submissionType,
+          dueDate: publishedAssignment.dueDate,
+        });
+      }
+    } else {
+      await ctx.db.insert("draftModuleContent", {
+        draftModuleId,
+        type: c.type,
+        title: c.title,
+        content: c.content,
+        orderIndex: c.orderIndex,
+        position: c.position,
+      });
+    }
   }
 }
 
