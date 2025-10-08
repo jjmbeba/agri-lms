@@ -3,13 +3,13 @@ import { z } from "zod";
 export const assignmentSubmissionSchema = z.object({
   assignmentId: z.string().min(1, "Assignment ID is required"),
   submissionType: z.enum(["file", "text", "url"], {
-    required_error: "Submission type is required",
+    message: "Submission type is required",
   }),
   content: z.string().min(1, "Content is required"),
 });
 
 export const fileSubmissionSchema = z.object({
-  content: z.string().url("Invalid file URL"),
+  content: z.url("Invalid file URL"),
 });
 
 const MAX_TEXT_LENGTH = 10_000;
