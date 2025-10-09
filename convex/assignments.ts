@@ -3,6 +3,11 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 
+// Pagination defaults
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+const MIN_PAGE_NUMBER = 1;
+
 // -----------------------------
 // Validators
 // -----------------------------
@@ -119,7 +124,7 @@ async function isInstructorOrAdmin(
   return role === "instructor" || role === "admin";
 }
 
-async function getSubmissionWithCourseData(
+async function getSubmissionWithCourseDataHelper(
   ctx: QueryCtx | MutationCtx,
   submissionId: Id<"assignmentSubmission">
 ) {
@@ -338,6 +343,7 @@ export const submitAssignment = mutation({
     const submissionId = await ctx.db.insert("assignmentSubmission", {
       assignmentId: args.assignmentId,
       userId: identity.subject,
+      userName: identity.name ?? "",
       enrollmentId: enrollment._id,
       submissionType: args.submissionType,
       content: args.content,
@@ -358,7 +364,10 @@ async function validateSubmissionAuthorization(
   currentUserId: string
 ) {
   const isGrader = await isInstructorOrAdmin(ctx);
-  const { submission } = await getSubmissionWithCourseData(ctx, submissionId);
+  const { submission } = await getSubmissionWithCourseDataHelper(
+    ctx,
+    submissionId
+  );
 
   if (status === "submitted" && submission.userId !== currentUserId) {
     // Only the submission owner (student) can revert to "submitted"
@@ -383,6 +392,57 @@ function validateGradingFields(
   if (status === "graded" && hasGradingFields && !isGrader) {
     throw new Error("Only instructors and admins can set grading fields");
   }
+}
+
+async function enforceRequiredScoreAndBounds(
+  ctx: MutationCtx,
+  submissionId: Id<"assignmentSubmission">,
+  status: "submitted" | "graded",
+  score: number | undefined
+) {
+  if (status !== "graded") {
+    return;
+  }
+  const { assignment } = await getSubmissionWithCourseDataHelper(
+    ctx,
+    submissionId
+  );
+  if (score === undefined) {
+    throw new Error("Score is required when marking as graded");
+  }
+  if (score < 0 || score > assignment.maxScore) {
+    throw new Error(`Score must be between 0 and ${assignment.maxScore}`);
+  }
+}
+
+function prepareUpdateData(
+  args: {
+    status: "submitted" | "graded";
+    score?: number;
+    feedback?: string;
+    gradedBy?: string;
+  },
+  isGrader: boolean,
+  currentUserId: string
+): Partial<Doc<"assignmentSubmission">> {
+  const updateData: Partial<Doc<"assignmentSubmission">> = {
+    status: args.status,
+  };
+
+  if (args.status === "graded") {
+    updateData.gradedAt = new Date().toISOString();
+    if (isGrader) {
+      if (args.score !== undefined) {
+        updateData.score = args.score;
+      }
+      if (args.feedback) {
+        updateData.feedback = args.feedback;
+      }
+      updateData.gradedBy = args.gradedBy || currentUserId;
+    }
+  }
+
+  return updateData;
 }
 
 export const updateSubmissionStatus = mutation({
@@ -414,28 +474,181 @@ export const updateSubmissionStatus = mutation({
       args.score !== undefined || !!args.feedback || !!args.gradedBy;
     validateGradingFields(args.status, hasGradingFields, isGrader);
 
-    const updateData: Partial<Doc<"assignmentSubmission">> = {
-      status: args.status,
-    };
+    // Enforce required score and bounds
+    await enforceRequiredScoreAndBounds(
+      ctx,
+      args.submissionId,
+      args.status,
+      args.score
+    );
 
-    if (args.status === "graded") {
-      updateData.gradedAt = new Date().toISOString();
-
-      // Only graders can set grading fields
-      if (isGrader) {
-        if (args.score !== undefined) {
-          updateData.score = args.score;
-        }
-        if (args.feedback) {
-          updateData.feedback = args.feedback;
-        }
-        // Set gradedBy to current user if not provided, or use provided value
-        updateData.gradedBy = args.gradedBy || currentUserId;
-      }
-    }
+    const updateData = prepareUpdateData(args, isGrader, currentUserId);
 
     await ctx.db.patch(args.submissionId, updateData);
 
     return { success: true };
+  },
+});
+
+// -----------------------------
+// Admin listing queries
+// -----------------------------
+
+export const listAssignmentSubmissionsForAdmin = query({
+  args: {
+    assignmentId: v.id("assignment"),
+    status: v.optional(v.union(v.literal("submitted"), v.literal("graded"))),
+    page: v.optional(v.number()),
+    pageSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const isGrader = await isInstructorOrAdmin(ctx);
+    if (!isGrader) {
+      throw new Error("Unauthorized");
+    }
+
+    // Base query by assignmentId
+    let submissions = await ctx.db
+      .query("assignmentSubmission")
+      .filter((q) => q.eq(q.field("assignmentId"), args.assignmentId))
+      .order("desc")
+      .collect();
+
+    if (args.status) {
+      submissions = submissions.filter((s) => s.status === args.status);
+    }
+
+    const pageSize = Math.max(
+      MIN_PAGE_NUMBER,
+      Math.min(args.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
+    );
+    const page = Math.max(MIN_PAGE_NUMBER, args.page ?? MIN_PAGE_NUMBER);
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+
+    const slice = submissions.slice(start, end);
+
+    // Enrich with assignment/module/course and enrollment ref if needed by UI
+    const rows = await Promise.all(
+      slice.map(async (submission) => {
+        const { assignment, courseVersion } =
+          await getSubmissionWithCourseDataHelper(ctx, submission._id);
+        return {
+          submission,
+          assignmentTitle:
+            (await ctx.db.get(assignment.moduleContentId))?.title ?? "",
+          courseId: courseVersion.courseId,
+        };
+      })
+    );
+
+    return {
+      total: submissions.length,
+      page,
+      pageSize,
+      rows,
+    };
+  },
+});
+
+export const getSubmissionWithCourseData = query({
+  args: { submissionId: v.id("assignmentSubmission") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const isGrader = await isInstructorOrAdmin(ctx);
+    if (!isGrader) {
+      throw new Error("Unauthorized");
+    }
+
+    return await getSubmissionWithCourseDataHelper(ctx, args.submissionId);
+  },
+});
+
+export const listSubmissionsInboxForAdmin = query({
+  args: {
+    courseId: v.optional(v.id("course")),
+    assignmentId: v.optional(v.id("assignment")),
+    status: v.optional(v.union(v.literal("submitted"), v.literal("graded"))),
+    q: v.optional(v.string()),
+    page: v.optional(v.number()),
+    pageSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const isGrader = await isInstructorOrAdmin(ctx);
+    if (!isGrader) {
+      throw new Error("Unauthorized");
+    }
+
+    // Start with all submissions or by assignment if provided
+    let submissions = await ctx.db
+      .query("assignmentSubmission")
+      .order("desc")
+      .collect();
+
+    if (args.assignmentId) {
+      submissions = submissions.filter(
+        (s) => s.assignmentId === args.assignmentId
+      );
+    }
+
+    if (args.status) {
+      submissions = submissions.filter((s) => s.status === args.status);
+    }
+
+    // Enrich to filter by courseId and text query
+    const enriched = await Promise.all(
+      submissions.map(async (submission) => {
+        const { assignment, courseVersion } =
+          await getSubmissionWithCourseDataHelper(ctx, submission._id);
+        const moduleContent = await ctx.db.get(assignment.moduleContentId);
+        return {
+          submission,
+          assignmentTitle: moduleContent?.title ?? "",
+          courseId: courseVersion.courseId,
+        };
+      })
+    );
+
+    let filtered = enriched;
+    if (args.courseId) {
+      filtered = filtered.filter((r) => r.courseId === args.courseId);
+    }
+    const queryText = args.q?.trim().toLowerCase();
+    if (queryText) {
+      filtered = filtered.filter(
+        (r) =>
+          r.assignmentTitle.toLowerCase().includes(queryText) ||
+          r.submission.userId.toLowerCase().includes(queryText)
+      );
+    }
+
+    const pageSize = Math.max(
+      MIN_PAGE_NUMBER,
+      Math.min(args.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
+    );
+    const page = Math.max(MIN_PAGE_NUMBER, args.page ?? MIN_PAGE_NUMBER);
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+
+    return {
+      total: filtered.length,
+      page,
+      pageSize,
+      rows: filtered.slice(start, end),
+    };
   },
 });

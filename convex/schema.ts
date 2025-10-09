@@ -98,6 +98,7 @@ export default defineSchema({
   assignmentSubmission: defineTable({
     assignmentId: v.id("assignment"),
     userId: v.string(),
+    userName: v.string(),
     enrollmentId: v.id("enrollment"),
     submissionType: v.union(
       v.literal("file"),
