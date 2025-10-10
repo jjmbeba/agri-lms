@@ -43,3 +43,29 @@ export type AssignmentSubmissionHistory = {
   content: string;
   submissionType: AssignmentSubmissionType;
 };
+
+// -----------------------------
+// Admin DTOs for submissions lists/inbox
+// -----------------------------
+
+export type AdminAssignmentSubmissionRow = {
+  submission: AssignmentSubmission;
+  assignmentTitle: string;
+  courseId: Id<"course">;
+};
+
+export type AdminSubmissionsPage = {
+  total: number;
+  page: number;
+  pageSize: number;
+  rows: AdminAssignmentSubmissionRow[];
+};
+
+export type AdminInboxFilter = {
+  courseId?: Id<"course">;
+  assignmentId?: Id<"assignment">;
+  status?: AssignmentSubmissionStatus;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+};

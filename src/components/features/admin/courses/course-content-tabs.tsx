@@ -2,6 +2,7 @@
 
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -13,10 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
+import { GradeDialog } from "../assignments/grade-dialog";
+// Id already imported above
+import { SubmissionsTable } from "../assignments/submissions-table";
 import PublishModulesBtn from "../modules/publish-modules-btn";
 import { CourseContentManagement } from "./course-content-management";
 
 const CourseContentTabs = ({ courseId }: { courseId: string }) => {
+  const [gradingSubmissionId, setGradingSubmissionId] =
+    useState<Id<"assignmentSubmission"> | null>(null);
+
+  const [isGradeOpen, setIsGradeOpen] = useState(false);
+
   const { data: publishedData, isLoading: isLoadingPublished } = useQuery(
     convexQuery(api.modules.getModulesByLatestVersionId, {
       courseId: courseId as Id<"course">,
@@ -33,6 +42,7 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
       <TabsList>
         <TabsTrigger value="published">Published</TabsTrigger>
         <TabsTrigger value="draft">Draft</TabsTrigger>
+        <TabsTrigger value="submissions">Submissions</TabsTrigger>
       </TabsList>
       <TabsContent value="published">
         {isLoadingPublished ? (
@@ -62,6 +72,24 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
             variant="draft"
           />
         )}
+      </TabsContent>
+      <TabsContent value="submissions">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-semibold text-lg">Submissions Inbox</h3>
+        </div>
+        <SubmissionsTable
+          courseId={courseId as Id<"course">}
+          onGradeClick={(id) => {
+            setGradingSubmissionId(id);
+            setIsGradeOpen(true);
+          }}
+          variant="inbox"
+        />
+        <GradeDialog
+          onOpenChange={setIsGradeOpen}
+          open={isGradeOpen}
+          submissionId={gradingSubmissionId}
+        />
       </TabsContent>
     </Tabs>
   );

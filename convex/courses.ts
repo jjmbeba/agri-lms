@@ -74,6 +74,7 @@ export const getCourse = query({
     }
 
     const identity = await ctx.auth.getUserIdentity();
+
     let isEnrolled = false;
     if (identity) {
       const enrollment = await ctx.db

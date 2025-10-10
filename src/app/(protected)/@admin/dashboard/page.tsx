@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ChartAreaInteractive } from "@/components/features/admin/dashboard/chart-area-interactive";
 import { DataTable } from "@/components/features/admin/dashboard/data-table";
 import { SectionCards } from "@/components/features/admin/dashboard/section-cards";
+import { SubmissionsInbox } from "@/components/features/admin/dashboard/submissions-inbox";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -75,6 +76,11 @@ export default function Page() {
                 <DataTable data={data} />
               </CardContent>
             </Card>
+          </div>
+
+          {/* Submissions Inbox */}
+          <div className="px-4 lg:px-6">
+            <SubmissionsInbox />
           </div>
         </div>
       </div>
