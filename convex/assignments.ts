@@ -435,7 +435,7 @@ function prepareUpdateData(
       if (args.score !== undefined) {
         updateData.score = args.score;
       }
-      if (args.feedback) {
+      if (args.feedback !== undefined) {
         updateData.feedback = args.feedback;
       }
       updateData.gradedBy = args.gradedBy || currentUserId;
@@ -632,7 +632,8 @@ export const listSubmissionsInboxForAdmin = query({
       filtered = filtered.filter(
         (r) =>
           r.assignmentTitle.toLowerCase().includes(queryText) ||
-          r.submission.userId.toLowerCase().includes(queryText)
+          r.submission.userId.toLowerCase().includes(queryText) ||
+          r.submission.userName?.toLowerCase().includes(queryText)
       );
     }
 

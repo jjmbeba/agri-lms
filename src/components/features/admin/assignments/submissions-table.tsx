@@ -38,8 +38,10 @@ export function SubmissionsTable(props: SubmissionsTableProps) {
     variant,
   } = props;
 
-  const { data, isLoading } = useQuery(
-    convexQuery(
+  const isReady = variant === "assignment" ? !!assignmentId : true;
+
+  const { data, isLoading } = useQuery({
+    ...convexQuery(
       variant === "assignment"
         ? api.assignments.listAssignmentSubmissionsForAdmin
         : api.assignments.listSubmissionsInboxForAdmin,
@@ -51,8 +53,9 @@ export function SubmissionsTable(props: SubmissionsTableProps) {
             pageSize,
           }
         : { assignmentId, courseId, status, q, page, pageSize }
-    )
-  );
+    ),
+    enabled: isReady,
+  });
 
   // const rows: AdminAssignmentSubmissionRow[] = useMemo(
   //   () => (data?.rows as AdminAssignmentSubmissionRow[]) ?? [],

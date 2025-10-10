@@ -3,7 +3,7 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,6 +80,16 @@ export function GradeDialog({
       onDynamic: schema,
     },
   });
+
+  // Reset form when submission changes
+  useEffect(() => {
+    if (submission) {
+      form.reset({
+        score: submission.submission?.score ?? 0,
+        feedback: submission.submission?.feedback ?? "",
+      });
+    }
+  }, [submission, form]);
 
   if (isLoading) {
     return (
