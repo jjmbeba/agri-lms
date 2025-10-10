@@ -89,7 +89,7 @@ export function GradeDialog({
         feedback: submission.submission?.feedback ?? "",
       });
     }
-  }, [submission, form]);
+  }, [submission, form.reset]);
 
   if (isLoading) {
     return (

@@ -57,11 +57,6 @@ export function SubmissionsTable(props: SubmissionsTableProps) {
     enabled: isReady,
   });
 
-  // const rows: AdminAssignmentSubmissionRow[] = useMemo(
-  //   () => (data?.rows as AdminAssignmentSubmissionRow[]) ?? [],
-  //   [data]
-  // );
-
   if (isLoading) {
     return <SubmissionsTableSkeleton />;
   }
