@@ -16,7 +16,6 @@ type Props = {
 export const CourseDetails = ({ preloadedCourse, courseId }: Props) => {
   const course = usePreloadedQuery(preloadedCourse);
 
-  // const course = useQuery(api.courses.getCourse, { id: courseId });
   const modules = useQuery(
     api.modules.getModulesByLatestVersionId,
     course ? { courseId: course.course._id } : "skip"

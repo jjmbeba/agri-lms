@@ -147,7 +147,7 @@ function ModuleAccordionItem({
 
   return (
     <AccordionItem
-      className={`rounded-md border ${isCompleted ? "border-green-200 bg-green-50" : ""}`}
+      className={"rounded-md border"}
       key={moduleData._id}
       value={moduleData._id}
     >

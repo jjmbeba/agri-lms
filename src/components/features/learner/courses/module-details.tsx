@@ -1,9 +1,12 @@
 "use client";
 
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
+import { Check, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../../../../convex/_generated/api";
@@ -93,6 +96,70 @@ export function ModuleDetails({
 
   const data = preloaded ?? moduleData ?? null;
 
+  // Get module progress
+  const { data: moduleProgress } = useQuery({
+    ...convexQuery(api.enrollments.getModuleProgress, {
+      moduleId,
+    }),
+  });
+
+  // Toggle completion mutation
+  const updateModuleProgress = useConvexMutation(
+    api.enrollments.updateModuleProgress
+  );
+  const [isPending, setIsPending] = useState(false);
+
+  const isCompleted = moduleProgress?.status === "completed";
+
+  const handleToggleCompletion = async () => {
+    setIsPending(true);
+    try {
+      if (isCompleted) {
+        // Mark as in progress (0%)
+        await updateModuleProgress({
+          moduleId,
+          status: "inProgress",
+          progressPercentage: 0,
+        });
+        toast.success("Module marked as incomplete");
+      } else {
+        // Mark as completed (100%)
+        await updateModuleProgress({
+          moduleId,
+          status: "completed",
+          progressPercentage: 100,
+        });
+        toast.success("Module completed!");
+      }
+    } catch (error) {
+      toast.error(
+        `Failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const renderButtonContent = () => {
+    if (isPending) {
+      return (
+        <>
+          <Loader2 className="mr-2 size-4 animate-spin" />
+          Updating...
+        </>
+      );
+    }
+    if (isCompleted) {
+      return (
+        <>
+          <Check className="mr-2 size-4" />
+          Completed
+        </>
+      );
+    }
+    return "Mark as Completed";
+  };
+
   if (!data) {
     return (
       <div className="py-12 text-center">
@@ -118,7 +185,14 @@ export function ModuleDetails({
     <div className="space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="font-semibold text-2xl">{data.title}</h1>
-        <Button type="button">Mark as Completed</Button>
+        <Button
+          disabled={isPending}
+          onClick={handleToggleCompletion}
+          type="button"
+          variant={isCompleted ? "outline" : "default"}
+        >
+          {renderButtonContent()}
+        </Button>
       </header>
 
       {(data.content ?? []).map((item: ModuleContentItem) =>

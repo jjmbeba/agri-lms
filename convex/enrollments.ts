@@ -266,6 +266,54 @@ export const getUserEnrolledCourses = query({
   },
 });
 
+export const getModuleProgress = query({
+  args: { moduleId: v.id("module") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    // Get module to find course
+    const module = await ctx.db.get(args.moduleId);
+    if (!module) {
+      return null;
+    }
+
+    const courseVersion = await ctx.db.get(module.courseVersionId);
+    if (!courseVersion) {
+      return null;
+    }
+
+    // Get enrollment
+    const enrollment = await ctx.db
+      .query("enrollment")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), identity.subject),
+          q.eq(q.field("courseId"), courseVersion.courseId)
+        )
+      )
+      .first();
+
+    if (!enrollment) {
+      return null;
+    }
+
+    // Get module progress
+    return await ctx.db
+      .query("moduleProgress")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("moduleId"), args.moduleId),
+          q.eq(q.field("userId"), identity.subject),
+          q.eq(q.field("enrollmentId"), enrollment._id)
+        )
+      )
+      .first();
+  },
+});
+
 export const updateModuleProgress = mutation({
   args: {
     moduleId: v.id("module"),
