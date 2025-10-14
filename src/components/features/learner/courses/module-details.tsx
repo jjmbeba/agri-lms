@@ -4,7 +4,8 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,11 +81,13 @@ function TextItemCard(item: ModuleContentItem) {
 
 type ModuleDetailsProps = {
   moduleId: Id<"module">;
+  courseId: Id<"course">;
   preloadedModule: Preloaded<typeof api.modules.getModuleWithContentById>;
 };
 
 export function ModuleDetails({
   moduleId,
+  courseId,
   preloadedModule,
 }: ModuleDetailsProps) {
   // Prefer preloaded data (SSR), fallback to client query if needed
@@ -99,6 +102,13 @@ export function ModuleDetails({
   // Get module progress
   const { data: moduleProgress } = useQuery({
     ...convexQuery(api.enrollments.getModuleProgress, {
+      moduleId,
+    }),
+  });
+
+  // Get navigation data
+  const { data: navigation, isLoading: navigationLoading } = useQuery({
+    ...convexQuery(api.modules.getModuleNavigation, {
       moduleId,
     }),
   });
@@ -198,6 +208,41 @@ export function ModuleDetails({
       {(data.content ?? []).map((item: ModuleContentItem) =>
         renderContentItem(item)
       )}
+
+      {/* Navigation Buttons */}
+      <div className="flex items-center justify-between border-t pt-6">
+        {navigationLoading || !navigation?.previousModuleId ? (
+          <Button disabled variant="outline">
+            <ChevronLeft className="mr-2 size-4" />
+            Previous Module
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link
+              href={`/courses/${courseId}/modules/${navigation.previousModuleId}`}
+            >
+              <ChevronLeft className="mr-2 size-4" />
+              Previous Module
+            </Link>
+          </Button>
+        )}
+
+        {navigationLoading || !navigation?.nextModuleId ? (
+          <Button disabled variant="outline">
+            Next Module
+            <ChevronRight className="ml-2 size-4" />
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link
+              href={`/courses/${courseId}/modules/${navigation.nextModuleId}`}
+            >
+              Next Module
+              <ChevronRight className="ml-2 size-4" />
+            </Link>
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ type ModulePageProps = {
 };
 
 const Page = async ({ params }: ModulePageProps) => {
-  const { module: moduleId } = await params;
+  const { course: courseId, module: moduleId } = await params;
 
   const preloaded = await preloadQuery(api.modules.getModuleWithContentById, {
     id: moduleId as Id<"module">,
@@ -17,6 +17,7 @@ const Page = async ({ params }: ModulePageProps) => {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
       <ModuleDetails
+        courseId={courseId as Id<"course">}
         moduleId={moduleId as Id<"module">}
         preloadedModule={preloaded}
       />

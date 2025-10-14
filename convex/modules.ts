@@ -314,6 +314,62 @@ export const getModuleWithContentById = query({
     return { ...m, content: contentWithAssignments } as const;
   },
 });
+
+export const getModuleNavigation = query({
+  args: { moduleId: v.id("module") },
+  handler: async (ctx, args) => {
+    const currentModule = await ctx.db.get(args.moduleId);
+    if (!currentModule) {
+      return { previousModuleId: null, nextModuleId: null };
+    }
+
+    // Get all modules in the same course version
+    const allModules = await ctx.db
+      .query("module")
+      .filter((q) =>
+        q.eq(q.field("courseVersionId"), currentModule.courseVersionId)
+      )
+      .collect();
+
+    // Sort by position
+    allModules.sort((a, b) => a.position - b.position);
+
+    const currentIndex = allModules.findIndex(
+      (module) => module._id === args.moduleId
+    );
+
+    if (currentIndex === -1) {
+      return { previousModuleId: null, nextModuleId: null };
+    }
+
+    const previousModule =
+      currentIndex > 0 ? allModules[currentIndex - 1] : null;
+    const nextModule =
+      currentIndex < allModules.length - 1
+        ? allModules[currentIndex + 1]
+        : null;
+
+    const result = {
+      previousModuleId: previousModule?._id ?? null,
+      nextModuleId: nextModule?._id ?? null,
+    };
+
+    // Debug logging - remove after testing
+    console.log("Navigation query debug:", {
+      moduleId: args.moduleId,
+      currentIndex,
+      totalModules: allModules.length,
+      allModules: allModules.map((m) => ({
+        id: m._id,
+        position: m.position,
+        title: m.title,
+      })),
+      result,
+    });
+
+    return result;
+  },
+});
 export const getDraftModulesByCourseId = query({
   args: { courseId: v.id("course") },
   handler: async (ctx, args) => {
