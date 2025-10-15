@@ -259,6 +259,7 @@ export const EnrolledCourseView = ({
   modules,
   progress,
 }: EnrolledCourseViewProps) => {
+  const COMPLETED_PERCENTAGE = 100; // course considered complete at 100%
   const c = course.course;
   const d = course.department;
   const {
@@ -282,6 +283,14 @@ export const EnrolledCourseView = ({
               >
                 Enrolled
               </Badge>
+              {progressPercentage === COMPLETED_PERCENTAGE ? (
+                <Badge
+                  className="border-green-200 bg-green-50 text-green-700"
+                  variant="outline"
+                >
+                  Completed
+                </Badge>
+              ) : null}
             </div>
             <p className="text-lg text-muted-foreground">{c.description}</p>
           </div>
@@ -302,6 +311,13 @@ export const EnrolledCourseView = ({
                 <span className="font-medium">{progressPercentage}%</span>
               </div>
               <Progress className="h-2" value={progressPercentage} />
+              <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                <Clock className="size-3" />
+                <span>
+                  Time remaining: ~
+                  {Math.max(totalModules - modulesCompleted, 0)}h
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-2">

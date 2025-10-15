@@ -226,7 +226,6 @@ export function ModuleDetails({
             </Link>
           </Button>
         )}
-
         {navigationLoading || !navigation?.nextModuleId ? (
           <Button disabled variant="outline">
             Next Module

@@ -266,6 +266,106 @@ export const getUserEnrolledCourses = query({
   },
 });
 
+// Admin: list progress across all students and courses
+export const getAllStudentsProgress = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    // Reuse role guard from modules.ts pattern
+    const role = (identity?.metadata as { role?: string })?.role ?? "learner";
+    if (!identity || role !== "admin") {
+      throw new Error("Unauthorized");
+    }
+
+    const enrollments = await ctx.db.query("enrollment").collect();
+
+    const results = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const course = await ctx.db.get(enrollment.courseId);
+        const progress = await ctx.db
+          .query("courseProgress")
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("userId"), enrollment.userId),
+              q.eq(q.field("courseId"), enrollment.courseId),
+              q.eq(q.field("enrollmentId"), enrollment._id)
+            )
+          )
+          .first();
+
+        return {
+          enrollmentId: enrollment._id,
+          userId: enrollment.userId,
+          courseId: enrollment.courseId,
+          courseTitle: course?.title ?? "Unknown",
+          progressPercentage: progress?.progressPercentage ?? 0,
+          status: progress?.status ?? "inProgress",
+          completedAt: progress?.completedAt,
+        } as const;
+      })
+    );
+
+    return results;
+  },
+});
+
+// Learner: return completion details for a course (if any)
+export const getCourseCompletionDetails = query({
+  args: { courseId: v.id("course") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const course = await ctx.db.get(args.courseId);
+    if (!course) {
+      throw new Error("Course not found");
+    }
+
+    const enrollment = await ctx.db
+      .query("enrollment")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("courseId"), args.courseId),
+          q.eq(q.field("userId"), identity.subject)
+        )
+      )
+      .first();
+
+    if (!enrollment) {
+      return null;
+    }
+
+    const progress = await ctx.db
+      .query("courseProgress")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), identity.subject),
+          q.eq(q.field("courseId"), args.courseId),
+          q.eq(q.field("enrollmentId"), enrollment._id)
+        )
+      )
+      .first();
+
+    if (!progress) {
+      return null;
+    }
+
+    return {
+      courseTitle: course.title,
+      completedAt: progress.completedAt,
+      status: progress.status,
+      progressPercentage: progress.progressPercentage,
+      user: {
+        id: identity.subject,
+        name: (identity.metadata as { name?: string })?.name,
+        email: identity.email,
+      },
+    } as const;
+  },
+});
+
 export const getModuleProgress = query({
   args: { moduleId: v.id("module") },
   handler: async (ctx, args) => {
