@@ -75,11 +75,9 @@ function ModuleListItem({
     return (
       <AssignmentItem
         assignmentId={item.assignmentId}
-        content={item.content || ""}
         isCompleted={isCompleted}
         key={`${moduleId}-${item.position}`}
         orderIndex={item.orderIndex}
-        position={item.position}
         title={item.title}
       />
     );
@@ -194,11 +192,11 @@ function ModuleAccordionItem({
             className="divide-y divide-border"
           >
             {items.map((it) => {
-              const isItemCompleted = false; // This would come from progress data
+              const isItemCompletedDefault = false; // This should default to false
               return (
                 <ModuleListItem
                   courseId={courseId}
-                  isCompleted={isItemCompleted}
+                  isCompleted={isItemCompletedDefault}
                   item={it}
                   key={`${moduleData._id}-${it.position}`}
                   moduleId={moduleData._id}

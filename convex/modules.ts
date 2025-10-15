@@ -354,19 +354,6 @@ export const getModuleNavigation = query({
       nextModuleId: nextModule?._id ?? null,
     };
 
-    // Debug logging - remove after testing
-    console.log("Navigation query debug:", {
-      moduleId: args.moduleId,
-      currentIndex,
-      totalModules: allModules.length,
-      allModules: allModules.map((m) => ({
-        id: m._id,
-        position: m.position,
-        title: m.title,
-      })),
-      result,
-    });
-
     return result;
   },
 });
