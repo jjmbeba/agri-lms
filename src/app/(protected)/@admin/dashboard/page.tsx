@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ChartAreaInteractive } from "@/components/features/admin/dashboard/chart-area-interactive";
 import { DataTable } from "@/components/features/admin/dashboard/data-table";
 import { SectionCards } from "@/components/features/admin/dashboard/section-cards";
+import { StudentProgressTable } from "@/components/features/admin/dashboard/student-progress-table";
 import { SubmissionsInbox } from "@/components/features/admin/dashboard/submissions-inbox";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -76,6 +77,11 @@ export default function Page() {
                 <DataTable data={data} />
               </CardContent>
             </Card>
+          </div>
+
+          {/* Student Progress */}
+          <div className="px-4 lg:px-6">
+            <StudentProgressTable />
           </div>
 
           {/* Submissions Inbox */}

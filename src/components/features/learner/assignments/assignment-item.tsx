@@ -5,9 +5,7 @@ import {
   AlertTriangle,
   Calendar,
   CheckCircle,
-  Clock,
   Eye,
-  FileText,
   Target,
   Upload,
 } from "lucide-react";
@@ -15,7 +13,6 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { formatDueDate } from "@/lib/validations/assignment";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
@@ -24,18 +21,14 @@ import { AssignmentDetailModal } from "./assignment-detail-modal";
 type AssignmentItemProps = {
   assignmentId: Id<"assignment">;
   title: string;
-  content: string;
   orderIndex: number;
-  position: number;
   isCompleted?: boolean;
 };
 
 export function AssignmentItem({
   assignmentId,
   title,
-  content,
   orderIndex,
-  position,
   isCompleted = false,
 }: AssignmentItemProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);

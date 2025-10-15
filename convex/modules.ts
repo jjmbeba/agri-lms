@@ -253,6 +253,110 @@ async function reseedDrafts(
 // -----------------------------
 // Queries
 // -----------------------------
+export const getModuleWithContentById = query({
+  args: { id: v.id("module") },
+  handler: async (ctx, args) => {
+    const m = await ctx.db.get(args.id);
+    if (!m) {
+      return null;
+    }
+
+    const content = await ctx.db
+      .query("moduleContent")
+      .filter((q) => q.eq(q.field("moduleId"), args.id))
+      .collect();
+    content.sort((a, b) => a.orderIndex - b.orderIndex);
+
+    // Batch fetch all assignments for assignment content items
+    const assignmentContentIds = content
+      .filter((item) => item.type === "assignment")
+      .map((item) => item._id);
+
+    const assignments =
+      assignmentContentIds.length > 0
+        ? await ctx.db
+            .query("assignment")
+            .filter((q) =>
+              q.or(
+                ...assignmentContentIds.map((id) =>
+                  q.eq(q.field("moduleContentId"), id)
+                )
+              )
+            )
+            .collect()
+        : [];
+
+    const assignmentMap = new Map(
+      assignments.map((assignment) => [assignment.moduleContentId, assignment])
+    );
+
+    const contentWithAssignments = content.map((item) => {
+      if (item.type === "assignment") {
+        const assignment = assignmentMap.get(item._id);
+        if (!assignment) {
+          throw new Error(
+            `Assignment not found for module content ${item._id}`
+          );
+        }
+
+        return {
+          ...item,
+          assignmentId: assignment._id,
+          dueDate: assignment.dueDate,
+          maxScore: assignment.maxScore,
+          submissionType: assignment.submissionType,
+          instructions: assignment.instructions,
+        };
+      }
+      return item;
+    });
+
+    return { ...m, content: contentWithAssignments } as const;
+  },
+});
+
+export const getModuleNavigation = query({
+  args: { moduleId: v.id("module") },
+  handler: async (ctx, args) => {
+    const currentModule = await ctx.db.get(args.moduleId);
+    if (!currentModule) {
+      return { previousModuleId: null, nextModuleId: null };
+    }
+
+    // Get all modules in the same course version
+    const allModules = await ctx.db
+      .query("module")
+      .filter((q) =>
+        q.eq(q.field("courseVersionId"), currentModule.courseVersionId)
+      )
+      .collect();
+
+    // Sort by position
+    allModules.sort((a, b) => a.position - b.position);
+
+    const currentIndex = allModules.findIndex(
+      (module) => module._id === args.moduleId
+    );
+
+    if (currentIndex === -1) {
+      return { previousModuleId: null, nextModuleId: null };
+    }
+
+    const previousModule =
+      currentIndex > 0 ? allModules[currentIndex - 1] : null;
+    const nextModule =
+      currentIndex < allModules.length - 1
+        ? allModules[currentIndex + 1]
+        : null;
+
+    const result = {
+      previousModuleId: previousModule?._id ?? null,
+      nextModuleId: nextModule?._id ?? null,
+    };
+
+    return result;
+  },
+});
 export const getDraftModulesByCourseId = query({
   args: { courseId: v.id("course") },
   handler: async (ctx, args) => {
