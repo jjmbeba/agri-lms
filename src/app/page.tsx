@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import CourseCategories from "@/components/features/homepage/course-categories";
-import CTA from "@/components/features/homepage/cta";
-import FAQ from "@/components/features/homepage/faq";
-import Features from "@/components/features/homepage/features";
-import HeroSection from "@/components/features/homepage/hero";
+import CourseCategories from "@/components/features/home-page/course-categories";
+import CTA from "@/components/features/home-page/cta";
+import FAQ from "@/components/features/home-page/faq";
+import Features from "@/components/features/home-page/features";
+import HeroSection from "@/components/features/home-page/hero";
 
 export const metadata: Metadata = {
   title: "Home",
