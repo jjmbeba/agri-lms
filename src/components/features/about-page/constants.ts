@@ -30,22 +30,22 @@ export const impact = [
   {
     title: "No Poverty",
     description:
-      "ASA  provides an opportunity to access information  that equips its user with knowledge and skills that if well implelmented will lead to increased incomes thus sustainable livelihods leading to reduced poverty.",
+      "AATI  provides an opportunity to access information  that equips its user with knowledge and skills that if well implemented will lead to increased incomes thus sustainable livelihods leading to reduced poverty.",
   },
   {
     title: "Zero hunger",
     description:
-      "ASA provides practical knowledge and skills that ensures best agricultural practices are carried out thus contributing to universal access to safe, nutritious and sufficient food at all times of the year.",
+      "AATI provides practical knowledge and skills that ensures best agricultural practices are carried out thus contributing to universal access to safe, nutritious and sufficient food at all times of the year.",
   },
   {
     title: "Good Health & Well-Being",
     description:
-      "ASA provides you with an opportunity to gain more skills  and learn more on production and consumption while addressing food safety and environment concerns thus meeting the consumer’s needs and ensuring quality health and well being for all.",
+      "AATI provides you with an opportunity to gain more skills  and learn more on production and consumption while addressing food safety and environment concerns thus meeting the consumer’s needs and ensuring quality health and well being for all.",
   },
   {
     title: "Quality Education",
     description:
-      "The well researched and simplified courses in ASA aim to  ensure everyone is included and offered quality education and promote growth and life long learning advantages. ",
+      "The well researched and simplified courses in AATI aim to  ensure everyone is included and offered quality education and promote growth and life long learning advantages. ",
   },
 ];
 
@@ -76,9 +76,9 @@ export const targetBeneficiaries = [
       "We provide a platform for  access at a users convenience, information that enhances financial literacy that not only improves  business management practices for profitability but also credit management.",
   },
   {
-    title: "Are you an an entreprise supervisor or owner?",
+    title: "Are you an enterprise supervisor or owner?",
     description:
-      "Join us for to acquire more skills in financial management, farm management and related skills that enhance your profitability.",
+      "Join us to acquire more skills in financial management, farm management and related skills that enhance your profitability.",
   },
   {
     title: "Are you a leader of a Co-operative or any group?",

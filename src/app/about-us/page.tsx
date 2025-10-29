@@ -103,7 +103,7 @@ const AboutUsPage = () => {
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Link
               className={buttonVariants({ variant: "secondary", size: "lg" })}
-              href="/"
+              href="/courses"
             >
               Explore Courses
             </Link>
@@ -112,7 +112,7 @@ const AboutUsPage = () => {
                 variant: "outline",
                 size: "lg",
               })}
-              href="/"
+              href="/departments"
             >
               Browse Departments
             </Link>
