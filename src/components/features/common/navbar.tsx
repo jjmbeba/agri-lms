@@ -121,9 +121,17 @@ const Navbar = ({ children }: PropsWithChildren) => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   className={navigationMenuTriggerStyle()}
-                  href="/contact"
+                  href="/about-us"
                 >
-                  Contact
+                  About Us
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  className={navigationMenuTriggerStyle()}
+                  href="/contact-us"
+                >
+                  Contact Us
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>

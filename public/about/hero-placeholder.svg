@@ -1,0 +1,11 @@
+<svg width="800" height="400" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Afrifoods Limited team and agricultural landscape">
+  <title>Afrifoods Limited - Business Development and Agricultural Solutions</title>
+  <rect width="800" height="400" fill="#f0f9ff"/>
+  <rect x="50" y="50" width="700" height="300" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="5,5"/>
+  <circle cx="200" cy="150" r="40" fill="#0ea5e9" opacity="0.7"/>
+  <circle cx="400" cy="150" r="40" fill="#0ea5e9" opacity="0.7"/>
+  <circle cx="600" cy="150" r="40" fill="#0ea5e9" opacity="0.7"/>
+  <rect x="150" y="220" width="500" height="60" fill="#0ea5e9" opacity="0.3" rx="8"/>
+  <text x="400" y="255" text-anchor="middle" fill="#0c4a6e" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Afrifoods Limited</text>
+  <text x="400" y="280" text-anchor="middle" fill="#0c4a6e" font-family="Arial, sans-serif" font-size="14">Enhancing Value Chains Since 2015</text>
+</svg>
