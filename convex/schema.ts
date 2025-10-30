@@ -116,4 +116,8 @@ export default defineSchema({
     gradedAt: v.optional(v.string()),
     gradedBy: v.optional(v.string()),
   }),
+  certificationPathway: defineTable({
+    name: v.string(),
+    courseIds: v.array(v.id("course")),
+  }),
 });

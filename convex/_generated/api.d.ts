@@ -20,6 +20,7 @@ import type * as courses from "../courses.js";
 import type * as departments from "../departments.js";
 import type * as enrollments from "../enrollments.js";
 import type * as modules from "../modules.js";
+import type * as pathways from "../pathways.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   departments: typeof departments;
   enrollments: typeof enrollments;
   modules: typeof modules;
+  pathways: typeof pathways;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
