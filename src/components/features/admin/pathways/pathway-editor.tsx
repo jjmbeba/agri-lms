@@ -53,6 +53,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
+import { PathwayVisualizer } from "./visualizer";
 
 // Types
 export type CourseWithDepartment = {
@@ -302,9 +303,7 @@ export const PathwayEditor: React.FC<{ pathway?: PathwayDoc | null }> = ({
               </div>
             </TabsContent>
             <TabsContent value="visualizer">
-              <div className="flex h-40 items-center justify-center rounded border text-muted-foreground">
-                Pathway Visualizer coming soon
-              </div>
+              <PathwayVisualizer courses={pathwayCourses} />
             </TabsContent>
           </Tabs>
         </div>

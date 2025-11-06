@@ -102,6 +102,21 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+
+  /* React Flow Theme Variables */
+  --xy-node-background: var(--card);
+  --xy-node-border: var(--border);
+  --xy-node-color: var(--card-foreground);
+  --xy-edge-stroke: var(--primary);
+  --xy-edge-stroke-width: 2;
+  --xy-background-pattern-color: var(--muted);
+  --xy-controls-background: var(--card);
+  --xy-controls-border: var(--border);
+  --xy-controls-color: var(--foreground);
+  --xy-minimap-background: var(--card);
+  --xy-minimap-border: var(--border);
+  --xy-handle-background: var(--primary);
+  --xy-handle-border: var(--border);
 }
 
 .dark {
@@ -150,6 +165,21 @@
   --shadow-xl:
     0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+  /* React Flow Theme Variables for Dark Mode */
+  --xy-node-background: var(--card);
+  --xy-node-border: var(--border);
+  --xy-node-color: var(--card-foreground);
+  --xy-edge-stroke: var(--primary);
+  --xy-edge-stroke-width: 2;
+  --xy-background-pattern-color: var(--muted);
+  --xy-controls-background: var(--card);
+  --xy-controls-border: var(--border);
+  --xy-controls-color: var(--foreground);
+  --xy-minimap-background: var(--card);
+  --xy-minimap-border: var(--border);
+  --xy-handle-background: var(--primary);
+  --xy-handle-border: var(--border);
 }
 
 @layer base {
@@ -168,4 +198,148 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* React Flow Custom Styles */
+.react-flow {
+  background-color: var(--background);
+}
+
+.react-flow__node {
+  background-color: var(--xy-node-background);
+  border: 1px solid var(--xy-node-border);
+  color: var(--xy-node-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+}
+
+.react-flow__edge-path {
+  stroke: var(--xy-edge-stroke);
+  stroke-width: var(--xy-edge-stroke-width);
+}
+
+.react-flow__background {
+  background-color: var(--background);
+}
+
+.react-flow__background-pattern {
+  stroke: var(--xy-background-pattern-color);
+  opacity: 0.4;
+}
+
+/* Controls Styling */
+.react-flow__controls {
+  background-color: var(--xy-controls-background);
+  border: 1px solid var(--xy-controls-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.react-flow__controls-button {
+  background-color: var(--xy-controls-background);
+  border-bottom: 1px solid var(--xy-controls-border);
+  color: var(--xy-controls-color);
+  transition: background-color 0.2s;
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--muted);
+}
+
+.react-flow__controls-button:active {
+  background-color: var(--accent);
+}
+
+.react-flow__controls-button svg {
+  fill: var(--xy-controls-color);
+}
+
+/* Minimap Styling */
+.react-flow__minimap {
+  background-color: var(--xy-minimap-background);
+  border: 1px solid var(--xy-minimap-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.react-flow__minimap-mask {
+  fill: var(--muted);
+  fill-opacity: 0.2;
+}
+
+.react-flow__minimap-node {
+  fill: var(--primary);
+  stroke: var(--border);
+}
+
+.react-flow__minimap-node.selected {
+  fill: var(--accent);
+}
+
+/* Handle Styling */
+.react-flow__handle {
+  background-color: var(--xy-handle-background);
+  border: 2px solid var(--xy-handle-border);
+  width: 8px;
+  height: 8px;
+}
+
+.react-flow__handle:hover {
+  background-color: var(--accent);
+  border-color: var(--primary);
+}
+
+/* Dark Mode Specific Overrides */
+.dark .react-flow {
+  background-color: var(--background);
+}
+
+.dark .react-flow__node {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--card-foreground);
+}
+
+.dark .react-flow__background {
+  background-color: var(--background);
+}
+
+.dark .react-flow__controls {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.dark .react-flow__controls-button {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+.dark .react-flow__controls-button:hover {
+  background-color: var(--muted);
+}
+
+.dark .react-flow__controls-button svg {
+  fill: var(--foreground);
+}
+
+.dark .react-flow__minimap {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.dark .react-flow__edge-path {
+  stroke: var(--primary);
+}
+
+.dark .react-flow__handle {
+  background-color: var(--primary);
+  border-color: var(--border);
+}
+
+.dark .react-flow__viewport {
+  background-color: var(--background);
+}
+
+.dark .react-flow__pane {
+  background-color: var(--background);
 }

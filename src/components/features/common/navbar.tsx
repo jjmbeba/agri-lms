@@ -1,6 +1,7 @@
 "use client";
 
 import { MenuIcon } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { PropsWithChildren } from "react";
 import {
@@ -126,14 +127,6 @@ const Navbar = ({ children }: PropsWithChildren) => {
                   About Us
                 </NavigationMenuLink>
               </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  className={navigationMenuTriggerStyle()}
-                  href="/contact-us"
-                >
-                  Contact Us
-                </NavigationMenuLink>
-              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
@@ -185,15 +178,12 @@ const Navbar = ({ children }: PropsWithChildren) => {
                   </AccordionItem>
                 </Accordion>
                 <div className="flex flex-col gap-6">
-                  <a className="font-medium" href="/courses">
+                  <Link className="font-medium" href="/courses">
                     Courses
-                  </a>
-                  <a className="font-medium" href="/market">
-                    Market & Prices
-                  </a>
-                  <a className="font-medium" href="/resources">
-                    Resources
-                  </a>
+                  </Link>
+                  <Link className="font-medium" href="/about-us">
+                    About Us
+                  </Link>
                 </div>
                 <div className="mt-6 flex flex-col gap-4">
                   <ThemeToggle />

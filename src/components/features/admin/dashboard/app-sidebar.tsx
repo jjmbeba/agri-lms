@@ -6,6 +6,7 @@ import {
   IconChartBar,
   IconDashboard,
   IconHelp,
+  IconLink,
   IconReport,
   IconSettings,
   IconUsers,
@@ -41,6 +42,11 @@ const data = {
       title: "Departments",
       url: "/departments",
       icon: IconBuilding,
+    },
+    {
+      title: "Pathways",
+      url: "/pathways",
+      icon: IconLink,
     },
     {
       title: "Learners",
