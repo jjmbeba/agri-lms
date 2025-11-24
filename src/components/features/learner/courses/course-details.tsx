@@ -9,7 +9,7 @@ import { EnrolledCourseView } from "./enrolled-course-view";
 import { NonEnrolledCourseView } from "./non-enrolled-course-view";
 
 type Props = {
-  preloadedCourse: Preloaded<typeof api.courses.getCourse>;
+  preloadedCourse: Preloaded<typeof api.courses.getCourseBySlug>;
   courseId: Id<"course">;
 };
 

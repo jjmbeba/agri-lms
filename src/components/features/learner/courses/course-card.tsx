@@ -16,6 +16,7 @@ type CourseCardProps = {
 export const CourseCard = ({ data }: CourseCardProps) => {
   const c = data.course;
   const d = data.department;
+  const courseSlug = c.slug ?? c._id;
 
   return (
     <Card className="group transition-shadow hover:shadow-lg" key={c._id}>
@@ -24,7 +25,7 @@ export const CourseCard = ({ data }: CourseCardProps) => {
           <div className="flex-1">
             <Link
               aria-label={`View course ${c.title}`}
-              href={`/courses/${c._id}`}
+              href={`/courses/${courseSlug}`}
             >
               <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
                 {c.title}
@@ -46,7 +47,7 @@ export const CourseCard = ({ data }: CourseCardProps) => {
         <Separator />
         <div className="flex items-center justify-end">
           <Button aria-label={`Open ${c.title}`} asChild size="sm">
-            <Link href={`/courses/${c._id}`}>View details</Link>
+            <Link href={`/courses/${courseSlug}`}>View details</Link>
           </Button>
         </div>
       </CardContent>
