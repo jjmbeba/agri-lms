@@ -5,7 +5,6 @@ import CourseContentTabs from "@/components/features/admin/courses/course-conten
 import CourseDetails from "@/components/features/admin/courses/course-details";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../../../../../../convex/_generated/api";
-import type { Id } from "../../../../../../convex/_generated/dataModel";
 
 type CourseDetailsPageProps = {
   params: {
@@ -17,11 +16,11 @@ export async function generateMetadata({
   params,
 }: CourseDetailsPageProps): Promise<Metadata> {
   // read route params
-  const { course } = await params;
+  const { course: slug } = await params;
 
   // fetch data
-  const courseData = await fetchQuery(api.courses.getCourse, {
-    id: course as Id<"course">,
+  const courseData = await fetchQuery(api.courses.getCourseBySlug, {
+    slug,
   });
 
   return {
@@ -30,14 +29,25 @@ export async function generateMetadata({
 }
 
 const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
-  const { course: courseId } = await params;
-  const preloadedCourse = await preloadQuery(api.courses.getCourse, {
-    id: courseId as Id<"course">,
+  const { course: slug } = await params;
+
+  const courseData = await fetchQuery(api.courses.getCourseBySlug, {
+    slug,
+  });
+
+  if (!courseData) {
+    notFound();
+  }
+
+  const preloadedCourse = await preloadQuery(api.courses.getCourseBySlug, {
+    slug,
   });
 
   if (!preloadedCourse) {
     notFound();
   }
+
+  const courseId = courseData.course._id;
 
   return (
     <div className="space-y-6 p-6">

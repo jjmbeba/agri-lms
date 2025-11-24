@@ -6,7 +6,7 @@ import { CourseDetailsHeader } from "./course-details-header";
 import { CourseDetailsStats } from "./course-details-stats";
 
 type Props = {
-  preloadedCourse: Preloaded<typeof api.courses.getCourse>;
+  preloadedCourse: Preloaded<typeof api.courses.getCourseBySlug>;
 };
 
 const CourseDetails = ({ preloadedCourse }: Props) => {
