@@ -1,8 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { restrictRoles } from "./auth";
+import { generateCourseSlug } from "./utils/slug";
 
 // Helper function to calculate total price of draft modules for a course
 async function getDraftModulesTotalPrice(
@@ -18,6 +19,47 @@ async function getDraftModulesTotalPrice(
     (total, module) => total + module.priceShillings,
     0
   );
+}
+
+async function buildCourseResponse(
+  ctx: QueryCtx,
+  course: Doc<"course">
+) {
+  const department = await ctx.db.get(course.departmentId);
+
+  const versions = await ctx.db
+    .query("courseVersion")
+    .filter((q) => q.eq(q.field("courseId"), course._id))
+    .collect();
+
+  let modulesCount = 0;
+  if (versions.length > 0) {
+    const latest = versions.reduce((acc, cur) =>
+      cur.versionNumber > acc.versionNumber ? cur : acc
+    );
+    const modulesForLatest = await ctx.db
+      .query("module")
+      .filter((q) => q.eq(q.field("courseVersionId"), latest._id))
+      .collect();
+    modulesCount = modulesForLatest.length;
+  }
+
+  const identity = await ctx.auth.getUserIdentity();
+  let isEnrolled = false;
+  if (identity) {
+    const enrollment = await ctx.db
+      .query("enrollment")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), identity.subject),
+          q.eq(q.field("courseId"), course._id)
+        )
+      )
+      .first();
+    isEnrolled = Boolean(enrollment);
+  }
+
+  return { course, department, modulesCount, isEnrolled } as const;
 }
 
 export const createCourse = mutation({
@@ -37,8 +79,11 @@ export const createCourse = mutation({
       throw new Error("Course price must be non-negative");
     }
 
+    const slug = await generateCourseSlug(ctx, args.title);
+
     return await ctx.db.insert("course", {
       title: args.title,
+      slug,
       description: args.description,
       tags: args.tags,
       departmentId: args.departmentId,
@@ -79,42 +124,22 @@ export const getCourse = query({
       return null;
     }
 
-    const department = await ctx.db.get(course.departmentId);
+    return buildCourseResponse(ctx, course);
+  },
+});
 
-    const versions = await ctx.db
-      .query("courseVersion")
-      .filter((q) => q.eq(q.field("courseId"), args.id))
-      .collect();
-
-    let modulesCount = 0;
-    if (versions.length > 0) {
-      const latest = versions.reduce((acc, cur) =>
-        cur.versionNumber > acc.versionNumber ? cur : acc
-      );
-      const modulesForLatest = await ctx.db
-        .query("module")
-        .filter((q) => q.eq(q.field("courseVersionId"), latest._id))
-        .collect();
-      modulesCount = modulesForLatest.length;
+export const getCourseBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const course = await ctx.db
+      .query("course")
+      .withIndex("slug", (q) => q.eq("slug", args.slug))
+      .first();
+    if (!course) {
+      return null;
     }
 
-    const identity = await ctx.auth.getUserIdentity();
-
-    let isEnrolled = false;
-    if (identity) {
-      const enrollment = await ctx.db
-        .query("enrollment")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("userId"), identity.subject),
-            q.eq(q.field("courseId"), args.id)
-          )
-        )
-        .first();
-      isEnrolled = Boolean(enrollment);
-    }
-
-    return { course, department, modulesCount, isEnrolled } as const;
+    return buildCourseResponse(ctx, course);
   },
 });
 
@@ -174,8 +199,20 @@ export const editCourse = mutation({
       );
     }
 
+    const existingCourse = await ctx.db.get(args.id);
+    if (!existingCourse) {
+      throw new ConvexError("Course not found");
+    }
+
+    const shouldRegenerateSlug =
+      existingCourse.title !== args.title || !existingCourse.slug;
+    const slug = shouldRegenerateSlug
+      ? await generateCourseSlug(ctx, args.title, args.id)
+      : existingCourse.slug;
+
     await ctx.db.patch(args.id, {
       title: args.title,
+      slug,
       description: args.description,
       tags: args.tags,
       departmentId: args.departmentId,

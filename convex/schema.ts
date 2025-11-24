@@ -10,12 +10,13 @@ export default defineSchema({
   }),
   course: defineTable({
     title: v.string(),
+    slug: v.string(),
     tags: v.array(v.string()),
     status: v.string(),
     departmentId: v.id("department"),
     description: v.string(),
     priceShillings: v.number(),
-  }),
+  }).index("slug", ["slug"]),
   courseVersion: defineTable({
     courseId: v.id("course"),
     versionNumber: v.number(),
