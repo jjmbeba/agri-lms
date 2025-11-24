@@ -1,6 +1,24 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { restrictRoles } from "./auth";
+
+// Helper function to calculate total price of draft modules for a course
+async function getDraftModulesTotalPrice(
+  ctx: MutationCtx,
+  courseId: Id<"course">
+): Promise<number> {
+  const draftModules = await ctx.db
+    .query("draftModule")
+    .filter((q) => q.eq(q.field("courseId"), courseId))
+    .collect();
+
+  return draftModules.reduce(
+    (total, module) => total + module.priceShillings,
+    0
+  );
+}
 
 export const createCourse = mutation({
   args: {
@@ -8,10 +26,16 @@ export const createCourse = mutation({
     description: v.string(),
     tags: v.array(v.string()),
     departmentId: v.id("department"),
+    priceShillings: v.number(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
+
+    // For new courses, there are no modules yet, so we allow any price >= 0
+    if (args.priceShillings < 0) {
+      throw new Error("Course price must be non-negative");
+    }
 
     return await ctx.db.insert("course", {
       title: args.title,
@@ -19,6 +43,7 @@ export const createCourse = mutation({
       tags: args.tags,
       departmentId: args.departmentId,
       status: "draft",
+      priceShillings: args.priceShillings,
     });
   },
 });
@@ -135,16 +160,26 @@ export const editCourse = mutation({
     description: v.string(),
     tags: v.array(v.string()),
     departmentId: v.id("department"),
+    priceShillings: v.number(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
+
+    // Validate that course price does not exceed total module prices
+    const moduleTotal = await getDraftModulesTotalPrice(ctx, args.id);
+    if (moduleTotal > 0 && moduleTotal < args.priceShillings) {
+      throw new ConvexError(
+        `Course price (${args.priceShillings} KES) cannot exceed combined module prices (${moduleTotal} KES)`
+      );
+    }
 
     await ctx.db.patch(args.id, {
       title: args.title,
       description: args.description,
       tags: args.tags,
       departmentId: args.departmentId,
+      priceShillings: args.priceShillings,
     });
     return await ctx.db.get(args.id);
   },

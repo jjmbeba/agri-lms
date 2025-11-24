@@ -105,6 +105,7 @@ export const ModuleFormProvider = ({ children }: ModuleFormProviderProps) => {
       basicInfo: {
         title: moduleData.title,
         description: moduleData.description,
+        priceShillings: moduleData.priceShillings,
       },
       content: contentItems,
     });

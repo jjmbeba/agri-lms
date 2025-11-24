@@ -78,12 +78,14 @@ const CourseForm = (props: CourseFormProps) => {
               text: tag,
             })),
             departmentId: rest.courseDetails.departmentId,
+            priceShillings: rest.courseDetails.priceShillings,
           }
         : {
             title: "",
             description: "",
             tags: [] as Tag[],
             departmentId: "",
+            priceShillings: 0,
           },
     validationLogic: revalidateLogic(),
     validators: {
@@ -96,6 +98,7 @@ const CourseForm = (props: CourseFormProps) => {
           description: value.description,
           tags: value.tags.map((tag) => tag.text),
           departmentId: value.departmentId as Id<"department">,
+          priceShillings: value.priceShillings,
         });
       } else if (type === "edit" && "id" in rest) {
         editCourse({
@@ -104,6 +107,7 @@ const CourseForm = (props: CourseFormProps) => {
           description: value.description,
           tags: value.tags.map((tag) => tag.text),
           departmentId: value.departmentId as Id<"department">,
+          priceShillings: value.priceShillings,
         });
       }
     },
@@ -148,6 +152,32 @@ const CourseForm = (props: CourseFormProps) => {
                     id="description"
                     onChange={(e) => field.handleChange(e.target.value)}
                     placeholder="Description"
+                    value={field.state.value}
+                  />
+                  {field.state.meta.errors.map((error) => (
+                    <FormError
+                      key={error?.message}
+                      message={error?.message ?? ""}
+                    />
+                  ))}
+                </div>
+              )}
+            </form.Field>
+            <form.Field name="priceShillings">
+              {(field) => (
+                <div className="grid gap-3">
+                  <Label htmlFor="priceShillings">Price (KES)</Label>
+                  <Input
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    id="priceShillings"
+                    min="0"
+                    onChange={(e) => {
+                      const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
+                      field.handleChange(value);
+                    }}
+                    placeholder="0.00"
+                    step="0.01"
+                    type="number"
                     value={field.state.value}
                   />
                   {field.state.meta.errors.map((error) => (

@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
@@ -10,6 +10,7 @@ import { restrictRoles } from "./auth";
 const basicInformationValidator = v.object({
   title: v.string(),
   description: v.string(),
+  priceShillings: v.number(),
 });
 
 // Constants
@@ -41,6 +42,7 @@ async function validateCourseExists(ctx: MutationCtx, courseId: Id<"course">) {
   if (!course) {
     throw new Error("Course not found");
   }
+  return course;
 }
 
 async function getDraftModules(ctx: MutationCtx, courseId: Id<"course">) {
@@ -157,6 +159,7 @@ async function publishModules(
       title: draftModule.title,
       description: draftModule.description,
       position: draftModule.position,
+      priceShillings: draftModule.priceShillings,
     });
 
     await publishModuleContent(ctx, draftModule._id, moduleId);
@@ -245,6 +248,7 @@ async function reseedDrafts(
       title: pm.title,
       description: pm.description,
       position: pm.position,
+      priceShillings: pm.priceShillings,
     });
     await reseedModuleContent(ctx, pm._id, newDraftModuleId);
   }
@@ -525,7 +529,7 @@ export const createDraftModule = mutation({
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
 
-    await validateCourseExists(ctx, args.courseId);
+    const course = await validateCourseExists(ctx, args.courseId);
 
     const existing = await ctx.db
       .query("draftModule")
@@ -536,6 +540,7 @@ export const createDraftModule = mutation({
     const draftModuleId = await ctx.db.insert("draftModule", {
       title: args.basicInfo.title,
       description: args.basicInfo.description,
+      priceShillings: args.basicInfo.priceShillings,
       courseId: args.courseId,
       position,
     });
@@ -706,6 +711,7 @@ export const updateDraftModule = mutation({
     await ctx.db.patch(args.moduleId, {
       title: args.basicInfo.title,
       description: args.basicInfo.description,
+      priceShillings: args.basicInfo.priceShillings,
     });
 
     const oldContent = await ctx.db
@@ -831,7 +837,7 @@ export const publishDraftModules = mutation({
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
 
-    await validateCourseExists(ctx, args.courseId);
+    const courseDoc = await validateCourseExists(ctx, args.courseId);
 
     const draftModulesData = await getDraftModules(ctx, args.courseId);
     await fixModulePositions(
@@ -840,6 +846,16 @@ export const publishDraftModules = mutation({
     );
     const updatedDraftModulesData = await getDraftModules(ctx, args.courseId);
     validateModulePositions(updatedDraftModulesData);
+
+    const totalModulePrice = updatedDraftModulesData.reduce(
+      (sum, module) => sum + module.priceShillings,
+      0
+    );
+    if (totalModulePrice < courseDoc.priceShillings) {
+      throw new ConvexError(
+        `Cannot publish: module total ${totalModulePrice} KES must be greater than or equal to the course price ${courseDoc.priceShillings} KES.`
+      );
+    }
 
     const nextVersionNumber = await getNextVersionNumber(ctx, args.courseId);
     const courseVersionId = await ctx.db.insert("courseVersion", {

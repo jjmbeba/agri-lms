@@ -24,6 +24,7 @@ const BasicModuleInfoForm = ({
     defaultValues: {
       title: formData.basicInfo?.title || "",
       description: formData.basicInfo?.description || "",
+      priceShillings: formData.basicInfo?.priceShillings || 0,
     },
     validationLogic: revalidateLogic(),
     validators: {
@@ -33,6 +34,7 @@ const BasicModuleInfoForm = ({
       setBasicInfo({
         title: value.title,
         description: value.description,
+        priceShillings: value.priceShillings,
       });
       handleNextStep();
     },
@@ -43,6 +45,7 @@ const BasicModuleInfoForm = ({
     if (formData.basicInfo) {
       form.setFieldValue("title", formData.basicInfo.title);
       form.setFieldValue("description", formData.basicInfo.description);
+      form.setFieldValue("priceShillings", formData.basicInfo.priceShillings);
     }
   }, [formData.basicInfo, form]);
 
@@ -83,6 +86,32 @@ const BasicModuleInfoForm = ({
                 id="description"
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="Description"
+                value={field.state.value}
+              />
+              {field.state.meta.errors.map((error) => (
+                <FormError
+                  key={error?.message}
+                  message={error?.message ?? ""}
+                />
+              ))}
+            </div>
+          )}
+        </form.Field>
+        <form.Field name="priceShillings">
+          {(field) => (
+            <div className="grid gap-3">
+              <Label htmlFor="priceShillings">Price (KES)</Label>
+              <Input
+                aria-invalid={field.state.meta.errors.length > 0}
+                id="priceShillings"
+                min="0"
+                onChange={(e) => {
+                  const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
+                  field.handleChange(value);
+                }}
+                placeholder="0.00"
+                step="0.01"
+                type="number"
                 value={field.state.value}
               />
               {field.state.meta.errors.map((error) => (

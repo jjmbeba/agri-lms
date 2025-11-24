@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { capitalize } from "@/lib/utils";
+import { capitalize, formatPriceShillings } from "@/lib/utils";
 import type { Doc } from "../../../../../convex/_generated/dataModel";
 import CourseHeaderActions from "./course-header-actions";
 
@@ -44,12 +44,16 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
               </div>
               <Separator className="h-4" orientation="vertical" />
               <div className="flex items-center gap-2">
+                <span className="font-medium">Course price:</span>
+                <span>{formatPriceShillings(course.course.priceShillings)}</span>
+              </div>
+              <Separator className="h-4" orientation="vertical" />
+              <div className="flex items-center gap-2">
                 <span className="font-medium">Created:</span>
                 <span>
                   {new Date(course.course._creationTime).toLocaleDateString()}
                 </span>
               </div>
-              <Separator className="h-4" orientation="vertical" />
             </div>
 
             {course.course.tags && (

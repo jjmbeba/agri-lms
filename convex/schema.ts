@@ -14,6 +14,7 @@ export default defineSchema({
     status: v.string(),
     departmentId: v.id("department"),
     description: v.string(),
+    priceShillings: v.number(),
   }),
   courseVersion: defineTable({
     courseId: v.id("course"),
@@ -25,6 +26,7 @@ export default defineSchema({
     title: v.string(),
     position: v.number(),
     description: v.string(),
+    priceShillings: v.number(),
   }),
   moduleContent: defineTable({
     moduleId: v.id("module"),
@@ -39,6 +41,7 @@ export default defineSchema({
     title: v.string(),
     position: v.number(),
     description: v.string(),
+    priceShillings: v.number(),
   }),
   draftModuleContent: defineTable({
     draftModuleId: v.id("draftModule"),
