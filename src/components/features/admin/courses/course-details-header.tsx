@@ -45,7 +45,7 @@ export function CourseDetailsHeader({ course }: CourseDetailsHeaderProps) {
               <Separator className="h-4" orientation="vertical" />
               <div className="flex items-center gap-2">
                 <span className="font-medium">Course price:</span>
-                <span>{formatPriceShillings(course.course.priceShillings)}</span>
+                <span>{course.course.priceShillings > 0 ? formatPriceShillings(course.course.priceShillings) : "Free"}</span>
               </div>
               <Separator className="h-4" orientation="vertical" />
               <div className="flex items-center gap-2">

@@ -77,7 +77,11 @@ export const NonEnrolledCourseView = ({
             </div>
             <p className="text-lg text-muted-foreground">{c.description}</p>
           </div>
-          <EnrollCourseBtn courseId={courseId} isEnrolled={isEnrolled} />
+          <EnrollCourseBtn
+            courseId={courseId}
+            isEnrolled={isEnrolled}
+            priceShillings={c.priceShillings}
+          />
         </div>
 
         {/* Course Stats */}
@@ -257,7 +261,11 @@ export const NonEnrolledCourseView = ({
                 </div>
               </div>
 
-              <EnrollCourseBtn courseId={courseId} isEnrolled={false} />
+              <EnrollCourseBtn
+                courseId={courseId}
+                isEnrolled={false}
+                priceShillings={c.priceShillings}
+              />
             </div>
           </div>
         </CardContent>

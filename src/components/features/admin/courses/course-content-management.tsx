@@ -319,7 +319,7 @@ export function CourseContentManagement({
                             {"priceShillings" in module &&
                               typeof module.priceShillings === "number" && (
                                 <Badge className="text-[10px] sm:text-xs" variant="secondary">
-                                  {formatPriceShillings(module.priceShillings)}
+                                  {module.priceShillings > 0 ? formatPriceShillings(module.priceShillings) : "Free"}
                                 </Badge>
                               )}
                           </div>
