@@ -12,6 +12,7 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_CONVEX_URL: z.string(),
+    NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z.string(),
   },
   // If you're using Next.js < 13.4.4, you'll need to specify the runtimeEnv manually
   runtimeEnv: {
@@ -22,6 +23,8 @@ export const env = createEnv({
     SITE_URL: process.env.SITE_URL,
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
     CLERK_JWT_ISSUER_DOMAIN: process.env.CLERK_JWT_ISSUER_DOMAIN,
+    NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:
+      process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {

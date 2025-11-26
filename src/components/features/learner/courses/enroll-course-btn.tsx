@@ -1,10 +1,13 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { BookOpen, Loader2 } from "lucide-react";
+import { usePaystackPayment } from "react-paystack";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { env } from "@/env";
 import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
@@ -27,6 +30,7 @@ const EnrollCourseBtn = ({
   isEnrolled,
   priceShillings = 0,
 }: EnrollCourseBtnProps) => {
+  const { user } = useUser();
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
     mutationFn: useConvexMutation(api.enrollments.createEnrollment),
     onSuccess: () => {
@@ -35,6 +39,14 @@ const EnrollCourseBtn = ({
     onError: (error) => {
       displayToastError(error);
     },
+  });
+
+  // Calculate amount in kobo for Paystack
+  const KOBO_PER_SHILLING = 100;
+
+  const initializePayment = usePaystackPayment({
+    publicKey: env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+    reference: Date.now().toString(),
   });
 
   if (isEnrolled) {
@@ -52,7 +64,21 @@ const EnrollCourseBtn = ({
         if (priceShillings === 0) {
           enroll({ courseId });
         } else {
-          toast.info("This course is paid. Please complete the checkout process to enroll.");
+          // toast.info("This course is paid. Please complete the checkout process to enroll.");
+          initializePayment({
+            config: {
+              email: user?.primaryEmailAddress?.emailAddress ?? "",
+              amount: priceShillings * KOBO_PER_SHILLING,
+              currency: "KES",
+            },
+            onSuccess: () => {
+              toast.success("Payment successful");
+              enroll({ courseId });
+            },
+            onClose: () => {
+              toast.error("Payment cancelled");
+            },
+          });
         }
       }}
     >
@@ -62,9 +88,7 @@ const EnrollCourseBtn = ({
         <BookOpen className="size-4" />
       )}
       <span>{isEnrolling ? "Enrolling..." : "Enroll Now"}</span>
-      <span className="text-xs sm:ml-2 sm:text-sm">
-        ({priceLabel})
-      </span>
+      <span className="text-xs sm:ml-2 sm:text-sm">({priceLabel})</span>
     </Button>
   );
 };
