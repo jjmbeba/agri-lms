@@ -25,10 +25,11 @@ export default defineSchema({
   module: defineTable({
     courseVersionId: v.id("courseVersion"),
     title: v.string(),
+    slug: v.string(),
     position: v.number(),
     description: v.string(),
     priceShillings: v.number(),
-  }),
+  }).index("slug", ["slug"]),
   moduleContent: defineTable({
     moduleId: v.id("module"),
     type: v.string(),

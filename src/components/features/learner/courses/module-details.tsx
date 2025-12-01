@@ -82,12 +82,16 @@ function TextItemCard(item: ModuleContentItem) {
 type ModuleDetailsProps = {
   moduleId: Id<"module">;
   courseId: Id<"course">;
-  preloadedModule: Preloaded<typeof api.modules.getModuleWithContentById>;
+  courseSlug: string;
+  preloadedModule:
+    | Preloaded<typeof api.modules.getModuleWithContentById>
+    | Preloaded<typeof api.modules.getModuleBySlug>;
 };
 
 export function ModuleDetails({
   moduleId,
   courseId,
+  courseSlug,
   preloadedModule,
 }: ModuleDetailsProps) {
   // Prefer preloaded data (SSR), fallback to client query if needed
@@ -213,7 +217,9 @@ export function ModuleDetails({
 
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between border-t pt-6">
-        {navigationLoading || !navigation?.previousModuleId ? (
+        {navigationLoading ||
+        !navigation?.previousModuleSlug ||
+        !navigation?.courseSlug ? (
           <Button disabled variant="outline">
             <ChevronLeft className="mr-2 size-4" />
             Previous Module
@@ -221,14 +227,16 @@ export function ModuleDetails({
         ) : (
           <Button asChild variant="outline">
             <Link
-              href={`/courses/${courseId}/modules/${navigation.previousModuleId}`}
+              href={`/courses/${navigation.courseSlug}/modules/${navigation.previousModuleSlug}`}
             >
               <ChevronLeft className="mr-2 size-4" />
               Previous Module
             </Link>
           </Button>
         )}
-        {navigationLoading || !navigation?.nextModuleId ? (
+        {navigationLoading ||
+        !navigation?.nextModuleSlug ||
+        !navigation?.courseSlug ? (
           <Button disabled variant="outline">
             Next Module
             <ChevronRight className="ml-2 size-4" />
@@ -236,7 +244,7 @@ export function ModuleDetails({
         ) : (
           <Button asChild variant="outline">
             <Link
-              href={`/courses/${courseId}/modules/${navigation.nextModuleId}`}
+              href={`/courses/${navigation.courseSlug}/modules/${navigation.nextModuleSlug}`}
             >
               Next Module
               <ChevronRight className="ml-2 size-4" />

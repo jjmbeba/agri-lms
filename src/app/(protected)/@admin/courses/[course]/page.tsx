@@ -60,7 +60,7 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
           <TabsTrigger value="settings">Settings (not implemented)</TabsTrigger>
         </TabsList>
         <TabsContent className="space-y-6" value="content">
-          <CourseContentTabs courseId={courseId} />
+          <CourseContentTabs courseId={String(courseId)} />
         </TabsContent>
         {/* <TabsContent className="space-y-6" value="students">
           <CourseStudentManagement />

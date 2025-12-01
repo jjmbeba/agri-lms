@@ -49,8 +49,6 @@ const verifyPaystackTransaction = async (reference: string) => {
 };
 
 const verifySignature = (payload: string, signature: string | null) => {
-  console.log("payload", payload);
-  console.log("signature", signature);
   if (!signature) {
     return false;
   }
@@ -60,10 +58,79 @@ const verifySignature = (payload: string, signature: string | null) => {
     .update(payload)
     .digest("hex");
 
-  console.log("generated", generated);
-  console.log("signature2", signature);
-
   return generated === signature;
+};
+
+type WebhookEvent = {
+  event?: string;
+  data?: {
+    reference?: string;
+    amount?: number;
+    currency?: string;
+    metadata?: Record<string, unknown>;
+  };
+};
+
+type ParsedMetadata = {
+  userId: string;
+  courseId: Id<"course">;
+  moduleId?: Id<"module">;
+  accessScope: "course" | "module";
+};
+
+const parseEvent = (rawBody: string): WebhookEvent => {
+  return JSON.parse(rawBody) as WebhookEvent;
+};
+
+const extractMetadata = (
+  metadata: Record<string, unknown>
+): ParsedMetadata | null => {
+  const userIdRaw = metadata.userId;
+  const courseIdRaw = metadata.courseId;
+  const moduleIdRaw = metadata.moduleId;
+  const userId = typeof userIdRaw === "string" ? userIdRaw : "";
+  const courseId =
+    typeof courseIdRaw === "string" ? (courseIdRaw as Id<"course">) : undefined;
+  const moduleId =
+    typeof moduleIdRaw === "string" ? (moduleIdRaw as Id<"module">) : undefined;
+  const accessScopeRaw = metadata.accessScope;
+  const accessScope: "course" | "module" =
+    accessScopeRaw === "module" ? "module" : "course";
+
+  if (!(userId && courseId)) {
+    return null;
+  }
+
+  if (accessScope === "module" && !moduleId) {
+    return null;
+  }
+
+  return {
+    userId,
+    courseId,
+    moduleId,
+    accessScope,
+  };
+};
+
+const validateWebhookRequest = (
+  event: WebhookEvent,
+  parsedMetadata: ParsedMetadata | null
+): { error: string } | null => {
+  const reference = event?.data?.reference;
+  if (!reference) {
+    return { error: "Missing transaction reference" };
+  }
+
+  if (!parsedMetadata) {
+    return { error: "Missing course or user metadata" };
+  }
+
+  if (parsedMetadata.accessScope === "module" && !parsedMetadata.moduleId) {
+    return { error: "Module metadata required for module purchases" };
+  }
+
+  return null;
 };
 
 export async function POST(request: NextRequest) {
@@ -72,59 +139,27 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get("x-paystack-signature");
 
     if (!verifySignature(rawBody, signature)) {
-      console.log("Invalid signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    const event = JSON.parse(rawBody) as {
-      event?: string;
-      data?: {
-        reference?: string;
-        amount?: number;
-        currency?: string;
-        metadata?: Record<string, unknown>;
-      };
-    };
+    const event = parseEvent(rawBody);
+    const metadata = event?.data?.metadata ?? {};
+    const parsedMetadata = extractMetadata(metadata);
 
-    const reference = event?.data?.reference;
-    if (!reference) {
-      return NextResponse.json(
-        { error: "Missing transaction reference" },
-        { status: 400 }
-      );
+    const validationError = validateWebhookRequest(event, parsedMetadata);
+    if (validationError) {
+      return NextResponse.json(validationError, { status: 400 });
     }
 
-    const metadata = event?.data?.metadata ?? {};
-    const userIdRaw = metadata.userId;
-    const courseIdRaw = metadata.courseId;
-    const moduleIdRaw = metadata.moduleId;
-    const userId = typeof userIdRaw === "string" ? userIdRaw : "";
-    const courseId =
-      typeof courseIdRaw === "string"
-        ? (courseIdRaw as Id<"course">)
-        : undefined;
-    const moduleId =
-      typeof moduleIdRaw === "string"
-        ? (moduleIdRaw as Id<"module">)
-        : undefined;
-    const accessScopeRaw = metadata.accessScope;
-    const accessScope: "course" | "module" =
-      accessScopeRaw === "module" ? "module" : "course";
-
-    if (!(userId && courseId)) {
+    // After validation, parsedMetadata is guaranteed to be non-null
+    if (!parsedMetadata) {
       return NextResponse.json(
         { error: "Missing course or user metadata" },
         { status: 400 }
       );
     }
 
-    if (accessScope === "module" && !moduleId) {
-      return NextResponse.json(
-        { error: "Module metadata required for module purchases" },
-        { status: 400 }
-      );
-    }
-
+    const reference = event?.data?.reference ?? "";
     const verifiedData = await verifyPaystackTransaction(reference);
     const transactionStatus = normalizeStatus(verifiedData?.status);
 
@@ -133,10 +168,10 @@ export async function POST(request: NextRequest) {
       status: transactionStatus,
       amountKobo: verifiedData?.amount ?? event?.data?.amount ?? 0,
       currency: verifiedData?.currency ?? event?.data?.currency ?? "KES",
-      userId,
-      courseId,
-      moduleId,
-      accessScope,
+      userId: parsedMetadata.userId,
+      courseId: parsedMetadata.courseId,
+      moduleId: parsedMetadata.moduleId,
+      accessScope: parsedMetadata.accessScope,
       metadata,
       rawEvent: event,
     });
@@ -148,16 +183,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
-// export function POST(request: NextRequest) {
-//   try {
-//     console.log("Webhook received");
-//     return NextResponse.json({ success: true });
-//   } catch (error) {
-//     console.error(error);
-//     return NextResponse.json(
-//       { error: "Unexpected webhook error" },
-//       { status: 500 }
-//     );
-//   }
-// }

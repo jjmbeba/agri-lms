@@ -124,6 +124,11 @@ const CreateModuleForm = ({
       return;
     }
 
+    if (!courseId) {
+      toast.error("Course ID is missing");
+      return;
+    }
+
     createDraftModule({
       basicInfo: values.basicInfo,
       content: { content: values.content },

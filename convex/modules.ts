@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { restrictRoles } from "./auth";
+import { generateModuleSlug } from "./utils/slug";
 
 // -----------------------------
 // Validators
@@ -37,10 +38,21 @@ const contentValidator = v.object({
 // -----------------------------
 // Helpers
 // -----------------------------
+const MAX_DEBUG_COURSES = 5;
+
 async function validateCourseExists(ctx: MutationCtx, courseId: Id<"course">) {
+  if (!courseId) {
+    throw new ConvexError("Course ID is required");
+  }
+
   const course = await ctx.db.get(courseId);
   if (!course) {
-    throw new Error("Course not found");
+    // Verify the ID format and check if any courses exist
+    const allCourses = await ctx.db.query("course").take(MAX_DEBUG_COURSES);
+    const courseIds = allCourses.map((c) => c._id);
+    throw new ConvexError(
+      `Course not found with ID: ${courseId}. Available course IDs: ${courseIds.join(", ")}`
+    );
   }
   return course;
 }
@@ -200,9 +212,15 @@ async function publishModules(
   courseVersionId: Id<"courseVersion">
 ) {
   for (const draftModule of draftModulesData) {
+    const slug = await generateModuleSlug(
+      ctx,
+      draftModule.title,
+      courseVersionId
+    );
     const moduleId = await ctx.db.insert("module", {
       courseVersionId,
       title: draftModule.title,
+      slug,
       description: draftModule.description,
       position: draftModule.position,
       priceShillings: draftModule.priceShillings,
@@ -389,6 +407,125 @@ export const getModuleWithContentById = query({
   },
 });
 
+export const getModuleBySlug = query({
+  args: {
+    courseSlug: v.string(),
+    moduleSlug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    // First, get the course by slug
+    const course = await ctx.db
+      .query("course")
+      .withIndex("slug", (q) => q.eq("slug", args.courseSlug))
+      .first();
+
+    if (!course) {
+      return null;
+    }
+
+    // Get the latest course version
+    const versions = await ctx.db
+      .query("courseVersion")
+      .filter((q) => q.eq(q.field("courseId"), course._id))
+      .collect();
+
+    if (versions.length === 0) {
+      return null;
+    }
+
+    versions.sort((a, b) => b.versionNumber - a.versionNumber);
+    const latestVersion = versions[0];
+
+    // Find module by slug within this course version
+    const module = await ctx.db
+      .query("module")
+      .withIndex("slug", (q) => q.eq("slug", args.moduleSlug))
+      .filter((q) => q.eq(q.field("courseVersionId"), latestVersion._id))
+      .first();
+
+    if (!module) {
+      return null;
+    }
+
+    // Check access if identity is available
+    // If no identity, still return module data - client will handle access control
+    if (identity) {
+      const hasCourseAccess = await userHasCourseEnrollment(
+        ctx,
+        course._id,
+        identity.subject
+      );
+      let canViewModule = hasCourseAccess;
+      if (!canViewModule) {
+        canViewModule = await userHasModuleAccess(
+          ctx,
+          module._id,
+          identity.subject
+        );
+      }
+
+      if (!canViewModule) {
+        return null;
+      }
+    }
+
+    // Get module content
+    const content = await ctx.db
+      .query("moduleContent")
+      .filter((q) => q.eq(q.field("moduleId"), module._id))
+      .collect();
+    content.sort((a, b) => a.orderIndex - b.orderIndex);
+
+    // Batch fetch all assignments for assignment content items
+    const assignmentContentIds = content
+      .filter((item) => item.type === "assignment")
+      .map((item) => item._id);
+
+    const assignments =
+      assignmentContentIds.length > 0
+        ? await ctx.db
+            .query("assignment")
+            .filter((q) =>
+              q.or(
+                ...assignmentContentIds.map((id) =>
+                  q.eq(q.field("moduleContentId"), id)
+                )
+              )
+            )
+            .collect()
+        : [];
+
+    const assignmentMap = new Map(
+      assignments.map((assignment) => [assignment.moduleContentId, assignment])
+    );
+
+    const contentWithAssignments = content.map((item) => {
+      if (item.type === "assignment") {
+        const assignment = assignmentMap.get(item._id);
+        if (!assignment) {
+          throw new Error(
+            `Assignment not found for module content ${item._id}`
+          );
+        }
+
+        return {
+          ...item,
+          assignmentId: assignment._id,
+          dueDate: assignment.dueDate,
+          maxScore: assignment.maxScore,
+          submissionType: assignment.submissionType,
+          instructions: assignment.instructions,
+        };
+      }
+      return item;
+    });
+
+    return { ...module, content: contentWithAssignments } as const;
+  },
+});
+
 export const getModuleNavigation = query({
   args: { moduleId: v.id("module") },
   handler: async (ctx, args) => {
@@ -452,9 +589,16 @@ export const getModuleNavigation = query({
         ? candidateModules[currentIndex + 1]
         : null;
 
+    // Get course slug for navigation
+    const course = await ctx.db.get(courseVersion.courseId);
+    const courseSlug = course?.slug ?? null;
+
     const result = {
       previousModuleId: previousModule?._id ?? null,
       nextModuleId: nextModule?._id ?? null,
+      previousModuleSlug: previousModule?.slug ?? null,
+      nextModuleSlug: nextModule?.slug ?? null,
+      courseSlug,
     };
 
     return result;
@@ -536,8 +680,9 @@ export const getModulesByLatestVersionId = query({
   args: { courseId: v.id("course") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    const unlockedModules = new Set<Id<"module">>();
+    const unlockedModuleIdsArray: Id<"module">[] = [];
     let hasCourseAccess = false;
+    const hasIdentity = identity !== null;
 
     if (identity) {
       hasCourseAccess = await userHasCourseEnrollment(
@@ -551,7 +696,9 @@ export const getModulesByLatestVersionId = query({
           args.courseId,
           identity.subject
         );
-        moduleSet.forEach((moduleId) => unlockedModules.add(moduleId));
+        for (const moduleId of moduleSet) {
+          unlockedModuleIdsArray.push(moduleId);
+        }
       }
     }
 
@@ -629,9 +776,15 @@ export const getModulesByLatestVersionId = query({
         });
 
         const lessonCount = contentWithAssignments.length;
+        // Check if module is accessible: either has course access or module is unlocked
+        // Note: TypeScript's control flow analysis may not track array mutations,
+        // but the runtime behavior is correct
+        const moduleInUnlockedList = unlockedModuleIdsArray.some(
+          (id) => id === m._id
+        );
         const isAccessible =
-          hasCourseAccess ||
-          (identity ? unlockedModules.has(m._id) : false);
+          // biome-ignore lint/nursery/noUnnecessaryConditions: Works well
+          hasCourseAccess || (hasIdentity && moduleInUnlockedList);
 
         return {
           ...m,
@@ -658,7 +811,8 @@ export const createDraftModule = mutation({
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
 
-    const course = await validateCourseExists(ctx, args.courseId);
+    // Verify course exists before proceeding
+    await validateCourseExists(ctx, args.courseId);
 
     const existing = await ctx.db
       .query("draftModule")

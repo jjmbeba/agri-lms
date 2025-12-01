@@ -19,6 +19,7 @@ import EnrollCourseBtn from "./enroll-course-btn";
 type CourseContentItem = {
   _id: Id<"module">;
   title: string;
+  slug: string;
   description: string;
   position: number;
   priceShillings: number;
@@ -68,13 +69,13 @@ type EnrolledCourseViewProps = {
 type ModuleItem = CourseContentItem["content"][number];
 
 function ModuleListItem({
-  courseId,
-  moduleId,
+  courseSlug,
+  moduleSlug,
   item,
   isCompleted,
 }: {
-  courseId: Id<"course">;
-  moduleId: Id<"module">;
+  courseSlug: string;
+  moduleSlug: string;
   item: ModuleItem;
   isCompleted: boolean;
 }) {
@@ -83,7 +84,7 @@ function ModuleListItem({
       <AssignmentItem
         assignmentId={item.assignmentId}
         isCompleted={isCompleted}
-        key={`${moduleId}-${item.position}`}
+        key={`${moduleSlug}-${item.position}`}
         orderIndex={item.orderIndex}
         title={item.title}
       />
@@ -95,8 +96,8 @@ function ModuleListItem({
       className={`flex items-start justify-between gap-3 px-4 py-3 ${
         isCompleted ? "bg-green-50" : ""
       }`}
-      href={`/courses/${String(courseId)}/modules/${String(moduleId)}`}
-      key={`${moduleId}-${item.position}`}
+      href={`/courses/${courseSlug}/modules/${moduleSlug}`}
+      key={`${moduleSlug}-${item.position}`}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -137,11 +138,13 @@ function ModuleListItem({
 function ModuleAccordionItem({
   moduleData,
   moduleProgress,
+  courseSlug,
   courseId,
   hasFullAccess,
 }: {
   moduleData: CourseContentItem;
   moduleProgress: EnrolledCourseViewProps["progress"]["modulesProgress"];
+  courseSlug: string;
   courseId: Id<"course">;
   hasFullAccess: boolean;
 }) {
@@ -213,11 +216,11 @@ function ModuleAccordionItem({
                 const isItemCompletedDefault = false;
                 return (
                   <ModuleListItem
-                    courseId={courseId}
+                    courseSlug={courseSlug}
                     isCompleted={isItemCompletedDefault}
                     item={it}
                     key={`${moduleData._id}-${it.position}`}
-                    moduleId={moduleData._id}
+                    moduleSlug={moduleData.slug}
                   />
                 );
               })}
@@ -251,11 +254,13 @@ function ModuleAccordionItem({
 function CourseContentAccordion({
   modules,
   modulesProgress,
+  courseSlug,
   courseId,
   hasFullAccess,
 }: {
   modules: CourseContentItem[];
   modulesProgress: EnrolledCourseViewProps["progress"]["modulesProgress"];
+  courseSlug: string;
   courseId: Id<"course">;
   hasFullAccess: boolean;
 }) {
@@ -276,6 +281,7 @@ function CourseContentAccordion({
         .map((m) => (
           <ModuleAccordionItem
             courseId={courseId}
+            courseSlug={courseSlug}
             hasFullAccess={hasFullAccess}
             key={m._id}
             moduleData={m}
@@ -421,6 +427,7 @@ export const EnrolledCourseView = ({
         <CardContent>
           <CourseContentAccordion
             courseId={course.course._id}
+            courseSlug={course.course.slug}
             hasFullAccess={hasFullAccess}
             modules={modules}
             modulesProgress={modulesProgress}
