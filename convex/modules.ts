@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { restrictRoles } from "./auth";
 
@@ -68,6 +68,52 @@ async function fixModulePositions(
       await ctx.db.patch(sorted[i]._id, { position: newPosition });
     }
   }
+}
+
+async function userHasCourseEnrollment(
+  ctx: QueryCtx,
+  courseId: Id<"course">,
+  userId: string
+) {
+  const enrollment = await ctx.db
+    .query("enrollment")
+    .filter((q) =>
+      q.and(
+        q.eq(q.field("courseId"), courseId),
+        q.eq(q.field("userId"), userId)
+      )
+    )
+    .first();
+  return Boolean(enrollment);
+}
+
+async function getModuleAccessSet(
+  ctx: QueryCtx,
+  courseId: Id<"course">,
+  userId: string
+) {
+  const rows = await ctx.db
+    .query("moduleAccess")
+    .withIndex("user_course", (q) =>
+      q.eq("userId", userId).eq("courseId", courseId)
+    )
+    .collect();
+
+  return new Set(rows.map((row) => row.moduleId));
+}
+
+async function userHasModuleAccess(
+  ctx: QueryCtx,
+  moduleId: Id<"module">,
+  userId: string
+) {
+  const access = await ctx.db
+    .query("moduleAccess")
+    .withIndex("user_module", (q) =>
+      q.eq("userId", userId).eq("moduleId", moduleId)
+    )
+    .first();
+  return Boolean(access);
 }
 
 function validateModulePositions(
@@ -260,8 +306,32 @@ async function reseedDrafts(
 export const getModuleWithContentById = query({
   args: { id: v.id("module") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
     const m = await ctx.db.get(args.id);
     if (!m) {
+      return null;
+    }
+
+    const courseVersion = await ctx.db.get(m.courseVersionId);
+    if (!courseVersion) {
+      return null;
+    }
+
+    const hasCourseAccess = await userHasCourseEnrollment(
+      ctx,
+      courseVersion.courseId,
+      identity.subject
+    );
+    let canViewModule = hasCourseAccess;
+    if (!canViewModule) {
+      canViewModule = await userHasModuleAccess(ctx, args.id, identity.subject);
+    }
+
+    if (!canViewModule) {
       return null;
     }
 
@@ -322,23 +392,52 @@ export const getModuleWithContentById = query({
 export const getModuleNavigation = query({
   args: { moduleId: v.id("module") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { previousModuleId: null, nextModuleId: null };
+    }
+
     const currentModule = await ctx.db.get(args.moduleId);
     if (!currentModule) {
       return { previousModuleId: null, nextModuleId: null };
     }
 
+    const courseVersion = await ctx.db.get(currentModule.courseVersionId);
+    if (!courseVersion) {
+      return { previousModuleId: null, nextModuleId: null };
+    }
+
     // Get all modules in the same course version
-    const allModules = await ctx.db
+    let candidateModules = await ctx.db
       .query("module")
       .filter((q) =>
         q.eq(q.field("courseVersionId"), currentModule.courseVersionId)
       )
       .collect();
 
-    // Sort by position
-    allModules.sort((a, b) => a.position - b.position);
+    const hasCourseAccess = await userHasCourseEnrollment(
+      ctx,
+      courseVersion.courseId,
+      identity.subject
+    );
+    if (!hasCourseAccess) {
+      const accessibleSet = await getModuleAccessSet(
+        ctx,
+        courseVersion.courseId,
+        identity.subject
+      );
+      if (!accessibleSet.has(currentModule._id)) {
+        return { previousModuleId: null, nextModuleId: null };
+      }
+      candidateModules = candidateModules.filter((module) =>
+        accessibleSet.has(module._id)
+      );
+    }
 
-    const currentIndex = allModules.findIndex(
+    // Sort by position
+    candidateModules.sort((a, b) => a.position - b.position);
+
+    const currentIndex = candidateModules.findIndex(
       (module) => module._id === args.moduleId
     );
 
@@ -347,10 +446,10 @@ export const getModuleNavigation = query({
     }
 
     const previousModule =
-      currentIndex > 0 ? allModules[currentIndex - 1] : null;
+      currentIndex > 0 ? candidateModules[currentIndex - 1] : null;
     const nextModule =
-      currentIndex < allModules.length - 1
-        ? allModules[currentIndex + 1]
+      currentIndex < candidateModules.length - 1
+        ? candidateModules[currentIndex + 1]
         : null;
 
     const result = {
@@ -436,6 +535,26 @@ export const getDraftModulesByCourseId = query({
 export const getModulesByLatestVersionId = query({
   args: { courseId: v.id("course") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const unlockedModules = new Set<Id<"module">>();
+    let hasCourseAccess = false;
+
+    if (identity) {
+      hasCourseAccess = await userHasCourseEnrollment(
+        ctx,
+        args.courseId,
+        identity.subject
+      );
+      if (!hasCourseAccess) {
+        const moduleSet = await getModuleAccessSet(
+          ctx,
+          args.courseId,
+          identity.subject
+        );
+        moduleSet.forEach((moduleId) => unlockedModules.add(moduleId));
+      }
+    }
+
     const versions = await ctx.db
       .query("courseVersion")
       .filter((q) => q.eq(q.field("courseId"), args.courseId))
@@ -509,7 +628,17 @@ export const getModulesByLatestVersionId = query({
           return item;
         });
 
-        return { ...m, content: contentWithAssignments };
+        const lessonCount = contentWithAssignments.length;
+        const isAccessible =
+          hasCourseAccess ||
+          (identity ? unlockedModules.has(m._id) : false);
+
+        return {
+          ...m,
+          content: isAccessible ? contentWithAssignments : [],
+          isAccessible,
+          lessonCount,
+        };
       })
     );
     return modulesWithContent;

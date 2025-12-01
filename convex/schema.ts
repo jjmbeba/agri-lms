@@ -99,6 +99,36 @@ export default defineSchema({
     progressPercentage: v.number(),
     completedAt: v.optional(v.string()),
   }),
+  transaction: defineTable({
+    reference: v.string(),
+    provider: v.literal("paystack"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("success"),
+      v.literal("failed"),
+      v.literal("abandoned")
+    ),
+    amountKobo: v.number(),
+    currency: v.string(),
+    userId: v.string(),
+    courseId: v.id("course"),
+    moduleId: v.optional(v.id("module")),
+    accessScope: v.union(v.literal("course"), v.literal("module")),
+    metadata: v.optional(v.any()),
+    rawEvent: v.optional(v.any()),
+    verifiedAt: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  }).index("reference", ["reference"]),
+  moduleAccess: defineTable({
+    userId: v.string(),
+    courseId: v.id("course"),
+    moduleId: v.id("module"),
+    transactionId: v.id("transaction"),
+    grantedAt: v.string(),
+  })
+    .index("user_module", ["userId", "moduleId"])
+    .index("user_course", ["userId", "courseId"]),
   assignmentSubmission: defineTable({
     assignmentId: v.id("assignment"),
     userId: v.string(),

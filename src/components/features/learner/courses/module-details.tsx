@@ -173,9 +173,11 @@ export function ModuleDetails({
   if (!data) {
     return (
       <div className="py-12 text-center">
-        <h3 className="mb-2 font-semibold text-lg">Module not found</h3>
+        <h3 className="mb-2 font-semibold text-lg">
+          Module unavailable or locked
+        </h3>
         <p className="text-muted-foreground">
-          This module may have been removed.
+          Ensure you have access to this module and try again.
         </p>
       </div>
     );

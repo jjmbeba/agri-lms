@@ -1,6 +1,64 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Easier for MVP */
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
+
+export async function ensureCourseEnrollment(
+  ctx: MutationCtx,
+  courseId: Id<"course">,
+  userId: string
+) {
+  const existingEnrollment = await ctx.db
+    .query("enrollment")
+    .filter((q) =>
+      q.and(
+        q.eq(q.field("courseId"), courseId),
+        q.eq(q.field("userId"), userId)
+      )
+    )
+    .first();
+
+  if (existingEnrollment) {
+    const existingProgress = await ctx.db
+      .query("courseProgress")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("courseId"), courseId),
+          q.eq(q.field("enrollmentId"), existingEnrollment._id)
+        )
+      )
+      .first();
+
+    if (!existingProgress) {
+      await ctx.db.insert("courseProgress", {
+        courseId,
+        userId,
+        enrollmentId: existingEnrollment._id,
+        status: "inProgress",
+        progressPercentage: 0,
+      });
+    }
+
+    return existingEnrollment._id;
+  }
+
+  const enrollmentId = await ctx.db.insert("enrollment", {
+    courseId,
+    userId,
+    enrolledAt: new Date().toISOString(),
+  });
+
+  await ctx.db.insert("courseProgress", {
+    courseId,
+    userId,
+    enrollmentId,
+    status: "inProgress",
+    progressPercentage: 0,
+  });
+
+  return enrollmentId;
+}
 
 export const createEnrollment = mutation({
   args: {
@@ -13,53 +71,7 @@ export const createEnrollment = mutation({
       throw new Error("Not authenticated");
     }
 
-    const existingEnrollment = await ctx.db
-      .query("enrollment")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("courseId"), args.courseId),
-          q.eq(q.field("userId"), identity.subject)
-        )
-      )
-      .first();
-
-    if (existingEnrollment) {
-      const existingProgress = await ctx.db
-        .query("courseProgress")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("userId"), identity.subject),
-            q.eq(q.field("courseId"), args.courseId),
-            q.eq(q.field("enrollmentId"), existingEnrollment._id)
-          )
-        )
-        .first();
-
-      if (!existingProgress) {
-        await ctx.db.insert("courseProgress", {
-          courseId: args.courseId,
-          userId: identity.subject,
-          enrollmentId: existingEnrollment._id,
-          status: "inProgress",
-          progressPercentage: 0,
-        });
-      }
-      return;
-    }
-
-    const enrollment = await ctx.db.insert("enrollment", {
-      courseId: args.courseId,
-      userId: identity.subject,
-      enrolledAt: new Date().toISOString(),
-    });
-
-    await ctx.db.insert("courseProgress", {
-      courseId: args.courseId,
-      userId: identity.subject,
-      enrollmentId: enrollment,
-      status: "inProgress",
-      progressPercentage: 0,
-    });
+    await ensureCourseEnrollment(ctx, args.courseId, identity.subject);
   },
 });
 

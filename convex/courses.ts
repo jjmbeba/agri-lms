@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
 import { restrictRoles } from "./auth";
 import { generateCourseSlug } from "./utils/slug";
 
@@ -21,10 +21,7 @@ async function getDraftModulesTotalPrice(
   );
 }
 
-async function buildCourseResponse(
-  ctx: QueryCtx,
-  course: Doc<"course">
-) {
+async function buildCourseResponse(ctx: QueryCtx, course: Doc<"course">) {
   const department = await ctx.db.get(course.departmentId);
 
   const versions = await ctx.db
@@ -46,6 +43,7 @@ async function buildCourseResponse(
 
   const identity = await ctx.auth.getUserIdentity();
   let isEnrolled = false;
+  let moduleAccessIds: Id<"module">[] = [];
   if (identity) {
     const enrollment = await ctx.db
       .query("enrollment")
@@ -57,9 +55,28 @@ async function buildCourseResponse(
       )
       .first();
     isEnrolled = Boolean(enrollment);
+
+    if (!isEnrolled) {
+      const accessRows = await ctx.db
+        .query("moduleAccess")
+        .withIndex("user_course", (q) =>
+          q.eq("userId", identity.subject).eq("courseId", course._id)
+        )
+        .collect();
+      moduleAccessIds = accessRows.map((row) => row.moduleId);
+    }
   }
 
-  return { course, department, modulesCount, isEnrolled } as const;
+  return {
+    course,
+    department,
+    modulesCount,
+    isEnrolled,
+    moduleAccess: {
+      count: moduleAccessIds.length,
+      moduleIds: moduleAccessIds,
+    },
+  } as const;
 }
 
 export const createCourse = mutation({
@@ -244,10 +261,25 @@ export const getPublishedCourses = query({
       .filter((q) => q.eq(q.field("userId"), identity.subject))
       .collect();
 
+    const moduleAccessRows = await ctx.db
+      .query("moduleAccess")
+      .withIndex("user_course", (q) => q.eq("userId", identity.subject))
+      .collect();
+    const moduleAccessByCourse = new Map<Id<"course">, Id<"module">[]>();
+    for (const row of moduleAccessRows) {
+      const existing = moduleAccessByCourse.get(row.courseId) ?? [];
+      existing.push(row.moduleId);
+      moduleAccessByCourse.set(row.courseId, existing);
+    }
+
     return courses.map((c) => ({
       course: c,
       department: departmentById.get(c.departmentId) ?? null,
       isEnrolled: userEnrollments.some((e) => e.courseId === c._id),
+      moduleAccess: {
+        count: moduleAccessByCourse.get(c._id)?.length ?? 0,
+        moduleIds: moduleAccessByCourse.get(c._id) ?? [],
+      },
     }));
   },
 });

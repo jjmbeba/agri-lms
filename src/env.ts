@@ -9,6 +9,8 @@ export const env = createEnv({
     UPLOADTHING_TOKEN: z.string(),
     SITE_URL: z.string(),
     CLERK_JWT_ISSUER_DOMAIN: z.string(),
+    PAYSTACK_SECRET_KEY: z.string(),
+    PAYSTACK_WEBHOOK_SECRET: z.string(),
   },
   client: {
     NEXT_PUBLIC_CONVEX_URL: z.string(),
@@ -25,6 +27,8 @@ export const env = createEnv({
     CLERK_JWT_ISSUER_DOMAIN: process.env.CLERK_JWT_ISSUER_DOMAIN,
     NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:
       process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+    PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+    PAYSTACK_WEBHOOK_SECRET: process.env.PAYSTACK_WEBHOOK_SECRET,
   },
   // For Next.js >= 13.4.4, you only need to destructure client variables:
   // experimental__runtimeEnv: {
