@@ -41,6 +41,8 @@ const EnrollCourseBtn = ({
   const { user } = useUser();
   const router = useRouter();
   const [isPaymentPending, setIsPaymentPending] = useState(false);
+  const accessScope: "course" | "module" = moduleId ? "module" : "course";
+  
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
     mutationFn: useConvexMutation(api.enrollments.createEnrollment),
     onSuccess: () => {
@@ -51,6 +53,18 @@ const EnrollCourseBtn = ({
       displayToastError(error);
     },
   });
+
+  const { mutate: grantFreeModuleAccess, isPending: isGrantingFreeAccess } =
+    useMutation({
+      mutationFn: useConvexMutation(api.payments.grantFreeModuleAccess),
+      onSuccess: () => {
+        toast.success("Module unlocked successfully");
+        router.refresh();
+      },
+      onError: (error) => {
+        displayToastError(error);
+      },
+    });
 
   // Calculate amount in kobo for Paystack
   const KOBO_PER_SHILLING = 100;
@@ -69,12 +83,16 @@ const EnrollCourseBtn = ({
 
   const priceLabel =
     priceShillings > 0 ? priceFormatter.format(priceShillings) : "Free";
-  const accessScope: "course" | "module" = moduleId ? "module" : "course";
-  const isProcessing = isEnrolling || isPaymentPending;
+  const isProcessing =
+    isEnrolling || isPaymentPending || isGrantingFreeAccess;
   const buttonLabel = label ?? (moduleId ? "Unlock Module" : "Enroll Now");
 
   const handleFreeEnrollment = () => {
-    enroll({ courseId });
+    if (moduleId) {
+      grantFreeModuleAccess({ courseId, moduleId });
+    } else {
+      enroll({ courseId });
+    }
   };
 
   const handlePaidEnrollment = () => {
@@ -125,7 +143,11 @@ const EnrollCourseBtn = ({
         },
       },
       onSuccess: () => {
-        toast.success("Payment successful. Unlocking access...");
+        const successMessage =
+          accessScope === "module"
+            ? "Payment successful. Unlocking module..."
+            : "Payment successful. Enrolling in course...";
+        toast.success(successMessage);
         setIsPaymentPending(false);
         router.refresh();
       },

@@ -135,6 +135,48 @@ export const recordPaystackTransaction = mutation({
   },
 });
 
+export const grantFreeModuleAccess = mutation({
+  args: {
+    courseId: v.id("course"),
+    moduleId: v.id("module"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    await assertModuleBelongsToCourse(ctx, args.moduleId, args.courseId);
+
+    const now = new Date().toISOString();
+    const reference = `free-${Date.now()}-${args.moduleId}`;
+
+    const transactionId = await ctx.db.insert("transaction", {
+      reference,
+      provider: "paystack",
+      status: "success",
+      amountKobo: 0,
+      currency: "KES",
+      userId: identity.subject,
+      courseId: args.courseId,
+      moduleId: args.moduleId,
+      accessScope: "module",
+      verifiedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await grantModuleAccess(ctx, {
+      courseId: args.courseId,
+      moduleId: args.moduleId,
+      transactionId,
+      userId: identity.subject,
+    });
+
+    return { success: true, transactionId } as const;
+  },
+});
+
 
 
 
