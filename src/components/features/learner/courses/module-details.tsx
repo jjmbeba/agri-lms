@@ -83,15 +83,11 @@ type ModuleDetailsProps = {
   moduleId: Id<"module">;
   courseId: Id<"course">;
   courseSlug: string;
-  preloadedModule:
-    | Preloaded<typeof api.modules.getModuleWithContentById>
-    | Preloaded<typeof api.modules.getModuleBySlug>;
+  preloadedModule: Preloaded<typeof api.modules.getModuleBySlug>;
 };
 
 export function ModuleDetails({
   moduleId,
-  courseId,
-  courseSlug,
   preloadedModule,
 }: ModuleDetailsProps) {
   // Prefer preloaded data (SSR), fallback to client query if needed
@@ -217,40 +213,52 @@ export function ModuleDetails({
 
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between border-t pt-6">
-        {navigationLoading ||
-        !navigation?.previousModuleSlug ||
-        !navigation?.courseSlug ? (
-          <Button disabled variant="outline">
-            <ChevronLeft className="mr-2 size-4" />
-            Previous Module
-          </Button>
-        ) : (
-          <Button asChild variant="outline">
-            <Link
-              href={`/courses/${navigation.courseSlug}/modules/${navigation.previousModuleSlug}`}
-            >
+        {(() => {
+          const hasPrevious =
+            !navigationLoading &&
+            navigation &&
+            "courseSlug" in navigation &&
+            navigation.previousModuleSlug &&
+            navigation.courseSlug;
+          return hasPrevious ? (
+            <Button asChild variant="outline">
+              <Link
+                href={`/courses/${navigation.courseSlug}/modules/${navigation.previousModuleSlug}`}
+              >
+                <ChevronLeft className="mr-2 size-4" />
+                Previous Module
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled variant="outline">
               <ChevronLeft className="mr-2 size-4" />
               Previous Module
-            </Link>
-          </Button>
-        )}
-        {navigationLoading ||
-        !navigation?.nextModuleSlug ||
-        !navigation?.courseSlug ? (
-          <Button disabled variant="outline">
-            Next Module
-            <ChevronRight className="ml-2 size-4" />
-          </Button>
-        ) : (
-          <Button asChild variant="outline">
-            <Link
-              href={`/courses/${navigation.courseSlug}/modules/${navigation.nextModuleSlug}`}
-            >
+            </Button>
+          );
+        })()}
+        {(() => {
+          const hasNext =
+            !navigationLoading &&
+            navigation &&
+            "courseSlug" in navigation &&
+            navigation.nextModuleSlug &&
+            navigation.courseSlug;
+          return hasNext ? (
+            <Button asChild variant="outline">
+              <Link
+                href={`/courses/${navigation.courseSlug}/modules/${navigation.nextModuleSlug}`}
+              >
+                Next Module
+                <ChevronRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled variant="outline">
               Next Module
               <ChevronRight className="ml-2 size-4" />
-            </Link>
-          </Button>
-        )}
+            </Button>
+          );
+        })()}
       </div>
     </div>
   );
