@@ -4,6 +4,7 @@ import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
@@ -16,9 +17,21 @@ import ThemeToggle from "@/components/ui/theme-toggle";
 import { capitalize } from "@/lib/utils";
 import { getRouteBreadcrumbs } from "./utils";
 
+const MAX_BREADCRUMBS = 3;
+
 export function SiteHeader() {
   const pathname = usePathname();
-  const breadcrumbs = getRouteBreadcrumbs(pathname);
+  const allBreadcrumbs = getRouteBreadcrumbs(pathname);
+
+  // Truncate breadcrumbs if too long: show first, ellipsis, and last 2
+  const breadcrumbs =
+    allBreadcrumbs.length > MAX_BREADCRUMBS
+      ? [
+          allBreadcrumbs[0],
+          { label: "...", href: "#", isEllipsis: true },
+          ...allBreadcrumbs.slice(-2),
+        ]
+      : allBreadcrumbs;
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -34,9 +47,13 @@ export function SiteHeader() {
               <BreadcrumbList>
                 {breadcrumbs.flatMap((breadcrumb, index) => [
                   <BreadcrumbItem key={breadcrumb.label}>
-                    <BreadcrumbLink href={breadcrumb.href}>
-                      {capitalize(breadcrumb.label)}
-                    </BreadcrumbLink>
+                    {"isEllipsis" in breadcrumb && breadcrumb.isEllipsis ? (
+                      <BreadcrumbEllipsis />
+                    ) : (
+                      <BreadcrumbLink href={breadcrumb.href}>
+                        {capitalize(breadcrumb.label)}
+                      </BreadcrumbLink>
+                    )}
                   </BreadcrumbItem>,
                   ...(index < breadcrumbs.length - 1
                     ? [

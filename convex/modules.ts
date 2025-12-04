@@ -549,6 +549,82 @@ export const getModuleBySlug = query({
   },
 });
 
+// Helper function to check module content access
+const checkModuleContentAccess = async (
+  ctx: QueryCtx,
+  identity: Awaited<ReturnType<typeof ctx.auth.getUserIdentity>>,
+  courseId: Id<"course">,
+  moduleId: Id<"module">
+): Promise<boolean> => {
+  if (!identity) {
+    return true;
+  }
+
+  const hasCourseAccess = await userHasCourseEnrollment(
+    ctx,
+    courseId,
+    identity.subject
+  );
+
+  if (hasCourseAccess) {
+    return true;
+  }
+
+  return userHasModuleAccess(ctx, moduleId, identity.subject);
+};
+
+// Helper function to get navigation slugs
+const getContentNavigationSlugs = (
+  allContent: Doc<"moduleContent">[],
+  currentContentId: Id<"moduleContent">
+) => {
+  allContent.sort((a, b) => a.orderIndex - b.orderIndex);
+
+  const currentIndex = allContent.findIndex(
+    (item) => item._id === currentContentId
+  );
+
+  const previousContent =
+    currentIndex > 0 ? allContent[currentIndex - 1] : null;
+  const nextContent =
+    currentIndex < allContent.length - 1 ? allContent[currentIndex + 1] : null;
+
+  return {
+    previousContentSlug: previousContent?.slug ?? null,
+    nextContentSlug: nextContent?.slug ?? null,
+  };
+};
+
+// Helper function to enrich content with assignment details
+const enrichContentWithAssignment = async (
+  ctx: QueryCtx,
+  moduleContent: Doc<"moduleContent">
+) => {
+  if (moduleContent.type !== "assignment") {
+    return moduleContent;
+  }
+
+  const assignment = await ctx.db
+    .query("assignment")
+    .filter((q) => q.eq(q.field("moduleContentId"), moduleContent._id))
+    .first();
+
+  if (!assignment) {
+    throw new Error(
+      `Assignment not found for module content ${moduleContent._id}`
+    );
+  }
+
+  return {
+    ...moduleContent,
+    assignmentId: assignment._id,
+    dueDate: assignment.dueDate,
+    maxScore: assignment.maxScore,
+    submissionType: assignment.submissionType,
+    instructions: assignment.instructions,
+  };
+};
+
 export const getModuleContentBySlug = query({
   args: {
     courseSlug: v.string(),
@@ -558,7 +634,7 @@ export const getModuleContentBySlug = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
-    // First, get the course by slug
+    // Get course by slug
     const course = await ctx.db
       .query("course")
       .withIndex("slug", (q) => q.eq("slug", args.courseSlug))
@@ -581,7 +657,7 @@ export const getModuleContentBySlug = query({
     versions.sort((a, b) => b.versionNumber - a.versionNumber);
     const latestVersion = versions[0];
 
-    // Find module by slug within this course version
+    // Find module by slug
     const module = await ctx.db
       .query("module")
       .withIndex("slug", (q) => q.eq("slug", args.moduleSlug))
@@ -592,28 +668,19 @@ export const getModuleContentBySlug = query({
       return null;
     }
 
-    // Check access if identity is available
-    if (identity) {
-      const hasCourseAccess = await userHasCourseEnrollment(
-        ctx,
-        course._id,
-        identity.subject
-      );
-      let canViewModule = hasCourseAccess;
-      if (!canViewModule) {
-        canViewModule = await userHasModuleAccess(
-          ctx,
-          module._id,
-          identity.subject
-        );
-      }
+    // Check access
+    const hasAccess = await checkModuleContentAccess(
+      ctx,
+      identity,
+      course._id,
+      module._id
+    );
 
-      if (!canViewModule) {
-        return null;
-      }
+    if (!hasAccess) {
+      return null;
     }
 
-    // Find moduleContent by slug within this module
+    // Find moduleContent by slug
     const moduleContent = await ctx.db
       .query("moduleContent")
       .withIndex("module_slug", (q) =>
@@ -625,54 +692,29 @@ export const getModuleContentBySlug = query({
       return null;
     }
 
-    // Get all content items for navigation
+    // Get navigation content
     const allContent = await ctx.db
       .query("moduleContent")
       .filter((q) => q.eq(q.field("moduleId"), module._id))
       .collect();
-    allContent.sort((a, b) => a.orderIndex - b.orderIndex);
 
-    const currentIndex = allContent.findIndex(
-      (item) => item._id === moduleContent._id
+    const { previousContentSlug, nextContentSlug } = getContentNavigationSlugs(
+      allContent,
+      moduleContent._id
     );
 
-    const previousContent =
-      currentIndex > 0 ? allContent[currentIndex - 1] : null;
-    const nextContent =
-      currentIndex < allContent.length - 1
-        ? allContent[currentIndex + 1]
-        : null;
-
-    // If this is an assignment, get assignment details
-    let contentWithAssignment = moduleContent;
-    if (moduleContent.type === "assignment") {
-      const assignment = await ctx.db
-        .query("assignment")
-        .filter((q) => q.eq(q.field("moduleContentId"), moduleContent._id))
-        .first();
-
-      if (!assignment) {
-        throw new Error(
-          `Assignment not found for module content ${moduleContent._id}`
-        );
-      }
-
-      contentWithAssignment = {
-        ...moduleContent,
-        assignmentId: assignment._id,
-        dueDate: assignment.dueDate,
-        maxScore: assignment.maxScore,
-        submissionType: assignment.submissionType,
-        instructions: assignment.instructions,
-      };
-    }
+    // Enrich with assignment details if needed
+    const enrichedContent = await enrichContentWithAssignment(
+      ctx,
+      moduleContent
+    );
 
     return {
       module,
       course,
-      content: contentWithAssignment,
-      previousContentSlug: previousContent?.slug ?? null,
-      nextContentSlug: nextContent?.slug ?? null,
+      content: enrichedContent,
+      previousContentSlug,
+      nextContentSlug,
       courseSlug: args.courseSlug,
       moduleSlug: args.moduleSlug,
     } as const;
@@ -992,7 +1034,7 @@ export const createDraftModule = mutation({
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
-      const slug = await generateDraftModuleContentSlug(
+      const contentSlug = await generateDraftModuleContentSlug(
         ctx,
         item.title,
         draftModuleId
@@ -1003,7 +1045,7 @@ export const createDraftModule = mutation({
           draftModuleId,
           type: item.type,
           title: item.title,
-          slug,
+          slug: contentSlug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -1021,7 +1063,7 @@ export const createDraftModule = mutation({
           draftModuleId,
           type: item.type,
           title: item.title,
-          slug,
+          slug: contentSlug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -1200,7 +1242,7 @@ export const updateDraftModule = mutation({
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
-      const slug = await generateDraftModuleContentSlug(
+      const contentSlug = await generateDraftModuleContentSlug(
         ctx,
         item.title,
         args.moduleId
@@ -1211,7 +1253,7 @@ export const updateDraftModule = mutation({
           draftModuleId: args.moduleId,
           type: item.type,
           title: item.title,
-          slug,
+          slug: contentSlug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -1229,7 +1271,7 @@ export const updateDraftModule = mutation({
           draftModuleId: args.moduleId,
           type: item.type,
           title: item.title,
-          slug,
+          slug: contentSlug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -1341,6 +1383,61 @@ export const publishDraftModules = mutation({
     await reseedDrafts(ctx, args.courseId, courseVersionId);
 
     return { courseVersionId, versionNumber: nextVersionNumber } as const;
+  },
+});
+
+export const updateDraftModuleContentById = mutation({
+  args: {
+    contentId: v.id("draftModuleContent"),
+    content: v.string(),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
+
+    const existingContent = await ctx.db.get(args.contentId);
+    if (!existingContent) {
+      throw new Error("Content not found");
+    }
+
+    const updates: Partial<{
+      content: string;
+      title: string;
+    }> = {
+      content: args.content,
+    };
+
+    if (args.title !== undefined) {
+      updates.title = args.title;
+    }
+
+    await ctx.db.patch(args.contentId, updates);
+
+    return { success: true } as const;
+  },
+});
+
+export const getDraftModuleContentById = query({
+  args: { contentId: v.id("draftModuleContent") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
+
+    const content = await ctx.db.get(args.contentId);
+    if (!content) {
+      return null;
+    }
+
+    const draftModule = await ctx.db.get(content.draftModuleId);
+    if (!draftModule) {
+      return null;
+    }
+
+    return {
+      ...content,
+      draftModule,
+    };
   },
 });
 

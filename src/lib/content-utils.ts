@@ -3,6 +3,15 @@
  * Used for converting between plain text and HTML formats for Tiptap editor
  */
 
+// Regex patterns defined at module scope for performance
+const HTML_TAG_PATTERN = /<\/?[a-z][\s\S]*>/i;
+const SCRIPT_TAG_PATTERN = /<script[\s\S]*?>[\s\S]*?<\/script>/i;
+const EVENT_HANDLER_PATTERN = /on\w+\s*=\s*["'][\s\S]*?["']/i;
+const IFRAME_NON_HTTP_PATTERN =
+  /<iframe[\s\S]*?src\s*=\s*["'](?!https?:\/\/)[\s\S]*?["'][\s\S]*?>/i;
+const HTML_STRIP_PATTERN = /<[^>]*>/g;
+const LINE_BREAK_PATTERN = /\r?\n/;
+
 /**
  * Detects if content is HTML format or plain text
  * @param content - The content string to check
@@ -14,8 +23,7 @@ export const isHTML = (content: string): boolean => {
   }
 
   // Check for common HTML tags
-  const htmlTagPattern = /<\/?[a-z][\s\S]*>/i;
-  return htmlTagPattern.test(content);
+  return HTML_TAG_PATTERN.test(content);
 };
 
 /**
@@ -35,7 +43,7 @@ export const convertPlainTextToHTML = (text: string): string => {
   }
 
   // Split by line breaks and wrap each non-empty line in <p> tags
-  const lines = text.split(/\r?\n/);
+  const lines = text.split(LINE_BREAK_PATTERN);
   const paragraphs = lines
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
@@ -89,10 +97,21 @@ export const truncateHTMLPreview = (html: string, maxLength = 100): string => {
     return "";
   }
 
-  // Create temporary element to extract text content
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  const text = div.textContent || div.innerText || "";
+  // Handle browser environment
+  if (typeof document !== "undefined") {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    const text = div.textContent || div.innerText || "";
+
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    return `${text.slice(0, maxLength)}...`;
+  }
+
+  // Server-side: simple regex-based stripping
+  const text = html.replace(HTML_STRIP_PATTERN, "").trim();
 
   if (text.length <= maxLength) {
     return text;
@@ -101,3 +120,64 @@ export const truncateHTMLPreview = (html: string, maxLength = 100): string => {
   return `${text.slice(0, maxLength)}...`;
 };
 
+/**
+ * Validates HTML content for safety
+ * Checks for potentially dangerous content
+ * @param html - HTML content string
+ * @returns Object with isValid flag and error message if invalid
+ */
+export const validateHTMLContent = (
+  html: string
+): { isValid: boolean; error?: string } => {
+  if (!html || html.trim() === "") {
+    return { isValid: true };
+  }
+
+  // Check for script tags
+  if (SCRIPT_TAG_PATTERN.test(html)) {
+    return {
+      isValid: false,
+      error: "Script tags are not allowed in content",
+    };
+  }
+
+  // Check for event handlers
+  if (EVENT_HANDLER_PATTERN.test(html)) {
+    return {
+      isValid: false,
+      error: "Event handlers are not allowed in content",
+    };
+  }
+
+  // Check for iframe with suspicious src
+  if (IFRAME_NON_HTTP_PATTERN.test(html)) {
+    return {
+      isValid: false,
+      error: "Iframes with non-HTTP(S) sources are not allowed",
+    };
+  }
+
+  return { isValid: true };
+};
+
+/**
+ * Strips all HTML tags from content
+ * Useful for generating plain text previews or metadata
+ * @param html - HTML content string
+ * @returns Plain text without HTML tags
+ */
+export const stripHTML = (html: string): string => {
+  if (!html) {
+    return "";
+  }
+
+  // Handle browser environment
+  if (typeof document !== "undefined") {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
+
+  // Server-side: simple regex-based stripping
+  return html.replace(HTML_STRIP_PATTERN, "").trim();
+};

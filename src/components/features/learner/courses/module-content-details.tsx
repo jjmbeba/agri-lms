@@ -1,14 +1,15 @@
 "use client";
 
-import { convexQuery, useSuspenseQuery } from "@convex-dev/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery as useSuspenseQueryBase } from "@tanstack/react-query";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { NotesViewer } from "@/components/features/learner/courses/notes-viewer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 
 type ModuleContentDetailsProps = {
   courseSlug: string;
@@ -48,7 +49,11 @@ function VideoContentCard(content: { title: string; content?: string }) {
     <section className="space-y-3">
       <h2 className="font-semibold text-xl">{content.title}</h2>
       <div>
-        <video aria-label={content.title} className="w-full rounded-md" controls>
+        <video
+          aria-label={content.title}
+          className="w-full rounded-md"
+          controls
+        >
           {content.content ? <source src={content.content} /> : null}
           <track kind="captions" />
         </video>
@@ -64,13 +69,9 @@ function VideoContentCard(content: { title: string; content?: string }) {
 
 function TextContentCard(content: { title: string; content?: string }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-4">
       <h2 className="font-semibold text-xl">{content.title}</h2>
-      {content.content ? (
-        <p className="prose-sm max-w-none">{content.content}</p>
-      ) : (
-        <p className="text-muted-foreground text-sm">No content provided.</p>
-      )}
+      <NotesViewer content={content.content || ""} />
     </section>
   );
 }
@@ -110,31 +111,38 @@ export function ModuleContentDetails({
 
   const renderContent = () => {
     if (content.type === "assignment") {
+      const assignmentContent = content as typeof content & {
+        dueDate?: string;
+        instructions?: string;
+        maxScore?: number;
+      };
       return (
         <AssignmentContentCard
-          title={content.title}
-          instructions={content.instructions}
-          dueDate={content.dueDate}
-          maxScore={content.maxScore}
+          dueDate={assignmentContent.dueDate}
+          instructions={assignmentContent.instructions}
+          maxScore={assignmentContent.maxScore}
+          title={assignmentContent.title}
         />
       );
     }
     if (content.type === "video") {
-      return <VideoContentCard title={content.title} content={content.content} />;
+      return (
+        <VideoContentCard content={content.content} title={content.title} />
+      );
     }
-    return <TextContentCard title={content.title} content={content.content} />;
+    return <TextContentCard content={content.content} title={content.title} />;
   };
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
+      <header className="space-y-5">
         <Link
+          className="flex items-center gap-3 text-muted-foreground text-sm hover:text-foreground"
           href={`/courses/${courseSlug}/modules/${moduleSlug}`}
-          className="text-muted-foreground hover:text-foreground text-sm"
         >
-          ← Back to {module.title}
+          <ChevronLeft className="size-4" />
+          Back to {module.title}
         </Link>
-        <h1 className="font-semibold text-2xl">{content.title}</h1>
       </header>
 
       {renderContent()}
@@ -175,4 +183,3 @@ export function ModuleContentDetails({
     </div>
   );
 }
-

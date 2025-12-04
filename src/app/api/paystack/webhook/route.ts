@@ -58,10 +58,14 @@ const verifySignature = (payload: string, signature: string | null) => {
     .update(payload)
     .digest("hex");
 
-  // return generated === signature;
   try {
-    return crypto.timingSafeEqual(Buffer.from(generated, "hex"), Buffer.from(signature, "hex"));
+    return crypto.timingSafeEqual(
+      Buffer.from(generated, "hex"),
+      Buffer.from(signature, "hex")
+    );
   } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: <error logging>
+    console.error(error);
     return false;
   }
 };
@@ -171,7 +175,7 @@ export async function POST(request: NextRequest) {
     await fetchMutation(api.payments.recordPaystackTransaction, {
       reference,
       status: transactionStatus,
-      amountKobo: verifiedData?.amount ?? event?.data?.amount ?? 0,
+      amountShillings: verifiedData?.amount ?? event?.data?.amount ?? 0,
       currency: verifiedData?.currency ?? event?.data?.currency ?? "KES",
       userId: parsedMetadata.userId,
       courseId: parsedMetadata.courseId,

@@ -8,8 +8,11 @@ type ModuleContentPageProps = {
 };
 
 const Page = async ({ params }: ModuleContentPageProps) => {
-  const { course: courseSlug, module: moduleSlug, content: contentSlug } =
-    await params;
+  const {
+    course: courseSlug,
+    module: moduleSlug,
+    content: contentSlug,
+  } = await params;
 
   const contentData = await fetchQuery(api.modules.getModuleContentBySlug, {
     courseSlug,
@@ -34,9 +37,9 @@ const Page = async ({ params }: ModuleContentPageProps) => {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
       <ModuleContentDetails
+        contentSlug={contentSlug}
         courseSlug={courseSlug}
         moduleSlug={moduleSlug}
-        contentSlug={contentSlug}
         preloadedContent={preloaded}
       />
     </div>
@@ -44,4 +47,3 @@ const Page = async ({ params }: ModuleContentPageProps) => {
 };
 
 export default Page;
-

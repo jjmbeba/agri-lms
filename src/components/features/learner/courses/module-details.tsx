@@ -8,6 +8,7 @@ import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { NotesViewer } from "@/components/features/learner/courses/notes-viewer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../../../../convex/_generated/api";
@@ -34,15 +35,17 @@ function AssignmentItemCard(
 ) {
   const cardContent = (
     <Card
+      className={
+        item.slug ? "cursor-pointer transition-shadow hover:shadow-md" : ""
+      }
       key={`assignment-${item.position}`}
-      className={item.slug ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
     >
       <CardHeader>
         <CardTitle>
           {item.slug ? (
             <Link
-              href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
               className="hover:underline"
+              href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
             >
               {item.title}
             </Link>
@@ -78,8 +81,8 @@ function VideoItemCard(
       <h2 className="font-semibold text-xl">
         {item.slug ? (
           <Link
-            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
             className="hover:underline"
+            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
           >
             {item.title}
           </Link>
@@ -108,12 +111,12 @@ function TextItemCard(
   moduleSlug: string
 ) {
   return (
-    <section className="space-y-2" key={`text-${item.position}`}>
+    <section className="space-y-3" key={`text-${item.position}`}>
       <h2 className="font-semibold text-xl">
         {item.slug ? (
           <Link
-            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
             className="hover:underline"
+            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
           >
             {item.title}
           </Link>
@@ -121,11 +124,20 @@ function TextItemCard(
           item.title
         )}
       </h2>
-      {item.content ? (
-        <p className="prose-sm max-w-none">{item.content}</p>
-      ) : (
-        <p className="text-muted-foreground text-sm">No content provided.</p>
-      )}
+      <div className="rounded-md border bg-muted/20 p-4">
+        <NotesViewer
+          className="max-h-[200px] overflow-hidden"
+          content={item.content || ""}
+        />
+        {item.slug && (
+          <Link
+            className="mt-2 inline-block text-primary text-sm hover:underline"
+            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
+          >
+            Read full notes →
+          </Link>
+        )}
+      </div>
     </section>
   );
 }
@@ -139,6 +151,7 @@ type ModuleDetailsProps = {
 
 export function ModuleDetails({
   moduleId,
+  courseSlug,
   preloadedModule,
 }: ModuleDetailsProps) {
   // Prefer preloaded data (SSR), fallback to client query if needed
@@ -234,14 +247,14 @@ export function ModuleDetails({
     );
   }
 
-  function renderContentItem(item: ModuleContentItem) {
+  function renderContentItem(item: ModuleContentItem, moduleSlug: string) {
     if (item.type === "assignment") {
-      return AssignmentItemCard(item, courseSlug, data.slug);
+      return AssignmentItemCard(item, courseSlug, moduleSlug);
     }
     if (item.type === "video") {
-      return VideoItemCard(item, courseSlug, data.slug);
+      return VideoItemCard(item, courseSlug, moduleSlug);
     }
-    return TextItemCard(item, courseSlug, data.slug);
+    return TextItemCard(item, courseSlug, moduleSlug);
   }
 
   return (
@@ -259,7 +272,7 @@ export function ModuleDetails({
       </header>
 
       {(data.content ?? []).map((item: ModuleContentItem) =>
-        renderContentItem(item)
+        renderContentItem(item, data.slug)
       )}
 
       {/* Navigation Buttons */}

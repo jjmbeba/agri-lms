@@ -18,12 +18,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  IconEdit,
   IconFileText,
   IconGripVertical,
   IconMessageCircle,
   IconTrash,
   IconVideo,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -174,6 +176,7 @@ type ModuleWithContent = Doc<"module"> & {
 type CourseContentManagementProps = {
   data: DraftModuleWithContent[] | ModuleWithContent[];
   courseId: string;
+  courseSlug: string;
   onRefresh?: () => void;
   variant: "published" | "draft";
 };
@@ -181,6 +184,7 @@ type CourseContentManagementProps = {
 export function CourseContentManagement({
   data,
   courseId,
+  courseSlug,
   onRefresh,
   variant,
 }: CourseContentManagementProps) {
@@ -318,8 +322,15 @@ export function CourseContentManagement({
                             </Badge>
                             {"priceShillings" in module &&
                               typeof module.priceShillings === "number" && (
-                                <Badge className="text-[10px] sm:text-xs" variant="secondary">
-                                  {module.priceShillings > 0 ? formatPriceShillings(module.priceShillings) : "Free"}
+                                <Badge
+                                  className="text-[10px] sm:text-xs"
+                                  variant="secondary"
+                                >
+                                  {module.priceShillings > 0
+                                    ? formatPriceShillings(
+                                        module.priceShillings
+                                      )
+                                    : "Free"}
                                 </Badge>
                               )}
                           </div>
@@ -417,50 +428,64 @@ export function CourseContentManagement({
                             </div>
 
                             {variant === "draft" && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button size="sm" variant="destructive">
-                                    <IconTrash className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Delete Content Item
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete "
-                                      {contentItem.title}"? This action cannot
-                                      be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      className={cn(
-                                        buttonVariants({
-                                          variant: "destructive",
-                                        })
-                                      )}
-                                      onClick={() => {
-                                        if (module.content.length === 1) {
-                                          toast.error(
-                                            "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
-                                          );
-                                          return;
-                                        }
-                                        deleteDraftModuleContent({
-                                          id: contentItem._id as Id<"draftModuleContent">,
-                                        });
-                                      }}
-                                    >
-                                      Delete Content
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <div className="flex items-center gap-2">
+                                {/* Edit Notes button for text content */}
+                                {contentItem.type === "text" &&
+                                  "slug" in contentItem &&
+                                  "slug" in module && (
+                                    <Button asChild size="sm" variant="outline">
+                                      <Link
+                                        href={`/courses/${courseSlug}/modules/${module.slug}/content/${contentItem.slug}/edit`}
+                                      >
+                                        <IconEdit className="h-4 w-4" />
+                                      </Link>
+                                    </Button>
+                                  )}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="sm" variant="destructive">
+                                      <IconTrash className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete Content Item
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "
+                                        {contentItem.title}"? This action cannot
+                                        be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className={cn(
+                                          buttonVariants({
+                                            variant: "destructive",
+                                          })
+                                        )}
+                                        onClick={() => {
+                                          if (module.content.length === 1) {
+                                            toast.error(
+                                              "You cannot delete the last content item in a module. Please add a new content item before deleting this one."
+                                            );
+                                            return;
+                                          }
+                                          deleteDraftModuleContent({
+                                            id: contentItem._id as Id<"draftModuleContent">,
+                                          });
+                                        }}
+                                      >
+                                        Delete Content
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             )}
                           </div>
                         ))}

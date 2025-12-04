@@ -166,10 +166,14 @@ const renderContentInput = (
         <div className="space-y-2">
           <Textarea
             onChange={(e) => field.onChange(e.target.value)}
-            placeholder="Enter text content..."
+            placeholder="Enter note content... (Rich text editing available after saving)"
             rows={DEFAULT_ROWS}
             value={field.value}
           />
+          <p className="text-muted-foreground text-xs">
+            Save the module to access the rich text editor with formatting
+            options
+          </p>
           {field.errors.map((error) => (
             <FormError key={error} message={error} />
           ))}

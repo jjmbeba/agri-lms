@@ -1,10 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { mutation, type MutationCtx } from "./_generated/server";
+import { type MutationCtx, mutation } from "./_generated/server";
 import { ensureCourseEnrollment } from "./enrollments";
-
-type AccessScope = "course" | "module";
-type TransactionStatus = "pending" | "success" | "failed" | "abandoned";
 
 async function assertModuleBelongsToCourse(
   ctx: MutationCtx,
@@ -59,7 +56,7 @@ export const recordPaystackTransaction = mutation({
       v.literal("failed"),
       v.literal("abandoned")
     ),
-    amountKobo: v.number(),
+    amountShillings: v.number(),
     currency: v.string(),
     userId: v.string(),
     courseId: v.id("course"),
@@ -88,7 +85,7 @@ export const recordPaystackTransaction = mutation({
       transactionId = existingTransaction._id;
       await ctx.db.patch(existingTransaction._id, {
         status: args.status,
-        amountKobo: args.amountKobo,
+        amountShillings: args.amountShillings,
         currency: args.currency,
         userId: args.userId,
         courseId: args.courseId,
@@ -97,14 +94,15 @@ export const recordPaystackTransaction = mutation({
         metadata: args.metadata,
         rawEvent: args.rawEvent,
         updatedAt: now,
-        verifiedAt: args.status === "success" ? now : existingTransaction.verifiedAt,
+        verifiedAt:
+          args.status === "success" ? now : existingTransaction.verifiedAt,
       });
     } else {
       transactionId = await ctx.db.insert("transaction", {
         reference: args.reference,
         provider: "paystack",
         status: args.status,
-        amountKobo: args.amountKobo,
+        amountShillings: args.amountShillings,
         currency: args.currency,
         userId: args.userId,
         courseId: args.courseId,
@@ -155,7 +153,7 @@ export const grantFreeModuleAccess = mutation({
       reference,
       provider: "paystack",
       status: "success",
-      amountKobo: 0,
+      amountShillings: 0,
       currency: "KES",
       userId: identity.subject,
       courseId: args.courseId,
@@ -176,8 +174,3 @@ export const grantFreeModuleAccess = mutation({
     return { success: true, transactionId } as const;
   },
 });
-
-
-
-
-
