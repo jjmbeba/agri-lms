@@ -38,8 +38,15 @@ function extractReadableServerMessage(rawMessage: string) {
   // Remove "Called by client" prefix if present
   let cleanedMessage = rawMessage.replace(calledByClientPattern, "").trim();
   
+  // Handle Convex error format: "[CONVEX M(...)] [Request ID: ...] Server Error"
+  // The actual error might be in the cause or after "Uncaught ConvexError:"
+  const convexErrorMatch = cleanedMessage.match(/Uncaught ConvexError:\s*(.+?)(?:\s+at\s|$)/i);
+  if (convexErrorMatch && convexErrorMatch[1]) {
+    cleanedMessage = convexErrorMatch[1].trim();
+  }
+  
   // Try to find the actual error message after "Error:" markers
-  const errorMarkers = ["Error:", "ConvexError:", "Error"];
+  const errorMarkers = ["ConvexError:", "Error:", "Uncaught ConvexError:"];
   for (const marker of errorMarkers) {
     const lastErrorIndex = cleanedMessage.lastIndexOf(marker);
     if (lastErrorIndex !== -1) {
@@ -53,6 +60,12 @@ function extractReadableServerMessage(rawMessage: string) {
     }
   }
   
+  // Remove Convex wrapper format: "[CONVEX M(...)] [Request ID: ...] Server Error"
+  cleanedMessage = cleanedMessage.replace(
+    /\[CONVEX\s+M\([^)]+\)\]\s*\[Request ID:[^\]]+\]\s*Server Error/gi,
+    ""
+  ).trim();
+  
   // Split by newlines and get the last meaningful line
   const lines = cleanedMessage
     .split("\n")
@@ -64,7 +77,78 @@ function extractReadableServerMessage(rawMessage: string) {
 }
 
 export function displayToastError(error: Error) {
-  const rawMessage = error.message ?? "";
+  // Convex errors might have the actual message in different properties
+  // Check error.data, error.cause, or error.message
+  const errorData = (error as { data?: unknown; cause?: Error }).data;
+  const errorCause = (error as { cause?: Error }).cause;
+  
+  // Try to extract the actual error message from various possible locations
+  let rawMessage = error.message ?? "";
+  
+  // Collect all possible message sources
+  const messageSources: string[] = [rawMessage];
+  
+  // Check error.stack - often contains the full error message
+  if (error.stack) {
+    messageSources.push(error.stack);
+  }
+  
+  // Check error.cause - Convex often wraps errors in cause
+  if (errorCause?.message) {
+    messageSources.push(errorCause.message);
+  }
+  
+  // Check error.cause.stack as well
+  if (errorCause?.stack) {
+    messageSources.push(errorCause.stack);
+  }
+  
+  // Check if error.data contains the message
+  if (errorData && typeof errorData === "object") {
+    const dataMessage = (errorData as { message?: string }).message;
+    if (dataMessage && typeof dataMessage === "string") {
+      messageSources.push(dataMessage);
+    }
+  }
+  
+  // Try stringifying the error to find nested messages
+  try {
+    const errorString = JSON.stringify(error, null, 2);
+    if (errorString.includes("Cannot publish")) {
+      // Extract the message from JSON string
+      const match = errorString.match(/"Cannot publish[^"]+"/);
+      if (match) {
+        messageSources.push(match[0].replace(/"/g, ""));
+      }
+    }
+  } catch {
+    // Ignore JSON stringify errors
+  }
+  
+  // Try to find the message that contains the actual error (not just wrapper)
+  for (const msg of messageSources) {
+    if (
+      msg.includes("Cannot publish") ||
+      msg.includes("module total") ||
+      (msg.includes("ConvexError") && !msg.includes("[CONVEX M("))
+    ) {
+      rawMessage = msg;
+      break;
+    }
+  }
+  
+  // If we still have a wrapper message, try to extract from cause recursively
+  if (rawMessage.includes("[CONVEX") && !rawMessage.includes("Cannot publish")) {
+    if (errorCause?.message && !errorCause.message.includes("[CONVEX")) {
+      rawMessage = errorCause.message;
+    }
+    // Also check if cause has a cause
+    const nestedCause = (errorCause as { cause?: Error })?.cause;
+    if (nestedCause?.message && nestedCause.message.includes("Cannot publish")) {
+      rawMessage = nestedCause.message;
+    }
+  }
+  
   if (rawMessage.includes("Not authenticated")) {
     toast.error("Not authenticated");
     return;
