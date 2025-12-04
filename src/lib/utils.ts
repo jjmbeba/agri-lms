@@ -27,27 +27,40 @@ const modulePricingPattern =
 const coursePricingPattern =
   /Course price \(([^)]+)\) cannot exceed combined module prices \(([^)]+)\)/i;
 const publishPricingPattern =
-  /Cannot publish:\s*module total ([^ ]+)\s+must be greater than or equal to the course price ([^ ]+)/i;
+  /Cannot publish:\s*module total ([\d,]+(?:\s*KES)?)\s+must be greater than or equal to the course price ([\d,]+(?:\s*KES)?)/i;
 const calledByClientPattern = /Called by client.*/i;
 
 function extractReadableServerMessage(rawMessage: string) {
   if (!rawMessage) {
     return "";
   }
-  const lastErrorIndex = rawMessage.lastIndexOf("Error:");
-  if (lastErrorIndex !== -1) {
-    const afterError = rawMessage
-      .slice(lastErrorIndex + "Error:".length)
-      .trim();
-    if (afterError) {
-      return afterError.replace(calledByClientPattern, "").trim();
+  
+  // Remove "Called by client" prefix if present
+  let cleanedMessage = rawMessage.replace(calledByClientPattern, "").trim();
+  
+  // Try to find the actual error message after "Error:" markers
+  const errorMarkers = ["Error:", "ConvexError:", "Error"];
+  for (const marker of errorMarkers) {
+    const lastErrorIndex = cleanedMessage.lastIndexOf(marker);
+    if (lastErrorIndex !== -1) {
+      const afterError = cleanedMessage
+        .slice(lastErrorIndex + marker.length)
+        .trim();
+      if (afterError && afterError.length > 0) {
+        cleanedMessage = afterError;
+        break;
+      }
     }
   }
-  const lines = rawMessage
+  
+  // Split by newlines and get the last meaningful line
+  const lines = cleanedMessage
     .split("\n")
     .map((line) => line.trim())
-    .filter(Boolean);
-  return lines.pop() ?? rawMessage.trim();
+    .filter((line) => line.length > 0 && !line.match(/^at\s+/));
+  
+  // Return the last line, or the whole message if no lines found
+  return lines.length > 0 ? lines[lines.length - 1] : cleanedMessage;
 }
 
 export function displayToastError(error: Error) {
@@ -61,7 +74,19 @@ export function displayToastError(error: Error) {
     return;
   }
 
+  // Check publish pricing error first in raw message (before extraction)
+  // This handles cases where the error might be wrapped
+  const rawPublishMatch = rawMessage.match(publishPricingPattern);
+  if (rawPublishMatch) {
+    const [, moduleTotal, coursePrice] = rawPublishMatch;
+    toast.error(
+      `Cannot publish: module total ${moduleTotal.trim()} must be greater than or equal to the course price ${coursePrice.trim()}. Adjust prices and try again.`
+    );
+    return;
+  }
+
   const readableMessage = extractReadableServerMessage(rawMessage);
+  
   const coursePricingMatch =
     readableMessage.match(coursePricingPattern) ||
     rawMessage.match(coursePricingPattern);
@@ -82,20 +107,34 @@ export function displayToastError(error: Error) {
     );
     return;
   }
-  const publishPricingMatch =
-    readableMessage.match(publishPricingPattern) ||
-    rawMessage.match(publishPricingPattern);
+  
+  // Check for publish pricing error in readable message
+  const publishPricingMatch = readableMessage.match(publishPricingPattern);
   if (publishPricingMatch) {
     const [, moduleTotal, coursePrice] = publishPricingMatch;
     toast.error(
-      `Cannot publish: module total ${moduleTotal} must be greater than or equal to the course price ${coursePrice}. Adjust prices and try again.`
+      `Cannot publish: module total ${moduleTotal.trim()} must be greater than or equal to the course price ${coursePrice.trim()}. Adjust prices and try again.`
     );
     return;
   }
-  if (readableMessage.includes("Cannot publish: module total")) {
-    toast.error(
-      "Cannot publish because the total module prices are below the course price. Adjust prices and try again."
-    );
+  
+  // Fallback: check if the message contains the key phrase
+  if (
+    readableMessage.includes("Cannot publish: module total") ||
+    rawMessage.includes("Cannot publish: module total")
+  ) {
+    // Try to extract numbers from the message
+    const numbers = readableMessage.match(/(\d+(?:,\d+)*)\s*KES/g) || 
+                    rawMessage.match(/(\d+(?:,\d+)*)\s*KES/g);
+    if (numbers && numbers.length >= 2) {
+      toast.error(
+        `Cannot publish: module total ${numbers[0]} must be greater than or equal to the course price ${numbers[1]}. Adjust prices and try again.`
+      );
+    } else {
+      toast.error(
+        "Cannot publish because the total module prices are below the course price. Adjust prices and try again."
+      );
+    }
     return;
   }
   if (readableMessage.includes("Total module prices")) {
