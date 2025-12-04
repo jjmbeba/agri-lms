@@ -3,7 +3,12 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { restrictRoles } from "./auth";
-import { generateModuleSlug } from "./utils/slug";
+import {
+  generateDraftModuleContentSlug,
+  generateDraftModuleSlug,
+  generateModuleContentSlug,
+  generateModuleSlug,
+} from "./utils/slug";
 
 // -----------------------------
 // Validators
@@ -168,11 +173,18 @@ async function publishModuleContent(
   for (let i = 0; i < draftContent.length; i++) {
     const item = draftContent[i];
 
+    const slug = await generateModuleContentSlug(
+      ctx,
+      item.title,
+      publishedModuleId
+    );
+
     if (item.type === "assignment") {
       const moduleContentId = await ctx.db.insert("moduleContent", {
         moduleId: publishedModuleId,
         type: item.type,
         title: item.title,
+        slug,
         content: item.content,
         orderIndex: item.orderIndex,
         position: i + 1,
@@ -198,6 +210,7 @@ async function publishModuleContent(
         moduleId: publishedModuleId,
         type: item.type,
         title: item.title,
+        slug,
         content: item.content,
         orderIndex: item.orderIndex,
         position: i + 1,
@@ -242,11 +255,18 @@ async function reseedModuleContent(
   publishedContent.sort((a, b) => a.orderIndex - b.orderIndex);
 
   for (const c of publishedContent) {
+    const slug = await generateDraftModuleContentSlug(
+      ctx,
+      c.title,
+      draftModuleId
+    );
+
     if (c.type === "assignment") {
       const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
         draftModuleId,
         type: c.type,
         title: c.title,
+        slug,
         content: c.content,
         orderIndex: c.orderIndex,
         position: c.position,
@@ -272,6 +292,7 @@ async function reseedModuleContent(
         draftModuleId,
         type: c.type,
         title: c.title,
+        slug,
         content: c.content,
         orderIndex: c.orderIndex,
         position: c.position,
@@ -307,9 +328,11 @@ async function reseedDrafts(
   publishedModules.sort((a, b) => a.position - b.position);
 
   for (const pm of publishedModules) {
+    const slug = await generateDraftModuleSlug(ctx, pm.title, courseId);
     const newDraftModuleId = await ctx.db.insert("draftModule", {
       courseId,
       title: pm.title,
+      slug,
       description: pm.description,
       position: pm.position,
       priceShillings: pm.priceShillings,
@@ -523,6 +546,136 @@ export const getModuleBySlug = query({
     });
 
     return { ...module, content: contentWithAssignments } as const;
+  },
+});
+
+export const getModuleContentBySlug = query({
+  args: {
+    courseSlug: v.string(),
+    moduleSlug: v.string(),
+    contentSlug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    // First, get the course by slug
+    const course = await ctx.db
+      .query("course")
+      .withIndex("slug", (q) => q.eq("slug", args.courseSlug))
+      .first();
+
+    if (!course) {
+      return null;
+    }
+
+    // Get the latest course version
+    const versions = await ctx.db
+      .query("courseVersion")
+      .filter((q) => q.eq(q.field("courseId"), course._id))
+      .collect();
+
+    if (versions.length === 0) {
+      return null;
+    }
+
+    versions.sort((a, b) => b.versionNumber - a.versionNumber);
+    const latestVersion = versions[0];
+
+    // Find module by slug within this course version
+    const module = await ctx.db
+      .query("module")
+      .withIndex("slug", (q) => q.eq("slug", args.moduleSlug))
+      .filter((q) => q.eq(q.field("courseVersionId"), latestVersion._id))
+      .first();
+
+    if (!module) {
+      return null;
+    }
+
+    // Check access if identity is available
+    if (identity) {
+      const hasCourseAccess = await userHasCourseEnrollment(
+        ctx,
+        course._id,
+        identity.subject
+      );
+      let canViewModule = hasCourseAccess;
+      if (!canViewModule) {
+        canViewModule = await userHasModuleAccess(
+          ctx,
+          module._id,
+          identity.subject
+        );
+      }
+
+      if (!canViewModule) {
+        return null;
+      }
+    }
+
+    // Find moduleContent by slug within this module
+    const moduleContent = await ctx.db
+      .query("moduleContent")
+      .withIndex("module_slug", (q) =>
+        q.eq("moduleId", module._id).eq("slug", args.contentSlug)
+      )
+      .first();
+
+    if (!moduleContent) {
+      return null;
+    }
+
+    // Get all content items for navigation
+    const allContent = await ctx.db
+      .query("moduleContent")
+      .filter((q) => q.eq(q.field("moduleId"), module._id))
+      .collect();
+    allContent.sort((a, b) => a.orderIndex - b.orderIndex);
+
+    const currentIndex = allContent.findIndex(
+      (item) => item._id === moduleContent._id
+    );
+
+    const previousContent =
+      currentIndex > 0 ? allContent[currentIndex - 1] : null;
+    const nextContent =
+      currentIndex < allContent.length - 1
+        ? allContent[currentIndex + 1]
+        : null;
+
+    // If this is an assignment, get assignment details
+    let contentWithAssignment = moduleContent;
+    if (moduleContent.type === "assignment") {
+      const assignment = await ctx.db
+        .query("assignment")
+        .filter((q) => q.eq(q.field("moduleContentId"), moduleContent._id))
+        .first();
+
+      if (!assignment) {
+        throw new Error(
+          `Assignment not found for module content ${moduleContent._id}`
+        );
+      }
+
+      contentWithAssignment = {
+        ...moduleContent,
+        assignmentId: assignment._id,
+        dueDate: assignment.dueDate,
+        maxScore: assignment.maxScore,
+        submissionType: assignment.submissionType,
+        instructions: assignment.instructions,
+      };
+    }
+
+    return {
+      module,
+      course,
+      content: contentWithAssignment,
+      previousContentSlug: previousContent?.slug ?? null,
+      nextContentSlug: nextContent?.slug ?? null,
+      courseSlug: args.courseSlug,
+      moduleSlug: args.moduleSlug,
+    } as const;
   },
 });
 
@@ -820,8 +973,15 @@ export const createDraftModule = mutation({
       .collect();
     const position = existing.length + 1;
 
+    const slug = await generateDraftModuleSlug(
+      ctx,
+      args.basicInfo.title,
+      args.courseId
+    );
+
     const draftModuleId = await ctx.db.insert("draftModule", {
       title: args.basicInfo.title,
+      slug,
       description: args.basicInfo.description,
       priceShillings: args.basicInfo.priceShillings,
       courseId: args.courseId,
@@ -832,11 +992,18 @@ export const createDraftModule = mutation({
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
+      const slug = await generateDraftModuleContentSlug(
+        ctx,
+        item.title,
+        draftModuleId
+      );
+
       if (item.type === "assignment") {
         const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
           draftModuleId,
           type: item.type,
           title: item.title,
+          slug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -854,6 +1021,7 @@ export const createDraftModule = mutation({
           draftModuleId,
           type: item.type,
           title: item.title,
+          slug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -991,8 +1159,20 @@ export const updateDraftModule = mutation({
       throw new Error("Module not found");
     }
 
+    // Generate new slug if title changed
+    const slug =
+      existingModule.title !== args.basicInfo.title
+        ? await generateDraftModuleSlug(
+            ctx,
+            args.basicInfo.title,
+            existingModule.courseId,
+            args.moduleId
+          )
+        : existingModule.slug;
+
     await ctx.db.patch(args.moduleId, {
       title: args.basicInfo.title,
+      slug,
       description: args.basicInfo.description,
       priceShillings: args.basicInfo.priceShillings,
     });
@@ -1020,11 +1200,18 @@ export const updateDraftModule = mutation({
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
+      const slug = await generateDraftModuleContentSlug(
+        ctx,
+        item.title,
+        args.moduleId
+      );
+
       if (item.type === "assignment") {
         const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
           draftModuleId: args.moduleId,
           type: item.type,
           title: item.title,
+          slug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -1042,6 +1229,7 @@ export const updateDraftModule = mutation({
           draftModuleId: args.moduleId,
           type: item.type,
           title: item.title,
+          slug,
           content: item.content,
           orderIndex: i,
           position: i + 1,
@@ -1153,5 +1341,82 @@ export const publishDraftModules = mutation({
     await reseedDrafts(ctx, args.courseId, courseVersionId);
 
     return { courseVersionId, versionNumber: nextVersionNumber } as const;
+  },
+});
+
+export const migrateModuleContentSlugs = mutation({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
+
+    // Migrate published moduleContent
+    const allModuleContent = await ctx.db.query("moduleContent").collect();
+    let migratedCount = 0;
+
+    for (const content of allModuleContent) {
+      // Skip if already has a slug
+      if (content.slug) {
+        continue;
+      }
+
+      const slug = await generateModuleContentSlug(
+        ctx,
+        content.title,
+        content.moduleId
+      );
+
+      await ctx.db.patch(content._id, { slug });
+      migratedCount++;
+    }
+
+    // Migrate draftModuleContent
+    const allDraftModuleContent = await ctx.db
+      .query("draftModuleContent")
+      .collect();
+    let draftMigratedCount = 0;
+
+    for (const draftContent of allDraftModuleContent) {
+      // Skip if already has a slug
+      if (draftContent.slug) {
+        continue;
+      }
+
+      const slug = await generateDraftModuleContentSlug(
+        ctx,
+        draftContent.title,
+        draftContent.draftModuleId
+      );
+
+      await ctx.db.patch(draftContent._id, { slug });
+      draftMigratedCount++;
+    }
+
+    // Migrate draftModule
+    const allDraftModules = await ctx.db.query("draftModule").collect();
+    let draftModuleMigratedCount = 0;
+
+    for (const draftModule of allDraftModules) {
+      // Skip if already has a slug
+      if (draftModule.slug) {
+        continue;
+      }
+
+      const slug = await generateDraftModuleSlug(
+        ctx,
+        draftModule.title,
+        draftModule.courseId,
+        draftModule._id
+      );
+
+      await ctx.db.patch(draftModule._id, { slug });
+      draftModuleMigratedCount++;
+    }
+
+    return {
+      success: true,
+      migratedModuleContent: migratedCount,
+      migratedDraftModuleContent: draftMigratedCount,
+      migratedDraftModule: draftModuleMigratedCount,
+    } as const;
   },
 });

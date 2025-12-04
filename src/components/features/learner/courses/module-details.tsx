@@ -16,6 +16,7 @@ import type { Id } from "../../../../../convex/_generated/dataModel";
 type ModuleContentItem = {
   type: "text" | "video" | "assignment" | string;
   title: string;
+  slug?: string;
   content?: string;
   orderIndex: number;
   position: number;
@@ -26,11 +27,29 @@ type ModuleContentItem = {
   instructions?: string;
 };
 
-function AssignmentItemCard(item: ModuleContentItem) {
-  return (
-    <Card key={`assignment-${item.position}`}>
+function AssignmentItemCard(
+  item: ModuleContentItem,
+  courseSlug: string,
+  moduleSlug: string
+) {
+  const cardContent = (
+    <Card
+      key={`assignment-${item.position}`}
+      className={item.slug ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
+    >
       <CardHeader>
-        <CardTitle>{item.title}</CardTitle>
+        <CardTitle>
+          {item.slug ? (
+            <Link
+              href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
+              className="hover:underline"
+            >
+              {item.title}
+            </Link>
+          ) : (
+            item.title
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2 text-sm">
@@ -45,12 +64,29 @@ function AssignmentItemCard(item: ModuleContentItem) {
       </CardContent>
     </Card>
   );
+
+  return cardContent;
 }
 
-function VideoItemCard(item: ModuleContentItem) {
+function VideoItemCard(
+  item: ModuleContentItem,
+  courseSlug: string,
+  moduleSlug: string
+) {
   return (
     <section className="space-y-3" key={`video-${item.position}`}>
-      <h2 className="font-semibold text-xl">{item.title}</h2>
+      <h2 className="font-semibold text-xl">
+        {item.slug ? (
+          <Link
+            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
+            className="hover:underline"
+          >
+            {item.title}
+          </Link>
+        ) : (
+          item.title
+        )}
+      </h2>
       <div>
         <video aria-label={item.title} className="w-full rounded-md" controls>
           {item.content ? <source src={item.content} /> : null}
@@ -66,10 +102,25 @@ function VideoItemCard(item: ModuleContentItem) {
   );
 }
 
-function TextItemCard(item: ModuleContentItem) {
+function TextItemCard(
+  item: ModuleContentItem,
+  courseSlug: string,
+  moduleSlug: string
+) {
   return (
     <section className="space-y-2" key={`text-${item.position}`}>
-      <h2 className="font-semibold text-xl">{item.title}</h2>
+      <h2 className="font-semibold text-xl">
+        {item.slug ? (
+          <Link
+            href={`/courses/${courseSlug}/modules/${moduleSlug}/content/${item.slug}`}
+            className="hover:underline"
+          >
+            {item.title}
+          </Link>
+        ) : (
+          item.title
+        )}
+      </h2>
       {item.content ? (
         <p className="prose-sm max-w-none">{item.content}</p>
       ) : (
@@ -185,12 +236,12 @@ export function ModuleDetails({
 
   function renderContentItem(item: ModuleContentItem) {
     if (item.type === "assignment") {
-      return AssignmentItemCard(item);
+      return AssignmentItemCard(item, courseSlug, data.slug);
     }
     if (item.type === "video") {
-      return VideoItemCard(item);
+      return VideoItemCard(item, courseSlug, data.slug);
     }
-    return TextItemCard(item);
+    return TextItemCard(item, courseSlug, data.slug);
   }
 
   return (
