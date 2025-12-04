@@ -48,6 +48,7 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
   }
 
   const courseId = courseData.course._id;
+  const courseSlug = courseData.course.slug;
 
   return (
     <div className="space-y-6 p-6">
@@ -56,11 +57,16 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="students">Students (not implemented)</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics (not implemented)</TabsTrigger>
+          <TabsTrigger value="analytics">
+            Analytics (not implemented)
+          </TabsTrigger>
           <TabsTrigger value="settings">Settings (not implemented)</TabsTrigger>
         </TabsList>
         <TabsContent className="space-y-6" value="content">
-          <CourseContentTabs courseId={String(courseId)} />
+          <CourseContentTabs
+            courseId={String(courseId)}
+            courseSlug={courseSlug}
+          />
         </TabsContent>
         {/* <TabsContent className="space-y-6" value="students">
           <CourseStudentManagement />

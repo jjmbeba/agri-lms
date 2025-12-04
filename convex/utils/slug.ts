@@ -77,3 +77,138 @@ export const generateModuleSlug = async (
   return findUniqueModuleSlug(ctx, base, 0, courseVersionId, currentModuleId);
 };
 
+const findUniqueModuleContentSlug = async (
+  ctx: MutationCtx | QueryCtx,
+  base: string,
+  suffix: number,
+  moduleId: Id<"module">,
+  currentModuleContentId?: Id<"moduleContent">
+): Promise<string> => {
+  const candidate = suffix === 0 ? base : `${base}-${suffix}`;
+  const existing = await ctx.db
+    .query("moduleContent")
+    .withIndex("module_slug", (q) =>
+      q.eq("moduleId", moduleId).eq("slug", candidate)
+    )
+    .first();
+  if (
+    !existing ||
+    existing._id === currentModuleContentId ||
+    existing.moduleId !== moduleId
+  ) {
+    return candidate;
+  }
+  return findUniqueModuleContentSlug(
+    ctx,
+    base,
+    suffix + 1,
+    moduleId,
+    currentModuleContentId
+  );
+};
+
+export const generateModuleContentSlug = async (
+  ctx: MutationCtx | QueryCtx,
+  title: string,
+  moduleId: Id<"module">,
+  currentModuleContentId?: Id<"moduleContent">
+): Promise<string> => {
+  const base = sanitizeTitle(title);
+  return findUniqueModuleContentSlug(
+    ctx,
+    base,
+    0,
+    moduleId,
+    currentModuleContentId
+  );
+};
+
+const findUniqueDraftModuleContentSlug = async (
+  ctx: MutationCtx | QueryCtx,
+  base: string,
+  suffix: number,
+  draftModuleId: Id<"draftModule">,
+  currentDraftModuleContentId?: Id<"draftModuleContent">
+): Promise<string> => {
+  const candidate = suffix === 0 ? base : `${base}-${suffix}`;
+  const existing = await ctx.db
+    .query("draftModuleContent")
+    .filter((q) =>
+      q.and(
+        q.eq(q.field("draftModuleId"), draftModuleId),
+        q.eq(q.field("slug"), candidate)
+      )
+    )
+    .first();
+  if (
+    !existing ||
+    existing._id === currentDraftModuleContentId ||
+    existing.draftModuleId !== draftModuleId
+  ) {
+    return candidate;
+  }
+  return findUniqueDraftModuleContentSlug(
+    ctx,
+    base,
+    suffix + 1,
+    draftModuleId,
+    currentDraftModuleContentId
+  );
+};
+
+export const generateDraftModuleContentSlug = async (
+  ctx: MutationCtx | QueryCtx,
+  title: string,
+  draftModuleId: Id<"draftModule">,
+  currentDraftModuleContentId?: Id<"draftModuleContent">
+): Promise<string> => {
+  const base = sanitizeTitle(title);
+  return findUniqueDraftModuleContentSlug(
+    ctx,
+    base,
+    0,
+    draftModuleId,
+    currentDraftModuleContentId
+  );
+};
+
+const findUniqueDraftModuleSlug = async (
+  ctx: MutationCtx | QueryCtx,
+  base: string,
+  suffix: number,
+  courseId: Id<"course">,
+  currentDraftModuleId?: Id<"draftModule">
+): Promise<string> => {
+  const candidate = suffix === 0 ? base : `${base}-${suffix}`;
+  const existing = await ctx.db
+    .query("draftModule")
+    .withIndex("course_slug", (q) =>
+      q.eq("courseId", courseId).eq("slug", candidate)
+    )
+    .first();
+  if (
+    !existing ||
+    existing._id === currentDraftModuleId ||
+    existing.courseId !== courseId
+  ) {
+    return candidate;
+  }
+  return findUniqueDraftModuleSlug(
+    ctx,
+    base,
+    suffix + 1,
+    courseId,
+    currentDraftModuleId
+  );
+};
+
+export const generateDraftModuleSlug = async (
+  ctx: MutationCtx | QueryCtx,
+  title: string,
+  courseId: Id<"course">,
+  currentDraftModuleId?: Id<"draftModule">
+): Promise<string> => {
+  const base = sanitizeTitle(title);
+  return findUniqueDraftModuleSlug(ctx, base, 0, courseId, currentDraftModuleId);
+};
+

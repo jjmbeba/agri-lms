@@ -20,7 +20,13 @@ import { SubmissionsTable } from "../assignments/submissions-table";
 import PublishModulesBtn from "../modules/publish-modules-btn";
 import { CourseContentManagement } from "./course-content-management";
 
-const CourseContentTabs = ({ courseId }: { courseId: string }) => {
+const CourseContentTabs = ({
+  courseId,
+  courseSlug,
+}: {
+  courseId: string;
+  courseSlug: string;
+}) => {
   const [gradingSubmissionId, setGradingSubmissionId] =
     useState<Id<"assignmentSubmission"> | null>(null);
 
@@ -50,6 +56,7 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
         ) : (
           <CourseContentManagement
             courseId={courseId}
+            courseSlug={courseSlug}
             data={[...(publishedData ?? [])]}
             variant="published"
           />
@@ -68,6 +75,7 @@ const CourseContentTabs = ({ courseId }: { courseId: string }) => {
         ) : (
           <CourseContentManagement
             courseId={courseId}
+            courseSlug={courseSlug}
             data={[...(draftData ?? [])]}
             variant="draft"
           />

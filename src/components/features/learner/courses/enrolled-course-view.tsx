@@ -114,9 +114,6 @@ function ModuleListItem({
             <span className="font-medium">{item.title}</span>
           </p>
         </div>
-        {item.type === "text" && item.content && (
-          <p className="mt-1 text-muted-foreground text-xs">{item.content}</p>
-        )}
       </div>
       <div className="flex items-center gap-2">
         <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide">
