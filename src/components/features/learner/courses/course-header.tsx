@@ -24,7 +24,11 @@ export const CourseHeader = ({ course }: CourseHeaderProps) => {
             </div>
             <p className="text-lg text-muted-foreground">{c.description}</p>
           </div>
-          <EnrollCourseBtn courseId={c._id} isEnrolled={course.isEnrolled} />
+          <EnrollCourseBtn
+            courseId={c._id}
+            isEnrolled={course.isEnrolled}
+            priceShillings={c.priceShillings}
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">

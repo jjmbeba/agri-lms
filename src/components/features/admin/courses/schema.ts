@@ -21,6 +21,9 @@ export const createCourseSchema = z.object({
   departmentId: z.string().min(1, {
     message: "Department is required",
   }),
+  priceShillings: z.number().nonnegative({
+    message: "Price must be a non-negative number",
+  }),
 });
 
 export const editCourseSchema = createCourseSchema.extend({

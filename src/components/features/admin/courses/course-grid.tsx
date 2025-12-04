@@ -36,32 +36,37 @@ export function CourseGrid({ coursesWithDepartment }: CourseGridProps) {
 
   return (
     <div className="grid @3xl/main:grid-cols-3 @xl/main:grid-cols-2 gap-6">
-      {coursesWithDepartment?.map((course) => (
+      {coursesWithDepartment?.map((courseWithDept) => {
+        const courseSlug =
+          courseWithDept.course.slug ?? courseWithDept.course._id;
+        return (
         <Card
           className="group transition-shadow hover:shadow-lg"
-          key={course.course._id}
+          key={courseWithDept.course._id}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <Link href={`/courses/${course.course._id}`}>
+                <Link href={`/courses/${courseSlug}`}>
                   <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
-                    {course.course.title}
+                    {courseWithDept.course.title}
                   </CardTitle>
                 </Link>
               </div>
               <Badge
                 variant={
-                  course.course.status === "active" ? "default" : "outline"
+                  courseWithDept.course.status === "active"
+                    ? "default"
+                    : "outline"
                 }
               >
-                {capitalize(course.course?.status ?? "")}
+                {capitalize(courseWithDept.course?.status ?? "")}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="line-clamp-2 text-muted-foreground text-sm">
-              {course.course.description}
+              {courseWithDept.course.description}
             </p>
 
             <div className="flex items-center gap-4 text-muted-foreground text-sm">
@@ -90,9 +95,12 @@ export function CourseGrid({ coursesWithDepartment }: CourseGridProps) {
             <Separator />
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
-                <EditCourseButton courseDetails={course.course} text="Edit" />
+                <EditCourseButton
+                  courseDetails={courseWithDept.course}
+                  text="Edit"
+                />
                 <Button asChild size="sm">
-                  <Link href={`/courses/${course.course._id}`}>
+                  <Link href={`/courses/${courseSlug}`}>
                     View Details
                   </Link>
                 </Button>
@@ -100,7 +108,8 @@ export function CourseGrid({ coursesWithDepartment }: CourseGridProps) {
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }

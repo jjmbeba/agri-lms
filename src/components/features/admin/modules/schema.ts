@@ -8,6 +8,9 @@ export const basicInformationSchema = z.object({
   description: z.string().min(1, {
     message: "Description is required",
   }),
+  priceShillings: z.number().nonnegative({
+    message: "Price must be a non-negative number",
+  }),
 });
 
 const contentItemSchema = z.object({

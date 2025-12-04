@@ -9,7 +9,7 @@ import { EnrolledCourseView } from "./enrolled-course-view";
 import { NonEnrolledCourseView } from "./non-enrolled-course-view";
 
 type Props = {
-  preloadedCourse: Preloaded<typeof api.courses.getCourse>;
+  preloadedCourse: Preloaded<typeof api.courses.getCourseBySlug>;
   courseId: Id<"course">;
 };
 
@@ -37,11 +37,18 @@ export const CourseDetails = ({ preloadedCourse, courseId }: Props) => {
     );
   }
 
-  if (course.isEnrolled) {
+  const moduleAccessCount = course.moduleAccess?.count ?? 0;
+  const hasFullAccess = course.isEnrolled;
+  const hasPartialAccess = moduleAccessCount > 0;
+  const shouldShowLearnerView = hasFullAccess || hasPartialAccess;
+  const normalizedModules = modules ? [...modules] : [];
+
+  if (shouldShowLearnerView) {
     return (
       <EnrolledCourseView
         course={course}
-        modules={modules ? [...modules] : []}
+        hasFullAccess={hasFullAccess}
+        modules={normalizedModules}
         progress={
           progress ?? {
             progressPercentage: 0,
@@ -50,6 +57,7 @@ export const CourseDetails = ({ preloadedCourse, courseId }: Props) => {
             modulesProgress: [],
           }
         }
+        unlockedModuleCount={moduleAccessCount}
       />
     );
   }
@@ -59,7 +67,7 @@ export const CourseDetails = ({ preloadedCourse, courseId }: Props) => {
       course={course}
       courseId={course.course._id}
       isEnrolled={course.isEnrolled}
-      modules={modules ? [...modules] : []}
+      modules={normalizedModules}
     />
   );
 };

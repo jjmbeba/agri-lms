@@ -47,6 +47,7 @@ export type FileUploadProps = {
 export type BasicInfoData = {
   title: string;
   description: string;
+  priceShillings: number;
 };
 
 export type ModuleFormData = {

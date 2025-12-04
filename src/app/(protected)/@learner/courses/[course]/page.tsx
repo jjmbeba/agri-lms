@@ -1,4 +1,4 @@
-import { preloadQuery } from "convex/nextjs";
+import { fetchQuery, preloadQuery } from "convex/nextjs";
 import { notFound } from "next/navigation";
 import { CourseDetails } from "@/components/features/learner/courses/course-details";
 import { api } from "../../../../../../convex/_generated/api";
@@ -9,21 +9,29 @@ type CoursePageProps = {
 };
 
 const Page = async ({ params }: CoursePageProps) => {
-  const { course: courseId } = await params;
-  const preloaded = await preloadQuery(api.courses.getCourse, {
-    id: courseId as Id<"course">,
+  const { course: slug } = await params;
+
+  const courseData = await fetchQuery(api.courses.getCourseBySlug, {
+    slug,
+  });
+
+  if (!courseData) {
+    notFound();
+  }
+
+  const preloaded = await preloadQuery(api.courses.getCourseBySlug, {
+    slug,
   });
 
   if (!preloaded) {
     notFound();
   }
 
+  const courseId = courseData.course._id as Id<"course">;
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
-      <CourseDetails
-        courseId={courseId as Id<"course">}
-        preloadedCourse={preloaded}
-      />
+      <CourseDetails courseId={courseId} preloadedCourse={preloaded} />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Clock, Play } from "lucide-react";
+import { BookOpen, Clock, Lock, Play } from "lucide-react";
 import Link from "next/link";
 import { AssignmentItem } from "@/components/features/learner/assignments/assignment-item";
 import {
@@ -14,12 +14,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
+import EnrollCourseBtn from "./enroll-course-btn";
 
 type CourseContentItem = {
   _id: Id<"module">;
   title: string;
+  slug: string;
   description: string;
   position: number;
+  priceShillings: number;
+  isAccessible?: boolean;
+  lessonCount?: number;
   content: Array<{
     type: string;
     title: string;
@@ -40,6 +45,7 @@ type EnrolledCourseViewProps = {
     course: Doc<"course">;
     department: Doc<"department"> | null;
     modulesCount: number;
+    isEnrolled: boolean;
   };
   modules: CourseContentItem[];
   progress: {
@@ -55,19 +61,21 @@ type EnrolledCourseViewProps = {
       completedAt: string | undefined;
     }[];
   };
+  hasFullAccess: boolean;
+  unlockedModuleCount: number;
 };
 
 // Extracted helpers to reduce cognitive complexity
 type ModuleItem = CourseContentItem["content"][number];
 
 function ModuleListItem({
-  courseId,
-  moduleId,
+  courseSlug,
+  moduleSlug,
   item,
   isCompleted,
 }: {
-  courseId: Id<"course">;
-  moduleId: Id<"module">;
+  courseSlug: string;
+  moduleSlug: string;
   item: ModuleItem;
   isCompleted: boolean;
 }) {
@@ -76,7 +84,7 @@ function ModuleListItem({
       <AssignmentItem
         assignmentId={item.assignmentId}
         isCompleted={isCompleted}
-        key={`${moduleId}-${item.position}`}
+        key={`${moduleSlug}-${item.position}`}
         orderIndex={item.orderIndex}
         title={item.title}
       />
@@ -88,8 +96,8 @@ function ModuleListItem({
       className={`flex items-start justify-between gap-3 px-4 py-3 ${
         isCompleted ? "bg-green-50" : ""
       }`}
-      href={`/courses/${String(courseId)}/modules/${String(moduleId)}`}
-      key={`${moduleId}-${item.position}`}
+      href={`/courses/${courseSlug}/modules/${moduleSlug}`}
+      key={`${moduleSlug}-${item.position}`}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -130,18 +138,24 @@ function ModuleListItem({
 function ModuleAccordionItem({
   moduleData,
   moduleProgress,
+  courseSlug,
   courseId,
+  hasFullAccess,
 }: {
   moduleData: CourseContentItem;
   moduleProgress: EnrolledCourseViewProps["progress"]["modulesProgress"];
+  courseSlug: string;
   courseId: Id<"course">;
+  hasFullAccess: boolean;
 }) {
   const items = (moduleData.content ?? [])
     .slice()
     .sort((a, b) => a.position - b.position);
+  const lessonCount = moduleData.lessonCount ?? items.length;
   const isCompleted =
     moduleProgress.find((mp) => mp.moduleId === moduleData._id)?.status ===
     "completed";
+  const isAccessible = hasFullAccess || Boolean(moduleData.isAccessible);
 
   return (
     <AccordionItem
@@ -173,9 +187,9 @@ function ModuleAccordionItem({
         </div>
         <div className="flex items-center gap-2">
           <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
-            {items.length} lesson{items.length === 1 ? "" : "s"}
+            {lessonCount} lesson{lessonCount === 1 ? "" : "s"}
           </span>
-          {isCompleted && (
+          {isCompleted && isAccessible && (
             <Badge
               className="border-green-200 bg-green-50 text-green-700"
               variant="outline"
@@ -183,33 +197,53 @@ function ModuleAccordionItem({
               Completed
             </Badge>
           )}
+          {!isAccessible && (
+            <Badge className="flex items-center gap-1" variant="destructive">
+              <Lock className="size-3" />
+              Locked
+            </Badge>
+          )}
         </div>
       </div>
       <AccordionContent>
-        {items.length > 0 ? (
-          <ol
-            aria-label={`Items in module ${moduleData.position}`}
-            className="divide-y divide-border"
-          >
-            {items.map((it) => {
-              const isItemCompletedDefault = false; // This should default to false
-              return (
-                <ModuleListItem
-                  courseId={courseId}
-                  isCompleted={isItemCompletedDefault}
-                  item={it}
-                  key={`${moduleData._id}-${it.position}`}
-                  moduleId={moduleData._id}
-                />
-              );
-            })}
-          </ol>
+        {isAccessible ? (
+          items.length > 0 ? (
+            <ol
+              aria-label={`Items in module ${moduleData.position}`}
+              className="divide-y divide-border"
+            >
+              {items.map((it) => {
+                const isItemCompletedDefault = false;
+                return (
+                  <ModuleListItem
+                    courseSlug={courseSlug}
+                    isCompleted={isItemCompletedDefault}
+                    item={it}
+                    key={`${moduleData._id}-${it.position}`}
+                    moduleSlug={moduleData.slug}
+                  />
+                );
+              })}
+            </ol>
+          ) : (
+            <div
+              aria-live="polite"
+              className="px-4 pb-4 text-muted-foreground text-xs"
+            >
+              No content available in this module yet.
+            </div>
+          )
         ) : (
-          <div
-            aria-live="polite"
-            className="px-4 pb-4 text-muted-foreground text-xs"
-          >
-            No content available in this module yet.
+          <div className="space-y-3 px-4 pb-4 text-sm">
+            <p className="text-muted-foreground">
+              Unlock this module to access its lessons and assignments.
+            </p>
+            <EnrollCourseBtn
+              courseId={courseId}
+              label="Unlock Module"
+              moduleId={moduleData._id}
+              priceShillings={moduleData.priceShillings}
+            />
           </div>
         )}
       </AccordionContent>
@@ -220,11 +254,15 @@ function ModuleAccordionItem({
 function CourseContentAccordion({
   modules,
   modulesProgress,
+  courseSlug,
   courseId,
+  hasFullAccess,
 }: {
   modules: CourseContentItem[];
   modulesProgress: EnrolledCourseViewProps["progress"]["modulesProgress"];
+  courseSlug: string;
   courseId: Id<"course">;
+  hasFullAccess: boolean;
 }) {
   if (modules.length === 0) {
     return (
@@ -243,6 +281,8 @@ function CourseContentAccordion({
         .map((m) => (
           <ModuleAccordionItem
             courseId={courseId}
+            courseSlug={courseSlug}
+            hasFullAccess={hasFullAccess}
             key={m._id}
             moduleData={m}
             moduleProgress={modulesProgress}
@@ -256,6 +296,8 @@ export const EnrolledCourseView = ({
   course,
   modules,
   progress,
+  hasFullAccess,
+  unlockedModuleCount,
 }: EnrolledCourseViewProps) => {
   const COMPLETED_PERCENTAGE = 100; // course considered complete at 100%
   const c = course.course;
@@ -279,8 +321,13 @@ export const EnrolledCourseView = ({
                 className="border-green-200 bg-green-50 text-green-700"
                 variant="outline"
               >
-                Enrolled
+                {hasFullAccess ? "Full Access" : "Module Access"}
               </Badge>
+              {!hasFullAccess && unlockedModuleCount > 0 ? (
+                <Badge variant="secondary">
+                  {unlockedModuleCount} unlocked
+                </Badge>
+              ) : null}
               {progressPercentage === COMPLETED_PERCENTAGE ? (
                 <Badge
                   className="border-green-200 bg-green-50 text-green-700"
@@ -292,6 +339,14 @@ export const EnrolledCourseView = ({
             </div>
             <p className="text-lg text-muted-foreground">{c.description}</p>
           </div>
+          {hasFullAccess ? null : (
+            <EnrollCourseBtn
+              courseId={course.course._id}
+              isEnrolled={course.isEnrolled}
+              label="Unlock Full Course"
+              priceShillings={c.priceShillings}
+            />
+          )}
         </div>
 
         {/* Progress Section */}
@@ -364,12 +419,16 @@ export const EnrolledCourseView = ({
             Course Content
           </CardTitle>
           <p className="text-muted-foreground text-sm">
-            Continue your learning journey. Click on modules to access content.
+            {hasFullAccess
+              ? "Continue your learning journey. Click on modules to access content."
+              : "Unlock modules individually or upgrade to full course access."}
           </p>
         </CardHeader>
         <CardContent>
           <CourseContentAccordion
             courseId={course.course._id}
+            courseSlug={course.course.slug}
+            hasFullAccess={hasFullAccess}
             modules={modules}
             modulesProgress={modulesProgress}
           />

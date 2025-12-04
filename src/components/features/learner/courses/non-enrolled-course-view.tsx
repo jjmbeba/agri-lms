@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowRight,
   Award,
   BookOpen,
   CheckCircle,
@@ -11,17 +10,26 @@ import {
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import EnrollCourseBtn from "./enroll-course-btn";
+
+const modulePriceFormatter = new Intl.NumberFormat("en-KE", {
+  style: "currency",
+  currency: "KES",
+  maximumFractionDigits: 0,
+});
+
+const MAX_PREVIEW_MODULES = 3;
 
 type CourseContentItem = {
   _id: Id<"module">;
   title: string;
   description: string;
   position: number;
+  priceShillings: number;
+  isAccessible?: boolean;
+  lessonCount?: number;
   content: Array<{
     type: string;
     title: string;
@@ -77,7 +85,11 @@ export const NonEnrolledCourseView = ({
             </div>
             <p className="text-lg text-muted-foreground">{c.description}</p>
           </div>
-          <EnrollCourseBtn courseId={courseId} isEnrolled={isEnrolled} />
+          <EnrollCourseBtn
+            courseId={courseId}
+            isEnrolled={isEnrolled}
+            priceShillings={c.priceShillings}
+          />
         </div>
 
         {/* Course Stats */}
@@ -140,8 +152,8 @@ export const NonEnrolledCourseView = ({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {courseFeatures.map((feature, index) => (
-              <div className="flex items-start gap-3" key={index}>
+            {courseFeatures.map((feature) => (
+              <div className="flex items-start gap-3" key={feature}>
                 <CheckCircle className="mt-0.5 size-5 shrink-0 text-green-500" />
                 <span className="text-sm">{feature}</span>
               </div>
@@ -170,14 +182,14 @@ export const NonEnrolledCourseView = ({
 
             {modules.length > 0 ? (
               <div className="space-y-3">
-                {modules.slice(0, 3).map((m) => {
-                  const itemsCount = m.content?.length ?? 0;
+                {modules.slice(0, MAX_PREVIEW_MODULES).map((m) => {
+                  const itemsCount = m.lessonCount ?? m.content?.length ?? 0;
                   return (
                     <div
-                      className="flex items-start justify-between gap-4 rounded-lg border p-4"
+                      className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between"
                       key={m._id}
                     >
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex items-center gap-3">
                           <div className="flex size-8 items-center justify-center rounded-full bg-muted font-medium text-xs">
                             {m.position}
@@ -192,23 +204,38 @@ export const NonEnrolledCourseView = ({
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
-                          {itemsCount} lesson{itemsCount === 1 ? "" : "s"}
-                        </span>
-                        <Badge className="text-xs" variant="outline">
-                          Preview
-                        </Badge>
+                      <div className="flex flex-col gap-3 sm:items-end">
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
+                            {itemsCount} lesson{itemsCount === 1 ? "" : "s"}
+                          </span>
+                          <Badge className="text-xs" variant="outline">
+                            Preview
+                          </Badge>
+                        </div>
+                        <div className="flex flex-col items-start gap-2 text-muted-foreground text-xs sm:items-end">
+                          <span>
+                            {m.priceShillings > 0
+                              ? modulePriceFormatter.format(m.priceShillings)
+                              : "Free Module"}
+                          </span>
+                          <EnrollCourseBtn
+                            courseId={courseId}
+                            label="Unlock Module"
+                            moduleId={m._id}
+                            priceShillings={m.priceShillings}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
                 })}
 
-                {modules.length > 3 && (
+                {modules.length > MAX_PREVIEW_MODULES && (
                   <div className="py-4 text-center">
                     <p className="text-muted-foreground text-sm">
-                      +{modules.length - 3} more modules available after
-                      enrollment
+                      +{modules.length - MAX_PREVIEW_MODULES} more modules
+                      available after enrollment
                     </p>
                   </div>
                 )}
@@ -257,7 +284,11 @@ export const NonEnrolledCourseView = ({
                 </div>
               </div>
 
-              <EnrollCourseBtn courseId={courseId} isEnrolled={false} />
+              <EnrollCourseBtn
+                courseId={courseId}
+                isEnrolled={false}
+                priceShillings={c.priceShillings}
+              />
             </div>
           </div>
         </CardContent>

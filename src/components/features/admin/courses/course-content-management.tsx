@@ -47,7 +47,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { capitalize, cn, displayToastError } from "@/lib/utils";
+import {
+  capitalize,
+  cn,
+  displayToastError,
+  formatPriceShillings,
+} from "@/lib/utils";
 
 type SortableItemContextValue = {
   attributes: DraggableAttributes;
@@ -311,6 +316,12 @@ export function CourseContentManagement({
                             >
                               {module.content?.length || 0} content item(s)
                             </Badge>
+                            {"priceShillings" in module &&
+                              typeof module.priceShillings === "number" && (
+                                <Badge className="text-[10px] sm:text-xs" variant="secondary">
+                                  {module.priceShillings > 0 ? formatPriceShillings(module.priceShillings) : "Free"}
+                                </Badge>
+                              )}
                           </div>
                         </div>
                       </div>
