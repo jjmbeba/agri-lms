@@ -1,8 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { env } from "@/env";
-import { displayToastError } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -11,6 +8,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePaystackPayment } from "react-paystack";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { env } from "@/env";
+import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Badge } from "../../../ui/badge";
@@ -42,7 +42,7 @@ const EnrollCourseBtn = ({
   const router = useRouter();
   const [isPaymentPending, setIsPaymentPending] = useState(false);
   const accessScope: "course" | "module" = moduleId ? "module" : "course";
-  
+
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
     mutationFn: useConvexMutation(api.enrollments.createEnrollment),
     onSuccess: () => {
@@ -65,8 +65,7 @@ const EnrollCourseBtn = ({
       },
     });
 
-  // Calculate amount in kobo for Paystack
-  const KOBO_PER_SHILLING = 100;
+  const CENTS_PER_SHILLING = 100;
 
   const initializePayment = usePaystackPayment({
     publicKey: env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
@@ -82,8 +81,7 @@ const EnrollCourseBtn = ({
 
   const priceLabel =
     priceShillings > 0 ? priceFormatter.format(priceShillings) : "Free";
-  const isProcessing =
-    isEnrolling || isPaymentPending || isGrantingFreeAccess;
+  const isProcessing = isEnrolling || isPaymentPending || isGrantingFreeAccess;
   const buttonLabel = label ?? (moduleId ? "Unlock Module" : "Enroll Now");
 
   const handleFreeEnrollment = () => {
@@ -109,9 +107,9 @@ const EnrollCourseBtn = ({
     initializePayment({
       config: {
         email: user.primaryEmailAddress.emailAddress,
-        amount: priceShillings * KOBO_PER_SHILLING,
+        amount: priceShillings * CENTS_PER_SHILLING,
         currency: "KES",
-        reference: Date.now().toString(),
+        reference: `pay-${user.id}-${Date.now().toString()}-${accessScope}`,
         metadata: {
           userId: user.id,
           courseId,
