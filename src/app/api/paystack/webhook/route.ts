@@ -58,7 +58,12 @@ const verifySignature = (payload: string, signature: string | null) => {
     .update(payload)
     .digest("hex");
 
-  return generated === signature;
+  // return generated === signature;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(generated, "hex"), Buffer.from(signature, "hex"));
+  } catch (error) {
+    return false;
+  }
 };
 
 type WebhookEvent = {

@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { env } from "@/env";
+import { displayToastError } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -8,9 +11,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { usePaystackPayment } from "react-paystack";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { env } from "@/env";
-import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Badge } from "../../../ui/badge";
@@ -47,7 +47,6 @@ const EnrollCourseBtn = ({
     mutationFn: useConvexMutation(api.enrollments.createEnrollment),
     onSuccess: () => {
       toast.success("Enrolled in course successfully");
-      router.refresh();
     },
     onError: (error) => {
       displayToastError(error);
