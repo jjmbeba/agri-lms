@@ -1,6 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+
+const MIN_RATING = 1;
+const MAX_RATING = 5;
+const DEFAULT_REVIEW_LIMIT = 20;
 
 export const submitReview = mutation({
   args: {
@@ -15,18 +18,17 @@ export const submitReview = mutation({
     }
 
     // Validate rating
-    if (args.rating < 1 || args.rating > 5) {
-      throw new ConvexError("Rating must be between 1 and 5");
+    if (args.rating < MIN_RATING || args.rating > MAX_RATING) {
+      throw new ConvexError(
+        `Rating must be between ${MIN_RATING} and ${MAX_RATING}`
+      );
     }
 
     // Check if user is enrolled
     const enrollment = await ctx.db
       .query("enrollment")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("userId"), identity.subject),
-          q.eq(q.field("courseId"), args.courseId)
-        )
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
       )
       .first();
 
@@ -77,7 +79,7 @@ export const getCourseReviews = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
+    const limit = args.limit ?? DEFAULT_REVIEW_LIMIT;
 
     const reviews = await ctx.db
       .query("courseReview")
@@ -94,6 +96,8 @@ export const getCourseReviewSummary = query({
     courseId: v.id("course"),
   },
   handler: async (ctx, args) => {
+    // Use the index on courseId for efficient querying
+    // The index ensures we only scan reviews for this specific course
     const reviews = await ctx.db
       .query("courseReview")
       .withIndex("course", (q) => q.eq("courseId", args.courseId))
@@ -104,32 +108,34 @@ export const getCourseReviewSummary = query({
         averageRating: 0,
         totalReviews: 0,
         ratingDistribution: {
-          1: 0,
+          [MIN_RATING]: 0,
           2: 0,
           3: 0,
           4: 0,
-          5: 0,
+          [MAX_RATING]: 0,
         },
       };
     }
 
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = totalRating / reviews.length;
-
+    // Calculate statistics efficiently by iterating once
+    let totalRating = 0;
     const ratingDistribution = {
-      1: 0,
+      [MIN_RATING]: 0,
       2: 0,
       3: 0,
       4: 0,
-      5: 0,
+      [MAX_RATING]: 0,
     };
 
     for (const review of reviews) {
+      totalRating += review.rating;
       const rating = Math.floor(review.rating) as 1 | 2 | 3 | 4 | 5;
-      if (rating >= 1 && rating <= 5) {
+      if (rating >= MIN_RATING && rating <= MAX_RATING) {
         ratingDistribution[rating]++;
       }
     }
+
+    const averageRating = totalRating / reviews.length;
 
     return {
       averageRating: Math.round(averageRating * 10) / 10,
@@ -183,4 +189,3 @@ export const deleteReview = mutation({
     return { success: true };
   },
 });
-

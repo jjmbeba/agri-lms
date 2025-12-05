@@ -82,7 +82,8 @@ export default defineSchema({
     courseId: v.id("course"),
     userId: v.string(),
     enrolledAt: v.string(),
-  }),
+  })
+    .index("user_course", ["userId", "courseId"]),
   moduleProgress: defineTable({
     moduleId: v.id("module"),
     userId: v.string(),
