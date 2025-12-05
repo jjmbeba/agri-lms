@@ -6,7 +6,9 @@ import {
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
+import { useQuery } from "convex/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "../../../../../convex/_generated/api";
 import type { Doc } from "../../../../../convex/_generated/dataModel";
 
 type CourseDetailsStatsProps = {
@@ -18,15 +20,21 @@ type CourseDetailsStatsProps = {
 };
 
 export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
+  const reviewSummary = useQuery(api.reviews.getCourseReviewSummary, {
+    courseId: course.course._id,
+  });
+
   // Mock data - in real app, these would come from the database
   const stats = {
     enrolledStudents: 245,
     modules: 8,
-    averageRating: 4.6,
     totalLessons: 12,
     totalDuration: "8 hours",
     lastActivity: "2 hours ago",
   };
+
+  const averageRating = reviewSummary?.averageRating ?? 0;
+  const totalReviews = reviewSummary?.totalReviews ?? 0;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -58,12 +66,18 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="font-medium text-sm">Average Rating (dummy data)</CardTitle>
+          <CardTitle className="font-medium text-sm">Average Rating</CardTitle>
           <IconBook className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="font-bold text-2xl">{stats.averageRating}</div>
-          <p className="text-muted-foreground text-xs">Based on 89 reviews</p>
+          <div className="font-bold text-2xl">
+            {totalReviews > 0 ? averageRating.toFixed(1) : "N/A"}
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {totalReviews > 0
+              ? `Based on ${totalReviews} review${totalReviews === 1 ? "" : "s"}`
+              : "No reviews yet"}
+          </p>
         </CardContent>
       </Card>
 
