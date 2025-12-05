@@ -274,7 +274,7 @@ export function NotesEditor({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="simple-editor-wrapper flex-1">
+      <div className="simple-editor-wrapper flex-1 !h-auto !w-full overflow-auto">
         <EditorContext.Provider value={{ editor }}>
           <Toolbar
             ref={toolbarRef}

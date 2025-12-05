@@ -50,7 +50,7 @@ export function NotesEditorPage({
   };
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-[calc(100vh-var(--header-height))] flex-col">
       <header className="border-b bg-background p-4">
         <div className="mx-auto flex max-w-7xl items-center gap-4">
           <Link
