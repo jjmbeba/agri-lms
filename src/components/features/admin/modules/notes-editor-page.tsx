@@ -51,8 +51,8 @@ export function NotesEditorPage({
 
   return (
     <div className="flex h-[calc(100vh-var(--header-height))] flex-col">
-      <header className="border-b bg-background p-4">
-        <div className="mx-auto flex max-w-7xl items-center gap-4">
+      <header className="border-b bg-background p-3 sm:p-4">
+        <div className="mx-auto flex max-w-7xl items-center gap-2 sm:gap-4">
           <Link
             className="text-muted-foreground hover:text-foreground"
             href={`/courses/${courseSlug}`}
@@ -67,7 +67,7 @@ export function NotesEditorPage({
       </header>
 
       <main className="flex-1 overflow-hidden">
-        <div className="mx-auto h-full max-w-7xl p-4">
+        <div className="mx-auto h-full max-w-7xl">
           <NotesEditor
             initialContent={initialContent}
             isSaving={isPending}
