@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     await fetchMutation(api.payments.recordPaystackTransaction, {
       reference,
       status: transactionStatus,
-      amountShillings: verifiedData?.amount ?? event?.data?.amount ?? 0,
+      amountCents: verifiedData?.amount ?? event?.data?.amount ?? 0,
       currency: verifiedData?.currency ?? event?.data?.currency ?? "KES",
       userId: parsedMetadata.userId,
       courseId: parsedMetadata.courseId,
