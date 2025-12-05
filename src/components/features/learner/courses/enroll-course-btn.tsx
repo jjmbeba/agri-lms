@@ -166,18 +166,20 @@ const EnrollCourseBtn = ({
   return (
     <Button
       aria-label={buttonLabel}
-      className="flex flex-col items-start gap-1 text-left sm:flex-row sm:items-center sm:text-sm"
+      className="gap-2"
       disabled={isProcessing}
       onClick={handleClick}
       type="button"
     >
       {isProcessing ? (
-        <Loader2 className="mr-2 size-4 animate-spin" />
+        <Loader2 className="size-4 animate-spin" />
       ) : (
         <BookOpen className="size-4" />
       )}
-      <span>{isProcessing ? "Processing..." : buttonLabel}</span>
-      <span className="text-xs sm:ml-2 sm:text-sm">({priceLabel})</span>
+      <span className="whitespace-nowrap">
+        {isProcessing ? "Processing..." : buttonLabel}
+      </span>
+      <span className="whitespace-nowrap">({priceLabel})</span>
     </Button>
   );
 };

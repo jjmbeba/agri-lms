@@ -22,6 +22,7 @@ import type * as enrollments from "../enrollments.js";
 import type * as modules from "../modules.js";
 import type * as pathways from "../pathways.js";
 import type * as payments from "../payments.js";
+import type * as reviews from "../reviews.js";
 import type * as utils_slug from "../utils/slug.js";
 
 /**
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   modules: typeof modules;
   pathways: typeof pathways;
   payments: typeof payments;
+  reviews: typeof reviews;
   "utils/slug": typeof utils_slug;
 }>;
 export declare const api: FilterApi<

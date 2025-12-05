@@ -77,19 +77,19 @@ export const NonEnrolledCourseView = ({
     <div className="space-y-6">
       {/* Course Header */}
       <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="mb-2 flex items-center gap-3">
-              <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
-              <Badge variant="secondary">Preview</Badge>
-            </div>
-            <p className="text-lg text-muted-foreground">{c.description}</p>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
+            <Badge variant="secondary">Preview</Badge>
           </div>
-          <EnrollCourseBtn
-            courseId={courseId}
-            isEnrolled={isEnrolled}
-            priceShillings={c.priceShillings}
-          />
+          <p className="text-lg text-muted-foreground">{c.description}</p>
+          <div className="flex">
+            <EnrollCourseBtn
+              courseId={courseId}
+              isEnrolled={isEnrolled}
+              priceShillings={c.priceShillings}
+            />
+          </div>
         </div>
 
         {/* Course Stats */}
@@ -186,46 +186,42 @@ export const NonEnrolledCourseView = ({
                   const itemsCount = m.lessonCount ?? m.content?.length ?? 0;
                   return (
                     <div
-                      className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between"
+                      className="flex flex-col gap-4 rounded-lg border p-4"
                       key={m._id}
                     >
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-8 items-center justify-center rounded-full bg-muted font-medium text-xs">
-                            {m.position}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{m.title}</p>
-                            {m.description && (
-                              <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
-                                {m.description}
-                              </p>
-                            )}
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-xs">
+                          {m.position}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm">{m.title}</p>
+                          {m.description && (
+                            <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
+                              {m.description}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-3 sm:items-end">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
                             {itemsCount} lesson{itemsCount === 1 ? "" : "s"}
                           </span>
                           <Badge className="text-xs" variant="outline">
                             Preview
                           </Badge>
-                        </div>
-                        <div className="flex flex-col items-start gap-2 text-muted-foreground text-xs sm:items-end">
-                          <span>
+                          <span className="text-muted-foreground text-xs">
                             {m.priceShillings > 0
                               ? modulePriceFormatter.format(m.priceShillings)
                               : "Free Module"}
                           </span>
-                          <EnrollCourseBtn
-                            courseId={courseId}
-                            label="Unlock Module"
-                            moduleId={m._id}
-                            priceShillings={m.priceShillings}
-                          />
                         </div>
+                        <EnrollCourseBtn
+                          courseId={courseId}
+                          label="Unlock Module"
+                          moduleId={m._id}
+                          priceShillings={m.priceShillings}
+                        />
                       </div>
                     </div>
                   );
@@ -260,37 +256,32 @@ export const NonEnrolledCourseView = ({
             Ready to Start Learning?
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Join thousands of students who have already enrolled in this
-              course. Start your learning journey today and gain valuable
-              skills.
-            </p>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Join thousands of students who have already enrolled in this course.
+            Start your learning journey today and gain valuable skills.
+          </p>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Users className="size-4 text-blue-500" />
-                  <span className="font-medium text-sm">
-                    {course.modulesCount} modules
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="size-4 text-yellow-500" />
-                  <span className="font-medium text-sm">
-                    {courseStats.averageRating}/5 rating (dummy data)
-                  </span>
-                </div>
-              </div>
-
-              <EnrollCourseBtn
-                courseId={courseId}
-                isEnrolled={false}
-                priceShillings={c.priceShillings}
-              />
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-blue-500" />
+              <span className="font-medium text-sm">
+                {course.modulesCount} modules
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="size-4 text-yellow-500" />
+              <span className="font-medium text-sm">
+                {courseStats.averageRating}/5 rating (dummy data)
+              </span>
             </div>
           </div>
+
+          <EnrollCourseBtn
+            courseId={courseId}
+            isEnrolled={false}
+            priceShillings={c.priceShillings}
+          />
         </CardContent>
       </Card>
     </div>

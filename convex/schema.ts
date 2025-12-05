@@ -82,7 +82,8 @@ export default defineSchema({
     courseId: v.id("course"),
     userId: v.string(),
     enrolledAt: v.string(),
-  }),
+  })
+    .index("user_course", ["userId", "courseId"]),
   moduleProgress: defineTable({
     moduleId: v.id("module"),
     userId: v.string(),
@@ -112,7 +113,7 @@ export default defineSchema({
       v.literal("failed"),
       v.literal("abandoned")
     ),
-    amountShillings: v.number(),
+    amountCents: v.number(),
     currency: v.string(),
     userId: v.string(),
     courseId: v.id("course"),
@@ -158,4 +159,16 @@ export default defineSchema({
     name: v.string(),
     courseIds: v.array(v.id("course")),
   }),
+  courseReview: defineTable({
+    courseId: v.id("course"),
+    enrollmentId: v.id("enrollment"),
+    userId: v.string(),
+    userName: v.string(),
+    rating: v.number(),
+    comment: v.string(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("course", ["courseId"])
+    .index("user_course", ["userId", "courseId"]),
 });

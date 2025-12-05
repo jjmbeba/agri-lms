@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Clock, Lock, Play } from "lucide-react";
+import { BookOpen, Clock, Lock, MessageSquare, Play } from "lucide-react";
 import Link from "next/link";
 import { AssignmentItem } from "@/components/features/learner/assignments/assignment-item";
 import {
@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
+import { CourseReviews } from "./course-reviews";
 import EnrollCourseBtn from "./enroll-course-btn";
 
 type CourseContentItem = {
@@ -310,39 +312,37 @@ export const EnrolledCourseView = ({
     <div className="space-y-6">
       {/* Course Header with Progress */}
       <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="mb-2 flex items-center gap-3">
-              <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
+            <Badge
+              className="border-green-200 bg-green-50 text-green-700"
+              variant="outline"
+            >
+              {hasFullAccess ? "Full Access" : "Module Access"}
+            </Badge>
+            {!hasFullAccess && unlockedModuleCount > 0 ? (
+              <Badge variant="secondary">{unlockedModuleCount} unlocked</Badge>
+            ) : null}
+            {progressPercentage === COMPLETED_PERCENTAGE ? (
               <Badge
                 className="border-green-200 bg-green-50 text-green-700"
                 variant="outline"
               >
-                {hasFullAccess ? "Full Access" : "Module Access"}
+                Completed
               </Badge>
-              {!hasFullAccess && unlockedModuleCount > 0 ? (
-                <Badge variant="secondary">
-                  {unlockedModuleCount} unlocked
-                </Badge>
-              ) : null}
-              {progressPercentage === COMPLETED_PERCENTAGE ? (
-                <Badge
-                  className="border-green-200 bg-green-50 text-green-700"
-                  variant="outline"
-                >
-                  Completed
-                </Badge>
-              ) : null}
-            </div>
-            <p className="text-lg text-muted-foreground">{c.description}</p>
+            ) : null}
           </div>
-          {hasFullAccess ? null : (
-            <EnrollCourseBtn
-              courseId={course.course._id}
-              isEnrolled={course.isEnrolled}
-              label="Unlock Full Course"
-              priceShillings={c.priceShillings}
-            />
+          <p className="text-lg text-muted-foreground">{c.description}</p>
+          {!hasFullAccess && (
+            <div className="flex">
+              <EnrollCourseBtn
+                courseId={course.course._id}
+                isEnrolled={course.isEnrolled}
+                label="Unlock Full Course"
+                priceShillings={c.priceShillings}
+              />
+            </div>
           )}
         </div>
 
@@ -408,29 +408,51 @@ export const EnrolledCourseView = ({
         </div>
       </div>
 
-      {/* Course Content with Enhanced UI */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Play className="size-5" />
+      {/* Course Content and Reviews Tabs */}
+      <Tabs defaultValue="content">
+        <TabsList>
+          <TabsTrigger value="content">
+            <Play className="size-4" />
             Course Content
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            {hasFullAccess
-              ? "Continue your learning journey. Click on modules to access content."
-              : "Unlock modules individually or upgrade to full course access."}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <CourseContentAccordion
+          </TabsTrigger>
+          <TabsTrigger value="reviews">
+            <MessageSquare className="size-4" />
+            Reviews
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="content">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Play className="size-5" />
+                Course Content
+              </CardTitle>
+              <p className="text-muted-foreground text-sm">
+                {hasFullAccess
+                  ? "Continue your learning journey. Click on modules to access content."
+                  : "Unlock modules individually or upgrade to full course access."}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <CourseContentAccordion
+                courseId={course.course._id}
+                courseSlug={course.course.slug}
+                hasFullAccess={hasFullAccess}
+                modules={modules}
+                modulesProgress={modulesProgress}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          <CourseReviews
             courseId={course.course._id}
-            courseSlug={course.course.slug}
-            hasFullAccess={hasFullAccess}
-            modules={modules}
-            modulesProgress={modulesProgress}
+            isEnrolled={course.isEnrolled}
           />
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

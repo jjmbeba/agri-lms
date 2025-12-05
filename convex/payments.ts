@@ -56,7 +56,7 @@ export const recordPaystackTransaction = mutation({
       v.literal("failed"),
       v.literal("abandoned")
     ),
-    amountShillings: v.number(),
+    amountCents: v.number(),
     currency: v.string(),
     userId: v.string(),
     courseId: v.id("course"),
@@ -85,7 +85,7 @@ export const recordPaystackTransaction = mutation({
       transactionId = existingTransaction._id;
       await ctx.db.patch(existingTransaction._id, {
         status: args.status,
-        amountShillings: args.amountShillings,
+        amountCents: args.amountCents,
         currency: args.currency,
         userId: args.userId,
         courseId: args.courseId,
@@ -102,7 +102,7 @@ export const recordPaystackTransaction = mutation({
         reference: args.reference,
         provider: "paystack",
         status: args.status,
-        amountShillings: args.amountShillings,
+        amountCents: args.amountCents,
         currency: args.currency,
         userId: args.userId,
         courseId: args.courseId,
@@ -153,7 +153,7 @@ export const grantFreeModuleAccess = mutation({
       reference,
       provider: "paystack",
       status: "success",
-      amountShillings: 0,
+      amountCents: 0,
       currency: "KES",
       userId: identity.subject,
       courseId: args.courseId,
