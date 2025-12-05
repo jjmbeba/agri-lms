@@ -10,6 +10,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
+const MIN_RATING = 1;
+const MAX_RATING = 5;
+const PERCENT_MULTIPLIER = 100;
+const RATING_VALUES = Array.from(
+  { length: MAX_RATING - MIN_RATING + 1 },
+  (_, i) => MIN_RATING + i
+) as readonly number[];
+const RATING_VALUES_REVERSED = Array.from(
+  { length: MAX_RATING - MIN_RATING + 1 },
+  (_, i) => MAX_RATING - i
+) as readonly number[];
+
 type CourseReviewsProps = {
   courseId: Id<"course">;
   isEnrolled: boolean;
@@ -46,7 +58,7 @@ const StarRating = ({
 
   return (
     <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((value) => {
+      {RATING_VALUES.map((value) => {
         const isFilled = value <= (hoverRating || rating);
         return (
           <button
@@ -118,7 +130,9 @@ const ReviewForm = ({
         comment: comment.trim(),
       });
       toast.success(
-        existingReview ? "Review updated successfully" : "Review submitted successfully"
+        existingReview
+          ? "Review updated successfully"
+          : "Review submitted successfully"
       );
     } catch (error) {
       toast.error(
@@ -127,6 +141,13 @@ const ReviewForm = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getButtonText = () => {
+    if (isSubmitting) {
+      return "Submitting...";
+    }
+    return existingReview ? "Update Review" : "Submit Review";
   };
 
   return (
@@ -152,11 +173,7 @@ const ReviewForm = ({
       </div>
 
       <Button disabled={isSubmitting} type="submit">
-        {isSubmitting
-          ? "Submitting..."
-          : existingReview
-            ? "Update Review"
-            : "Submit Review"}
+        {getButtonText()}
       </Button>
     </form>
   );
@@ -207,8 +224,15 @@ export const CourseReviews = ({ courseId, isEnrolled }: CourseReviewsProps) => {
     limit: 20,
   });
   const userReview = useQuery(api.reviews.getUserReview, { courseId });
+  const existingReview = userReview
+    ? {
+        _id: userReview._id,
+        rating: userReview.rating,
+        comment: userReview.comment,
+      }
+    : null;
 
-  if (!summary || !reviews) {
+  if (!(summary && reviews)) {
     return (
       <div className="py-8 text-center">
         <p className="text-muted-foreground">Loading reviews...</p>
@@ -235,13 +259,17 @@ export const CourseReviews = ({ courseId, isEnrolled }: CourseReviewsProps) => {
                   <div className="font-bold text-4xl">
                     {summary.averageRating.toFixed(1)}
                   </div>
-                  <StarRating rating={Math.round(summary.averageRating)} readonly />
+                  <StarRating
+                    rating={Math.round(summary.averageRating)}
+                    readonly
+                  />
                   <p className="mt-1 text-muted-foreground text-sm">
-                    {summary.totalReviews} review{summary.totalReviews !== 1 ? "s" : ""}
+                    {summary.totalReviews} review
+                    {summary.totalReviews !== 1 ? "s" : ""}
                   </p>
                 </div>
                 <div className="flex-1 space-y-2">
-                  {[5, 4, 3, 2, 1].map((star) => (
+                  {RATING_VALUES_REVERSED.map((star) => (
                     <div className="flex items-center gap-2" key={star}>
                       <span className="text-sm">{star}</span>
                       <Star className="size-4 fill-yellow-400 text-yellow-400" />
@@ -249,7 +277,15 @@ export const CourseReviews = ({ courseId, isEnrolled }: CourseReviewsProps) => {
                         <div
                           className="h-full bg-yellow-400"
                           style={{
-                            width: `${summary.totalReviews > 0 ? (summary.ratingDistribution[star as 1 | 2 | 3 | 4 | 5] / summary.totalReviews) * 100 : 0}%`,
+                            width: `${
+                              summary.totalReviews > 0
+                                ? (
+                                    summary.ratingDistribution[
+                                      star as 1 | 2 | 3 | 4 | 5
+                                    ] / summary.totalReviews
+                                  ) * PERCENT_MULTIPLIER
+                                : 0
+                            }%`,
                           }}
                         />
                       </div>
@@ -270,11 +306,11 @@ export const CourseReviews = ({ courseId, isEnrolled }: CourseReviewsProps) => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {userReview ? "Edit Your Review" : "Write a Review"}
+              {existingReview ? "Edit Your Review" : "Write a Review"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ReviewForm courseId={courseId} existingReview={userReview} />
+            <ReviewForm courseId={courseId} existingReview={existingReview} />
           </CardContent>
         </Card>
       )}
@@ -297,4 +333,3 @@ export const CourseReviews = ({ courseId, isEnrolled }: CourseReviewsProps) => {
     </div>
   );
 };
-
