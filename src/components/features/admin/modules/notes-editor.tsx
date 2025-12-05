@@ -278,13 +278,7 @@ export function NotesEditor({
         <EditorContext.Provider value={{ editor }}>
           <Toolbar
             ref={toolbarRef}
-            style={{
-              ...(isMobile
-                ? {
-                    bottom: `calc(100% - ${height - rect.y}px)`,
-                  }
-                : {}),
-            }}
+            className="sticky top-0 z-10"
           >
             {mobileView === "main" ? (
               <MainToolbarContent
