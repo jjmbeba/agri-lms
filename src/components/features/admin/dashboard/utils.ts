@@ -5,6 +5,9 @@ const UUID_PATTERN =
 export const getRouteBreadcrumbs = (pathname: string) => {
   const pathParts = pathname.split("/").filter(Boolean);
 
+  // Check if this is a learner route (doesn't start with 'admin')
+  const isLearnerRoute = !pathParts.includes("admin");
+
   // Define route labels mapping
   const routeLabels: Record<string, string> = {
     admin: "Dashboard",
@@ -15,22 +18,34 @@ export const getRouteBreadcrumbs = (pathname: string) => {
     settings: "Settings",
   };
 
-  const breadcrumbs = pathParts.map((part, index) => {
-    const href = `/${pathParts.slice(0, index + 1).join("/")}`;
+  const breadcrumbs = pathParts
+    .filter((part, index) => {
+      // Skip "modules" segment for learner routes
+      if (isLearnerRoute && part === "modules") {
+        return false;
+      }
+      // Skip "content" segment for learner routes
+      if (isLearnerRoute && part === "content") {
+        return false;
+      }
+      return true;
+    })
+    .map((part, index, filteredParts) => {
+      const href = `/${pathParts.slice(0, pathParts.indexOf(part) + 1).join("/")}`;
 
-    // Handle dynamic routes (like course IDs)
-    let label = routeLabels[part] || part;
+      // Handle dynamic routes (like course IDs)
+      let label = routeLabels[part] || part;
 
-    // If it's a UUID or looks like an ID, show a more user-friendly label
-    if (UUID_PATTERN.test(part)) {
-      label = "Course Details";
-    }
+      // If it's a UUID or looks like an ID, show a more user-friendly label
+      if (UUID_PATTERN.test(part)) {
+        label = "Course Details";
+      }
 
-    return {
-      label,
-      href,
-    };
-  });
+      return {
+        label,
+        href,
+      };
+    });
 
   return breadcrumbs;
 };

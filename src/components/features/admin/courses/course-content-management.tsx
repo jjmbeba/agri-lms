@@ -171,6 +171,8 @@ type DraftModuleWithContent = Doc<"draftModule"> & {
 };
 type ModuleWithContent = Doc<"module"> & {
   content: Doc<"moduleContent">[];
+  lessonCount?: number;
+  isAccessible?: boolean;
 };
 
 type CourseContentManagementProps = {
@@ -318,7 +320,9 @@ export function CourseContentManagement({
                               className="text-[10px] sm:text-xs"
                               variant="outline"
                             >
-                              {module.content?.length || 0} content item(s)
+                              {"lessonCount" in module && typeof module.lessonCount === "number"
+                                ? `${module.lessonCount} content item(s)`
+                                : `${module.content?.length || 0} content item(s)`}
                             </Badge>
                             {"priceShillings" in module &&
                               typeof module.priceShillings === "number" && (
@@ -388,7 +392,7 @@ export function CourseContentManagement({
                     </div>
 
                     {/* Content Items */}
-                    {module.content && module.content.length > 0 && (
+                    {module.content && module.content.length > 0 ? (
                       <div className="ml-4 space-y-2 sm:ml-8">
                         {module.content.map((contentItem) => (
                           <div
@@ -490,6 +494,17 @@ export function CourseContentManagement({
                           </div>
                         ))}
                       </div>
+                    ) : (
+                      "lessonCount" in module &&
+                      typeof module.lessonCount === "number" &&
+                      module.lessonCount > 0 &&
+                      variant === "published" && (
+                        <div className="ml-4 rounded-md border border-dashed border-muted-foreground/30 bg-muted/20 p-4 text-center text-muted-foreground text-sm sm:ml-8">
+                          Content is hidden due to access restrictions. This module
+                          contains {module.lessonCount} item
+                          {module.lessonCount === 1 ? "" : "s"}.
+                        </div>
+                      )
                     )}
 
                     {moduleIndex < modules.length - 1 && (
