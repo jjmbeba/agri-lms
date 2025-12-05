@@ -1,7 +1,7 @@
 "use client";
 
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { Preloaded } from "convex/react";
 import { usePreloadedQuery } from "convex/react";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -154,14 +154,8 @@ export function ModuleDetails({
   courseSlug,
   preloadedModule,
 }: ModuleDetailsProps) {
-  // Prefer preloaded data (SSR), fallback to client query if needed
-  const preloaded = usePreloadedQuery(preloadedModule);
-
-  const { data: moduleData } = useSuspenseQuery(
-    convexQuery(api.modules.getModuleWithContentById, { id: moduleId })
-  );
-
-  const data = preloaded ?? moduleData ?? null;
+  // Use preloaded data from SSR
+  const data = usePreloadedQuery(preloadedModule);
 
   // Get module progress
   const { data: moduleProgress } = useQuery({
