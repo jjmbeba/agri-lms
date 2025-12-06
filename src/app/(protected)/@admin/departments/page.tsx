@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const DepartmentsPage = async () => {
-  const preloadedDepartments = await preloadQuery(
-    api.departments.getAllDepartmentsWithCounts,
-    {}
-  );
+  const [preloadedDepartments, preloadedDepartmentStats] = await Promise.all([
+    preloadQuery(api.departments.getAllDepartmentsWithCounts, {}),
+    preloadQuery(api.departments.getDepartmentStats, {}),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -42,7 +42,7 @@ const DepartmentsPage = async () => {
           </div>
 
           {/* Statistics Cards */}
-          <DepartmentStatCards preloadedDepartments={preloadedDepartments} />
+          <DepartmentStatCards preloadedDepartments={preloadedDepartmentStats} />
 
           {/* Departments Grid */}
           <DepartmentGrid preloadedDepartments={preloadedDepartments} />
