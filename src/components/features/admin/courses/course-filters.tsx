@@ -16,14 +16,19 @@ import {
 } from "@/components/ui/select";
 import { api } from "../../../../../convex/_generated/api";
 
-const statuses = ["All Status", "Active", "Inactive", "Draft", "Archived"];
+const statuses = ["All Status", "Published", "Draft"] as const;
+const sortOptions = [
+  { label: "Title", value: "title" },
+  { label: "Last Updated", value: "updated" },
+  { label: "Price", value: "price" },
+] as const;
 
 type CourseFiltersProps = {
   onFiltersChange: (filters: {
     searchTerm: string;
     selectedDepartment: string;
-    selectedStatus: string;
-    sortBy: string;
+      selectedStatus: string;
+      sortBy: string;
   }) => void;
 };
 
@@ -31,8 +36,8 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
-  const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [sortBy, setSortBy] = useState("title");
+  const [selectedStatus, setSelectedStatus] = useState<string>("All Status");
+  const [sortBy, setSortBy] = useState<string>(sortOptions[0].value);
   const { data: departments, isLoading: isLoadingDepartments } = useQuery(
     convexQuery(api.departments.getDepartments, {})
   );
@@ -122,10 +127,11 @@ export function CourseFilters({ onFiltersChange }: CourseFiltersProps) {
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="title">Title</SelectItem>
-              <SelectItem value="students">Students</SelectItem>
-              <SelectItem value="completion">Completion Rate</SelectItem>
-              <SelectItem value="updated">Last Updated</SelectItem>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

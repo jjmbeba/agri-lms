@@ -4,7 +4,7 @@ import DeleteDepartmentButton from "./delete-department-btn";
 import EditDepartmentButton from "./edit-department-btn";
 
 type Props = {
-  department: Doc<"department"> & { courseCount: number };
+  department: Doc<"department"> & { courseCount: number; studentCount: number };
 };
 
 const DepartmentCard = ({ department }: Props) => {
@@ -27,7 +27,9 @@ const DepartmentCard = ({ department }: Props) => {
               <p className="font-medium text-muted-foreground text-sm">
                 Students
               </p>
-              <p className="font-bold text-2xl">{0}</p>
+              <p className="font-bold text-2xl">
+                {department.studentCount.toLocaleString()}
+              </p>
             </div>
             <div className="space-y-1">
               <p className="font-medium text-muted-foreground text-sm">

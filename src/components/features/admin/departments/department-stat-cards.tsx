@@ -11,33 +11,31 @@ import type { api } from "../../../../../convex/_generated/api";
 import DepartmentHeaderCard from "./department-header-card";
 
 type Props = {
-  preloadedDepartments: Preloaded<
-    typeof api.departments.getAllDepartmentsWithCounts
-  >;
+  preloadedDepartments: Preloaded<typeof api.departments.getDepartmentStats>;
 };
 
 const DepartmentStatCards = ({ preloadedDepartments }: Props) => {
-  const departments = usePreloadedQuery(preloadedDepartments);
+  const stats = usePreloadedQuery(preloadedDepartments);
 
-  const totalCourses = departments.reduce(
-    (sum, dept) => sum + dept.courseCount,
-    0
-  );
+  const totalDepartments = stats?.totalDepartments ?? 0;
+  const totalStudents = stats?.totalStudents ?? 0;
+  const totalCourses = stats?.totalCourses ?? 0;
+  const growthRate = stats?.enrollmentGrowthPct ?? 0;
 
   return (
     <div className="px-4 lg:px-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DepartmentHeaderCard
-          description={`${departments.length} active departments`}
+          description={`${totalDepartments} active departments`}
           icon={IconBuilding}
           title="Total Departments"
-          value={departments.length}
+          value={totalDepartments}
         />
         <DepartmentHeaderCard
-          description="Across all departments"
+          description="Unique learners across departments"
           icon={IconUsers}
           title="Total Students"
-          value={11}
+          value={totalStudents}
         />
         <DepartmentHeaderCard
           description="Available programs"
@@ -46,10 +44,10 @@ const DepartmentStatCards = ({ preloadedDepartments }: Props) => {
           value={totalCourses}
         />
         <DepartmentHeaderCard
-          description="Student enrollment this month"
+          description="Enrollment change vs last month"
           icon={IconTrendingUp}
           title="Growth Rate"
-          value={12.5}
+          value={growthRate}
         />
       </div>
     </div>

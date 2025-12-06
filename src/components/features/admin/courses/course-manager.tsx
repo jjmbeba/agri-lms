@@ -8,7 +8,7 @@ import { CourseGrid } from "./course-grid";
 import { CourseStats } from "./course-stats";
 
 type CourseManagerProps = {
-  preloadedCourses: Preloaded<typeof api.courses.getCourses>;
+  preloadedCourses: Preloaded<typeof api.courses.getCoursesWithDepartmentStats>;
 };
 
 export function CourseManager({ preloadedCourses }: CourseManagerProps) {
@@ -45,10 +45,8 @@ export function CourseManager({ preloadedCourses }: CourseManagerProps) {
         switch (filters.sortBy) {
           case "title":
             return a.course.title.localeCompare(b.course.title);
-          // case "students":
-          //   return b.course.enrolledStudents - a.course.enrolledStudents;
-          // case "completion":
-          //   return b.course.completionRate - a.course.completionRate;
+          case "price":
+            return a.course.priceShillings - b.course.priceShillings;
           case "updated":
             return (
               new Date(b.course._creationTime).getTime() -
@@ -66,7 +64,7 @@ export function CourseManager({ preloadedCourses }: CourseManagerProps) {
 
   return (
     <>
-      <CourseStats coursesCount={coursesWithCategory.length} />
+      <CourseStats />
 
       <div className="px-4 lg:px-6">
         <CourseFilters onFiltersChange={handleFiltersChange} />

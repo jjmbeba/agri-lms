@@ -32,7 +32,6 @@ import {
   IconLayoutColumns,
   IconLoader,
   IconPlus,
-  IconTrendingUp,
 } from "@tabler/icons-react";
 import {
   type ColumnDef,
@@ -50,16 +49,9 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { useId, useMemo, useState } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
@@ -79,7 +71,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -88,7 +79,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -97,29 +87,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const COMPLETION_RATE_HIGH = 85;
-const COMPLETION_RATE_MEDIUM = 75;
 const PAGE_SIZES = [10, 20, 30, 40, 50] as const;
-const CHART_MARGIN_LEFT = 0;
-const CHART_MARGIN_RIGHT = 10;
-const CHART_TICK_MARGIN = 8;
+
+const formatKes = (shillings: number) =>
+  new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    maximumFractionDigits: 0,
+  }).format(shillings);
 
 export const schema = z.object({
-  id: z.number(),
-  courseName: z.string(),
-  instructor: z.string(),
-  category: z.string(),
+  id: z.string(),
+  title: z.string(),
   status: z.string(),
-  enrolledStudents: z.number(),
-  completionRate: z.string(),
-  lastUpdated: z.string(),
+  department: z.string(),
+  priceShillings: z.number(),
+  modulesCount: z.number(),
+  enrollments: z.number(),
+  updatedAt: z.string(),
 });
 
 // Create a separate component for the drag handle
-function DragHandle({ id }: { id: number }) {
+function DragHandle({ id }: { id: string }) {
   const { attributes, listeners } = useSortable({
     id,
   });
@@ -171,83 +163,69 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "courseName",
-    header: "Course Name",
-    cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />;
-    },
+    accessorKey: "title",
+    header: "Course",
+    cell: ({ row }) => <TableCellViewer item={row.original} />,
     enableHiding: false,
-  },
-  {
-    accessorKey: "instructor",
-    header: "Instructor",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.original.instructor}</div>
-    ),
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => (
-      <div className="w-32">
-        <Badge className="px-1.5 text-muted-foreground" variant="outline">
-          {row.original.category}
-        </Badge>
-      </div>
-    ),
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => (
       <Badge className="px-1.5 text-muted-foreground" variant="outline">
-        {row.original.status === "Active" ? (
+        {row.original.status === "published" ? (
           <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
         ) : (
           <IconLoader />
         )}
-        {row.original.status}
+        {row.original.status
+          ? `${row.original.status.charAt(0).toUpperCase()}${row.original.status.slice(1)}`
+          : ""}
       </Badge>
     ),
   },
   {
-    accessorKey: "enrolledStudents",
-    header: () => <div className="w-full text-right">Students</div>,
+    accessorKey: "department",
+    header: "Department",
     cell: ({ row }) => (
-      <div className="text-right font-medium">
-        {row.original.enrolledStudents.toLocaleString()}
+      <div className="w-32 truncate text-muted-foreground">
+        {row.original.department}
       </div>
     ),
   },
   {
-    accessorKey: "completionRate",
-    header: () => <div className="w-full text-right">Completion</div>,
+    accessorKey: "priceShillings",
+    header: () => <div className="w-full text-right">Price (KES)</div>,
     cell: ({ row }) => (
-      <div className="text-right">
-        <Badge
-          className={(() => {
-            const rate = Number.parseFloat(row.original.completionRate);
-            if (rate >= COMPLETION_RATE_HIGH) {
-              return "border-green-200 text-green-700";
-            }
-            if (rate >= COMPLETION_RATE_MEDIUM) {
-              return "border-yellow-200 text-yellow-700";
-            }
-            return "border-red-200 text-red-700";
-          })()}
-          variant="outline"
-        >
-          {row.original.completionRate}
-        </Badge>
+      <div className="text-right font-medium tabular-nums">
+        {formatKes(row.original.priceShillings)}
       </div>
     ),
   },
   {
-    accessorKey: "lastUpdated",
-    header: "Last Updated",
+    accessorKey: "modulesCount",
+    header: () => <div className="w-full text-right">Modules</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium tabular-nums">
+        {row.original.modulesCount}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "enrollments",
+    header: () => <div className="w-full text-right">Enrollments</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium tabular-nums">
+        {row.original.enrollments.toLocaleString()}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: "Updated",
     cell: ({ row }) => (
       <div className="text-muted-foreground">
-        {new Date(row.original.lastUpdated).toLocaleDateString()}
+        {new Date(row.original.updatedAt).toLocaleDateString()}
       </div>
     ),
   },
@@ -369,35 +347,7 @@ export function DataTable({
       className="w-full flex-col justify-start gap-6"
       defaultValue="outline"
     >
-      <div className="flex items-center justify-between px-4 lg:px-6">
-        <Label className="sr-only" htmlFor="view-selector">
-          View
-        </Label>
-        <Select defaultValue="outline">
-          <SelectTrigger
-            className="flex @4xl/main:hidden w-fit"
-            id="view-selector"
-            size="sm"
-          >
-            <SelectValue placeholder="Select a view" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="outline">Outline</SelectItem>
-            <SelectItem value="past-performance">Past Performance</SelectItem>
-            <SelectItem value="key-personnel">Key Personnel</SelectItem>
-            <SelectItem value="focus-documents">Focus Documents</SelectItem>
-          </SelectContent>
-        </Select>
-        <TabsList className="@4xl/main:flex hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1">
-          <TabsTrigger value="outline">Outline</TabsTrigger>
-          <TabsTrigger value="past-performance">
-            Past Performance <Badge variant="secondary">3</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="key-personnel">
-            Key Personnel <Badge variant="secondary">2</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
-        </TabsList>
+      <div className="flex items-center justify-end px-4 lg:px-6">
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -432,10 +382,6 @@ export function DataTable({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="outline">
-            <IconPlus />
-            <span className="hidden lg:inline">Add Section</span>
-          </Button>
         </div>
       </div>
       <TabsContent
@@ -571,44 +517,9 @@ export function DataTable({
           </div>
         </div>
       </TabsContent>
-      <TabsContent
-        className="flex flex-col px-4 lg:px-6"
-        value="past-performance"
-      >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed" />
-      </TabsContent>
-      <TabsContent className="flex flex-col px-4 lg:px-6" value="key-personnel">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed" />
-      </TabsContent>
-      <TabsContent
-        className="flex flex-col px-4 lg:px-6"
-        value="focus-documents"
-      >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed" />
-      </TabsContent>
     </Tabs>
   );
 }
-
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--primary)",
-  },
-} satisfies ChartConfig;
 
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   const isMobile = useIsMobile();
@@ -617,144 +528,47 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
         <Button className="w-fit px-0 text-left text-foreground" variant="link">
-          {item.courseName}
+          {item.title}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.courseName}</DrawerTitle>
-          <DrawerDescription>
-            Course details and student engagement metrics
-          </DrawerDescription>
+          <DrawerTitle>{item.title}</DrawerTitle>
+          <DrawerDescription>{item.department}</DrawerDescription>
         </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-          {!isMobile && (
-            <>
-              <ChartContainer config={chartConfig}>
-                <AreaChart
-                  accessibilityLayer
-                  data={chartData}
-                  margin={{
-                    left: CHART_MARGIN_LEFT,
-                    right: CHART_MARGIN_RIGHT,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    axisLine={false}
-                    dataKey="month"
-                    hide
-                    tickFormatter={(value: string) => value.slice(0, 3)}
-                    tickLine={false}
-                    tickMargin={CHART_TICK_MARGIN}
-                  />
-                  <ChartTooltip
-                    content={<ChartTooltipContent indicator="dot" />}
-                    cursor={false}
-                  />
-                  <Area
-                    dataKey="mobile"
-                    fill="var(--color-mobile)"
-                    fillOpacity={0.6}
-                    stackId="a"
-                    stroke="var(--color-mobile)"
-                    type="natural"
-                  />
-                  <Area
-                    dataKey="desktop"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stackId="a"
-                    stroke="var(--color-desktop)"
-                    type="natural"
-                  />
-                </AreaChart>
-              </ChartContainer>
-              <Separator />
-              <div className="grid gap-2">
-                <div className="flex gap-2 font-medium leading-none">
-                  Trending up by 5.2% this month{" "}
-                  <IconTrendingUp className="size-4" />
-                </div>
-                <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
-                </div>
-              </div>
-              <Separator />
-            </>
-          )}
-          <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="courseName">Course Name</Label>
-              <Input defaultValue={item.courseName} id="courseName" />
+        <div className="flex flex-col gap-4 overflow-y-auto px-4 py-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{item.status}</Badge>
+            <Badge variant="secondary">{item.department}</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground">Price</span>
+              <span className="font-medium">{formatKes(item.priceShillings)}</span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="instructor">Instructor</Label>
-                <Input defaultValue={item.instructor} id="instructor" />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="category">Category</Label>
-                <Select defaultValue={item.category}>
-                  <SelectTrigger className="w-full" id="category">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sustainability">
-                      Sustainability
-                    </SelectItem>
-                    <SelectItem value="Crop Management">
-                      Crop Management
-                    </SelectItem>
-                    <SelectItem value="Soil Science">Soil Science</SelectItem>
-                    <SelectItem value="Pest Control">Pest Control</SelectItem>
-                    <SelectItem value="Water Management">
-                      Water Management
-                    </SelectItem>
-                    <SelectItem value="Animal Husbandry">
-                      Animal Husbandry
-                    </SelectItem>
-                    <SelectItem value="Technology">Technology</SelectItem>
-                    <SelectItem value="Business">Business</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground">Updated</span>
+              <span className="font-medium">
+                {new Date(item.updatedAt).toLocaleDateString()}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="enrolledStudents">Enrolled Students</Label>
-                <Input
-                  defaultValue={item.enrolledStudents.toString()}
-                  id="enrolledStudents"
-                />
-              </div>
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="completionRate">Completion Rate</Label>
-                <Input defaultValue={item.completionRate} id="completionRate" />
-              </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground">Modules</span>
+              <span className="font-medium tabular-nums">{item.modulesCount}</span>
             </div>
-            <div className="flex flex-col gap-3">
-              <Label htmlFor="status">Status</Label>
-              <Select defaultValue={item.status}>
-                <SelectTrigger className="w-full" id="status">
-                  <SelectValue placeholder="Select a status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground">Enrollments</span>
+              <span className="font-medium tabular-nums">
+                {item.enrollments.toLocaleString()}
+              </span>
             </div>
-          </form>
+          </div>
         </div>
         <DrawerFooter>
-          <Button>Submit</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
+            <Button variant="outline">Close</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

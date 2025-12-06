@@ -10,7 +10,10 @@ export const metadata: Metadata = {
 };
 
 const CoursesPage = async () => {
-  const preloadedCourses = await preloadQuery(api.courses.getCourses, {});
+  const preloadedCourses = await preloadQuery(
+    api.courses.getCoursesWithDepartmentStats,
+    {}
+  );
 
   return (
     <div className="flex flex-1 flex-col">

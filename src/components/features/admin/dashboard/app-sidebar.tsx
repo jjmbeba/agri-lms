@@ -50,23 +50,15 @@ const data = {
     },
     {
       title: "Learners",
-      url: "/admin/learners",
+      url: "/learners",
       icon: IconUsers,
+      disabled: true,
     },
     {
       title: "Analytics",
-      url: "/admin/analytics",
+      url: "/analytics",
       icon: IconChartBar,
-    },
-    {
-      title: "Extension Hub",
-      url: "/admin/extension",
-      icon: IconWorld,
-    },
-    {
-      title: "Reports",
-      url: "/admin/reports",
-      icon: IconReport,
+      disabled: true,
     },
   ],
   learnerNavMain: [
@@ -86,11 +78,6 @@ const data = {
       title: "Settings",
       url: "/admin/settings",
       icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "/admin/help",
-      icon: IconHelp,
     },
   ],
 };
@@ -121,7 +108,7 @@ export function AppSidebar({
           items={userRole === "admin" ? data.adminNavMain : data.learnerNavMain}
         />
         {/* <NavDocuments items={data.documents} /> */}
-        <NavSecondary className="mt-auto" items={data.navSecondary} />
+        {/* <NavSecondary className="mt-auto" items={data.navSecondary} /> */}
       </SidebarContent>
     </Sidebar>
   );

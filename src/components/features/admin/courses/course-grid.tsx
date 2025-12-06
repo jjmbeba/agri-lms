@@ -15,6 +15,7 @@ type CourseGridProps = {
   coursesWithDepartment: {
     course: Doc<"course">;
     department: Doc<"department"> | null;
+    enrollments: number;
   }[];
 };
 
@@ -72,27 +73,10 @@ export function CourseGrid({ coursesWithDepartment }: CourseGridProps) {
             <div className="flex items-center gap-4 text-muted-foreground text-sm">
               <div className="flex items-center gap-1">
                 <IconUsers className="h-4 w-4" />
-                10 students
-              </div>
-              <div className="flex items-center gap-1">
-                <IconClock className="h-4 w-4" />
-                10 hours
+                {courseWithDept.enrollments} student(s)
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Completion Rate</span>
-                <span className="font-medium">100%</span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-muted">
-                <div
-                  className="h-2 rounded-full bg-primary transition-all"
-                  style={{ width: "100%" }}
-                />
-              </div>
-            </div>
-            <Separator />
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
                 <EditCourseButton
