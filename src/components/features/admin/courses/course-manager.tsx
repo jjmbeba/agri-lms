@@ -45,10 +45,8 @@ export function CourseManager({ preloadedCourses }: CourseManagerProps) {
         switch (filters.sortBy) {
           case "title":
             return a.course.title.localeCompare(b.course.title);
-          // case "students":
-          //   return b.course.enrolledStudents - a.course.enrolledStudents;
-          // case "completion":
-          //   return b.course.completionRate - a.course.completionRate;
+          case "price":
+            return a.course.priceShillings - b.course.priceShillings;
           case "updated":
             return (
               new Date(b.course._creationTime).getTime() -
