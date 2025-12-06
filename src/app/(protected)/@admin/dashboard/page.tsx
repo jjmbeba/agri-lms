@@ -1,5 +1,6 @@
 import { IconPlant, IconTrendingUp } from "@tabler/icons-react";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ChartAreaInteractive } from "@/components/features/admin/dashboard/chart-area-interactive";
 import { CourseManagementTable } from "@/components/features/admin/dashboard/course-management-table";
 import { SectionCards } from "@/components/features/admin/dashboard/section-cards";
@@ -73,7 +74,15 @@ export default function Page() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0">
-                <CourseManagementTable />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center px-4 py-10 text-sm text-muted-foreground">
+                      Loading courses…
+                    </div>
+                  }
+                >
+                  <CourseManagementTable />
+                </Suspense>
               </CardContent>
             </Card>
           </div>

@@ -1,4 +1,5 @@
 import { query } from "./_generated/server";
+import { restrictRoles } from "./auth";
 
 type AdminDashboardStats = {
   totalLearners: number;
@@ -10,6 +11,9 @@ type AdminDashboardStats = {
 export const getAdminDashboardStats = query({
   args: {},
   handler: async (ctx): Promise<AdminDashboardStats> => {
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
+
     const enrollments = await ctx.db.query("enrollment").collect();
     const totalLearners = new Set(enrollments.map((enrollment) => enrollment.userId)).size;
 

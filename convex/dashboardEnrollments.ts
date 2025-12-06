@@ -28,7 +28,7 @@ export const getEnrollmentsTimeseries = query({
     }
 
     const points: EnrollmentTimeseriesPoint[] = [];
-    for (let i = DAYS; i >= 0; i -= 1) {
+    for (let i = 0; i <= DAYS; i += 1) {
       const date = new Date(start + i * MS_PER_DAY);
       date.setUTCHours(0, 0, 0, 0);
       const key = date.toISOString().slice(0, 10);
