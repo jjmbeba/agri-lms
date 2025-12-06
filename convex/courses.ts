@@ -166,30 +166,100 @@ export const deleteCourse = mutation({
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
 
+    const draftModules = await ctx.db
+      .query("draftModule")
+      .filter((q) => q.eq(q.field("courseId"), args.id))
+      .collect();
+
+    await Promise.all(
+      draftModules.map(async (draftModule) => {
+        const draftModuleContents = await ctx.db
+          .query("draftModuleContent")
+          .filter((q) => q.eq(q.field("draftModuleId"), draftModule._id))
+          .collect();
+
+        await Promise.all(
+          draftModuleContents.map(async (draftModuleContent) => {
+            const draftAssignments = await ctx.db
+              .query("draftAssignment")
+              .filter((q) =>
+                q.eq(q.field("draftModuleContentId"), draftModuleContent._id)
+              )
+              .collect();
+
+            await Promise.all(
+              draftAssignments.map((draftAssignment) =>
+                ctx.db.delete(draftAssignment._id)
+              )
+            );
+
+            await ctx.db.delete(draftModuleContent._id);
+          })
+        );
+
+        await ctx.db.delete(draftModule._id);
+      })
+    );
+
     const versions = await ctx.db
       .query("courseVersion")
       .filter((q) => q.eq(q.field("courseId"), args.id))
       .collect();
 
-    for (const vRow of versions) {
-      const modules = await ctx.db
-        .query("module")
-        .filter((q) => q.eq(q.field("courseVersionId"), vRow._id))
-        .collect();
-
-      for (const m of modules) {
-        const contents = await ctx.db
-          .query("moduleContent")
-          .filter((q) => q.eq(q.field("moduleId"), m._id))
+    await Promise.all(
+      versions.map(async (version) => {
+        const modules = await ctx.db
+          .query("module")
+          .filter((q) => q.eq(q.field("courseVersionId"), version._id))
           .collect();
 
-        for (const c of contents) {
-          await ctx.db.delete(c._id);
-        }
-        await ctx.db.delete(m._id);
-      }
-      await ctx.db.delete(vRow._id);
-    }
+        await Promise.all(
+          modules.map(async (moduleRow) => {
+            const moduleContents = await ctx.db
+              .query("moduleContent")
+              .filter((q) => q.eq(q.field("moduleId"), moduleRow._id))
+              .collect();
+
+            await Promise.all(
+              moduleContents.map(async (moduleContent) => {
+                const assignments = await ctx.db
+                  .query("assignment")
+                  .filter((q) =>
+                    q.eq(q.field("moduleContentId"), moduleContent._id)
+                  )
+                  .collect();
+
+                await Promise.all(
+                  assignments.map(async (assignmentRow) => {
+                    const submissions = await ctx.db
+                      .query("assignmentSubmission")
+                      .filter((q) =>
+                        q.eq(q.field("assignmentId"), assignmentRow._id)
+                      )
+                      .collect();
+
+                    await Promise.all(
+                      submissions.map((submission) =>
+                        ctx.db.delete(submission._id)
+                      )
+                    );
+
+                    await ctx.db.delete(assignmentRow._id);
+                  })
+                );
+
+                await ctx.db.delete(moduleContent._id);
+              })
+            );
+
+            await ctx.db.delete(moduleRow._id);
+          })
+        );
+
+        await ctx.db.delete(version._id);
+      })
+    );
+
     await ctx.db.delete(args.id);
     return { success: true } as const;
   },

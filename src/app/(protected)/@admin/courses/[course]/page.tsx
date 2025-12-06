@@ -53,39 +53,10 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
   return (
     <div className="space-y-6 p-6">
       <CourseDetails preloadedCourse={preloadedCourse} />
-      <Tabs className="space-y-6" defaultValue="content">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="students">Students (not implemented)</TabsTrigger>
-          <TabsTrigger value="analytics">
-            Analytics (not implemented)
-          </TabsTrigger>
-          <TabsTrigger value="settings">Settings (not implemented)</TabsTrigger>
-        </TabsList>
-        <TabsContent className="space-y-6" value="content">
           <CourseContentTabs
             courseId={String(courseId)}
             courseSlug={courseSlug}
           />
-        </TabsContent>
-        {/* <TabsContent className="space-y-6" value="students">
-          <CourseStudentManagement />
-        </TabsContent> */}
-
-        {/* <TabsContent className="space-y-6" value="analytics">
-          <div className="py-12 text-center">
-            <h3 className="mb-2 font-semibold text-lg">
-              Analytics Coming Soon
-            </h3>
-            <p className="text-muted-foreground">
-              Detailed course analytics and insights will be available here.
-            </p>
-          </div>
-        </TabsContent> */}
-        {/* <TabsContent className="space-y-6" value="settings">
-          <CourseSettings />
-        </TabsContent> */}
-      </Tabs>
     </div>
   );
 };
