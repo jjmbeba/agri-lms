@@ -283,3 +283,57 @@ export const getPublishedCourses = query({
     }));
   },
 });
+
+export const getCoursesWithStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db.query("course").collect();
+    const departments = await ctx.db.query("department").collect();
+    const courseVersions = await ctx.db.query("courseVersion").collect();
+    const modules = await ctx.db.query("module").collect();
+    const enrollments = await ctx.db.query("enrollment").collect();
+
+    const departmentById = new Map(departments.map((dept) => [dept._id, dept]));
+
+    const enrollmentCountByCourse = new Map<Id<"course">, number>();
+    for (const enrollment of enrollments) {
+      const current = enrollmentCountByCourse.get(enrollment.courseId) ?? 0;
+      enrollmentCountByCourse.set(enrollment.courseId, current + 1);
+    }
+
+    const versionsByCourse = new Map<Id<"course">, typeof courseVersions>();
+    for (const version of courseVersions) {
+      const list = versionsByCourse.get(version.courseId) ?? [];
+      list.push(version);
+      versionsByCourse.set(version.courseId, list);
+    }
+
+    const modulesByVersion = new Map<Id<"courseVersion">, number>();
+    for (const module of modules) {
+      const current = modulesByVersion.get(module.courseVersionId) ?? 0;
+      modulesByVersion.set(module.courseVersionId, current + 1);
+    }
+
+    return courses.map((course) => {
+      const versionsForCourse = versionsByCourse.get(course._id) ?? [];
+      let modulesCount = 0;
+      if (versionsForCourse.length > 0) {
+        const latestVersion = versionsForCourse.reduce((latest, current) =>
+          current.versionNumber > latest.versionNumber ? current : latest
+        );
+        modulesCount = modulesByVersion.get(latestVersion._id) ?? 0;
+      }
+
+      return {
+        id: course._id,
+        title: course.title,
+        status: course.status,
+        department: departmentById.get(course.departmentId)?.name ?? "Unknown",
+        priceShillings: course.priceShillings,
+        modulesCount,
+        enrollments: enrollmentCountByCourse.get(course._id) ?? 0,
+        updatedAt: new Date(course._creationTime).toISOString(),
+      } as const;
+    });
+  },
+});
