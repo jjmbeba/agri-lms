@@ -18,6 +18,7 @@ import type * as auth from "../auth.js";
 import type * as constants from "../constants.js";
 import type * as courses from "../courses.js";
 import type * as dashboard from "../dashboard.js";
+import type * as dashboardEnrollments from "../dashboardEnrollments.js";
 import type * as departments from "../departments.js";
 import type * as enrollments from "../enrollments.js";
 import type * as modules from "../modules.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   courses: typeof courses;
   dashboard: typeof dashboard;
+  dashboardEnrollments: typeof dashboardEnrollments;
   departments: typeof departments;
   enrollments: typeof enrollments;
   modules: typeof modules;
