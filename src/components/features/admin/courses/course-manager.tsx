@@ -8,7 +8,7 @@ import { CourseGrid } from "./course-grid";
 import { CourseStats } from "./course-stats";
 
 type CourseManagerProps = {
-  preloadedCourses: Preloaded<typeof api.courses.getCourses>;
+  preloadedCourses: Preloaded<typeof api.courses.getCoursesWithDepartmentStats>;
 };
 
 export function CourseManager({ preloadedCourses }: CourseManagerProps) {

@@ -338,6 +338,29 @@ export const getCoursesWithStats = query({
   },
 });
 
+export const getCoursesWithDepartmentStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db.query("course").collect();
+    const departments = await ctx.db.query("department").collect();
+    const enrollments = await ctx.db.query("enrollment").collect();
+
+    const departmentById = new Map(departments.map((dept) => [dept._id, dept]));
+    const enrollmentCountByCourse = new Map<Id<"course">, number>();
+
+    for (const enrollment of enrollments) {
+      const current = enrollmentCountByCourse.get(enrollment.courseId) ?? 0;
+      enrollmentCountByCourse.set(enrollment.courseId, current + 1);
+    }
+
+    return courses.map((course) => ({
+      course,
+      department: departmentById.get(course.departmentId) ?? null,
+      enrollments: enrollmentCountByCourse.get(course._id) ?? 0,
+    }));
+  },
+});
+
 export const getCourseStats = query({
   args: {},
   handler: async (ctx) => {
