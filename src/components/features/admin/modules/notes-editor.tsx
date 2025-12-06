@@ -190,6 +190,7 @@ export function NotesEditor({
   );
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [toolbarHeight, setToolbarHeight] = useState(0);
 
   const normalizedContent = normalizeContentForTiptap(initialContent);
 
@@ -255,6 +256,30 @@ export function NotesEditor({
     }
   }, [isMobile, mobileView]);
 
+  useEffect(() => {
+    const toolbarElement = toolbarRef.current;
+    if (!toolbarElement) {
+      setToolbarHeight(0);
+      return;
+    }
+
+    const updateHeight = () => {
+      setToolbarHeight(toolbarElement.getBoundingClientRect().height);
+    };
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(toolbarElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isMobile]);
+
   const handleSave = () => {
     const html = editor?.getHTML() ?? "";
     onSave(html);
@@ -297,6 +322,7 @@ export function NotesEditor({
           <EditorContent
             className="simple-editor-content"
             editor={editor}
+            style={{ paddingTop: isMobile ? toolbarHeight : 0 }}
             role="presentation"
           />
         </EditorContext.Provider>
