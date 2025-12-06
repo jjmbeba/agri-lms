@@ -66,7 +66,7 @@ export function CourseManager({ preloadedCourses }: CourseManagerProps) {
 
   return (
     <>
-      <CourseStats coursesCount={coursesWithCategory.length} />
+      <CourseStats />
 
       <div className="px-4 lg:px-6">
         <CourseFilters onFiltersChange={handleFiltersChange} />

@@ -337,3 +337,34 @@ export const getCoursesWithStats = query({
     });
   },
 });
+
+export const getCourseStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db.query("course").collect();
+    const enrollments = await ctx.db.query("enrollment").collect();
+    const courseProgress = await ctx.db.query("courseProgress").collect();
+
+    const totalCourses = courses.length;
+    const activeCourses = courses.filter((course) => course.status === "published").length;
+
+    const uniqueStudents = new Set(enrollments.map((enrollment) => enrollment.userId));
+    const totalStudents = uniqueStudents.size;
+
+    const totalEnrollments = enrollments.length;
+    const completedEnrollments = courseProgress.filter(
+      (progress) => progress.status === "completed"
+    ).length;
+    const completionRate =
+      totalEnrollments === 0
+        ? 0
+        : Math.round((completedEnrollments / totalEnrollments) * 100);
+
+    return {
+      totalCourses,
+      activeCourses,
+      totalStudents,
+      completionRate,
+    } as const;
+  },
+});
