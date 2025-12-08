@@ -1,6 +1,14 @@
 "use client";
 
-import { Award, BookOpen, CheckCircle, Clock, Play, Star, Users } from "lucide-react";
+import {
+  Award,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  Play,
+  Star,
+  Users,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
@@ -50,7 +58,6 @@ export const NonEnrolledCourseView = ({
 }: NonEnrolledCourseViewProps) => {
   const c = course.course;
   const d = course.department;
-  const isComingSoon = c.status === "comingSoon";
   const hasHandout = Boolean(c.handout && c.handout.trim().length > 0);
 
   const courseStats = {
@@ -74,15 +81,12 @@ export const NonEnrolledCourseView = ({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
-            <Badge variant="secondary">
-              {isComingSoon ? "Coming Soon" : "Preview"}
-            </Badge>
+            <Badge variant="secondary">Preview</Badge>
           </div>
           <p className="text-lg text-muted-foreground">{c.description}</p>
           <div className="flex">
             <EnrollCourseBtn
               courseId={courseId}
-              isComingSoon={isComingSoon}
               isEnrolled={isEnrolled}
               priceShillings={c.priceShillings}
             />
