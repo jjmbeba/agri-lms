@@ -79,6 +79,7 @@ const CourseForm = (props: CourseFormProps) => {
             })),
             departmentId: rest.courseDetails.departmentId,
             priceShillings: rest.courseDetails.priceShillings,
+            handout: rest.courseDetails.handout ?? "",
           }
         : {
             title: "",
@@ -86,6 +87,7 @@ const CourseForm = (props: CourseFormProps) => {
             tags: [] as Tag[],
             departmentId: "",
             priceShillings: 0,
+            handout: "",
           },
     validationLogic: revalidateLogic(),
     validators: {
@@ -99,6 +101,7 @@ const CourseForm = (props: CourseFormProps) => {
           tags: value.tags.map((tag) => tag.text),
           departmentId: value.departmentId as Id<"department">,
           priceShillings: value.priceShillings,
+          handout: value.handout ?? "",
         });
       } else if (type === "edit" && "id" in rest) {
         editCourse({
@@ -108,6 +111,7 @@ const CourseForm = (props: CourseFormProps) => {
           tags: value.tags.map((tag) => tag.text),
           departmentId: value.departmentId as Id<"department">,
           priceShillings: value.priceShillings,
+          handout: value.handout ?? "",
         });
       }
     },
@@ -172,7 +176,10 @@ const CourseForm = (props: CourseFormProps) => {
                     id="priceShillings"
                     min="0"
                     onChange={(e) => {
-                      const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
+                      const value =
+                        e.target.value === ""
+                          ? 0
+                          : Number.parseFloat(e.target.value);
                       field.handleChange(value);
                     }}
                     placeholder="0.00"
@@ -247,6 +254,7 @@ const CourseForm = (props: CourseFormProps) => {
                   </div>
                 )}
               </form.Field>
+
               <form.Field name="tags">
                 {(field) => (
                   <div className="grid w-full gap-3 md:w-1/2">
@@ -285,6 +293,26 @@ const CourseForm = (props: CourseFormProps) => {
                 )}
               </form.Field>
             </div>
+            <form.Field name="handout">
+              {(field) => (
+                <div className="grid w-full gap-3">
+                  <Label htmlFor="handout">Course Handout</Label>
+                  <Textarea
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    id="handout"
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Add course handout text"
+                    value={field.state.value}
+                  />
+                  {field.state.meta.errors.map((error) => (
+                    <FormError
+                      key={error?.message}
+                      message={error?.message ?? ""}
+                    />
+                  ))}
+                </div>
+              )}
+            </form.Field>
           </div>
         </ScrollArea>
         <form.Subscribe

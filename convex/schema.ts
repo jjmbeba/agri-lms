@@ -16,6 +16,7 @@ export default defineSchema({
     departmentId: v.id("department"),
     description: v.string(),
     priceShillings: v.number(),
+    handout: v.optional(v.string()),
   }).index("slug", ["slug"]),
   courseVersion: defineTable({
     courseId: v.id("course"),
