@@ -307,8 +307,8 @@ export const EnrolledCourseView = ({
     totalModules,
     modulesProgress,
   } = progress;
-  const hasHandout =
-    Boolean(c.handout) && c.handout.trim().length > 0;
+  const handoutText = c.handout ?? "";
+  const hasHandout = handoutText.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -343,7 +343,7 @@ export const EnrolledCourseView = ({
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-wrap text-muted-foreground text-sm">
-                  {c.handout}
+                  {handoutText}
                 </p>
               </CardContent>
             </Card>
