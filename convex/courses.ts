@@ -86,6 +86,7 @@ export const createCourse = mutation({
     tags: v.array(v.string()),
     departmentId: v.id("department"),
     priceShillings: v.number(),
+    handout: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -106,6 +107,7 @@ export const createCourse = mutation({
       departmentId: args.departmentId,
       status: "draft",
       priceShillings: args.priceShillings,
+      handout: args.handout ?? "",
     });
   },
 });
@@ -273,6 +275,7 @@ export const editCourse = mutation({
     tags: v.array(v.string()),
     departmentId: v.id("department"),
     priceShillings: v.number(),
+    handout: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -304,6 +307,7 @@ export const editCourse = mutation({
       tags: args.tags,
       departmentId: args.departmentId,
       priceShillings: args.priceShillings,
+      handout: args.handout ?? existingCourse.handout ?? "",
     });
     return await ctx.db.get(args.id);
   },
