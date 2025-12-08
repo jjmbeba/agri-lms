@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CourseContentTabs from "@/components/features/admin/courses/course-content-tabs";
 import CourseDetails from "@/components/features/admin/courses/course-details";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../../../../../../convex/_generated/api";
 
 type CourseDetailsPageProps = {
@@ -53,10 +52,7 @@ const CourseDetailsPage = async ({ params }: CourseDetailsPageProps) => {
   return (
     <div className="space-y-6 p-6">
       <CourseDetails preloadedCourse={preloadedCourse} />
-          <CourseContentTabs
-            courseId={String(courseId)}
-            courseSlug={courseSlug}
-          />
+      <CourseContentTabs courseId={String(courseId)} courseSlug={courseSlug} />
     </div>
   );
 };

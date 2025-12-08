@@ -2,6 +2,7 @@ import { IconBook } from "@tabler/icons-react";
 import { preloadQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 import { CourseManager } from "@/components/features/admin/courses/course-manager";
+import { CourseRequestsPanel } from "@/components/features/admin/courses/course-requests-panel";
 import CreateCourseButton from "@/components/features/admin/courses/create-course-btn";
 import { api } from "../../../../../convex/_generated/api";
 
@@ -41,6 +42,9 @@ const CoursesPage = async () => {
 
           {/* Course Management Components */}
           <CourseManager preloadedCourses={preloadedCourses} />
+          <div className="px-4 lg:px-6">
+            <CourseRequestsPanel />
+          </div>
         </div>
       </div>
     </div>
