@@ -171,4 +171,11 @@ export default defineSchema({
   })
     .index("course", ["courseId"])
     .index("user_course", ["userId", "courseId"]),
+  courseRequest: defineTable({
+    userId: v.string(),
+    userName: v.optional(v.string()),
+    title: v.string(),
+    reason: v.string(),
+    createdAt: v.string(),
+  }).index("user", ["userId"]),
 });
