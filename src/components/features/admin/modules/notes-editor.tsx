@@ -228,8 +228,8 @@ export function NotesEditor({
         maxSize: MAX_FILE_SIZE,
         limit: 3,
         upload: handleImageUpload,
-        onError: () => {
-          // Error handling done by the component
+        onError: (error) => {
+          alert(error?.message ?? "Image upload failed");
         },
       }),
     ],
