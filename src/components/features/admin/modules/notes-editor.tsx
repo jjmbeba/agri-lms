@@ -47,6 +47,7 @@ import { useIsBreakpoint } from "@/hooks/use-is-breakpoint";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { normalizeContentForTiptap } from "@/lib/content-utils";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
+import FileHandler from '@tiptap/extension-file-handler'
 
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
@@ -228,8 +229,49 @@ export function NotesEditor({
         maxSize: MAX_FILE_SIZE,
         limit: 3,
         upload: handleImageUpload,
-        onError: () => {
-          // Error handling done by the component
+        onError: (error) => {
+          alert(error?.message ?? "Image upload failed");
+        },
+      }),
+      FileHandler.configure({
+        onPaste: async (editor, files) => {
+          for (const file of files) {
+            if (!file.type.startsWith("image/")) {
+              continue;
+            }
+
+            if (file.size > MAX_FILE_SIZE) {
+              alert(
+                `File size exceeds maximum allowed (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
+              );
+              continue;
+            }
+
+            try {
+              const abortController = new AbortController();
+              const url = await handleImageUpload(
+                file,
+                undefined,
+                abortController.signal
+              );
+
+              const alt = file.name.replace(/\.[^/.]+$/, "") || "image";
+
+              editor
+                .chain()
+                .focus()
+                .setImage({
+                  src: url,
+                  alt,
+                  title: alt,
+                })
+                .run();
+            } catch (error) {
+              alert(
+                error instanceof Error ? error.message : "Image upload failed"
+              );
+            }
+          }
         },
       }),
     ],

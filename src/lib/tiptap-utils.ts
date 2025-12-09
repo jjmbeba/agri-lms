@@ -12,6 +12,7 @@ import {
   type Editor,
   type NodeWithPos,
 } from "@tiptap/react"
+import { uploadFiles } from "@/lib/uploadthing"
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -363,7 +364,6 @@ export const handleImageUpload = async (
   onProgress?: (event: { progress: number }) => void,
   abortSignal?: AbortSignal
 ): Promise<string> => {
-  // Validate file
   if (!file) {
     throw new Error("No file provided")
   }
@@ -374,17 +374,26 @@ export const handleImageUpload = async (
     )
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
+  if (abortSignal?.aborted) {
+    throw new Error("Upload cancelled")
   }
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  const [response] = await uploadFiles("imageUploader", {
+    files: [file],
+    onUploadProgress: ({ progress }) => {
+      onProgress?.({ progress })
+    },
+    signal: abortSignal,
+  })
+
+  const url = response?.url
+
+  if (!url) {
+    throw new Error("Upload failed")
+  }
+
+  onProgress?.({ progress: 100 })
+  return url
 }
 
 type ProtocolOptions = {

@@ -6,6 +6,24 @@ const f = createUploadthing();
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
+  imageUploader: f({
+    image: {
+      maxFileSize: "8MB",
+      maxFileCount: 3,
+    },
+  })
+    .middleware(async () => {
+      const session = await auth();
+
+      if (!session.userId) {
+        throw new UploadThingError("Unauthorized");
+      }
+
+      return { userId: session.userId };
+    })
+    .onUploadComplete(({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, url: file.url };
+    }),
   // Define as many FileRoutes as you like, each with a unique routeSlug
   fileUploader: f({
     pdf: {

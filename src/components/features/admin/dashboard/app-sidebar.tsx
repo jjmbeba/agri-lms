@@ -97,7 +97,7 @@ export function AppSidebar({
             >
               <Link href="/">
                 <GalleryVerticalEndIcon className="!size-5" />
-                <span className="font-semibold text-base">AgriLMS Kenya</span>
+                <span className="font-semibold text-base">AATI LMS</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
