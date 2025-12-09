@@ -235,7 +235,6 @@ export function NotesEditor({
       }),
       FileHandler.configure({
         onPaste: async (editor, files) => {
-          console.log("onPaste", editor, files);
           for (const file of files) {
             if (!file.type.startsWith("image/")) {
               continue;

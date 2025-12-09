@@ -144,7 +144,7 @@ const Navbar = ({ children }: PropsWithChildren) => {
                 <SheetTitle>
                   <a className="flex items-center gap-2" href="/">
                     <span className="font-semibold text-lg tracking-tighter">
-                      AgriLMS Kenya
+                      AATI LMS
                     </span>
                   </a>
                 </SheetTitle>
