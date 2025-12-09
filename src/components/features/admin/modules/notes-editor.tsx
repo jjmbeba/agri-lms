@@ -1,5 +1,6 @@
 "use client";
 
+import FileHandler from "@tiptap/extension-file-handler";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
@@ -8,6 +9,7 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
 import { Selection } from "@tiptap/extensions";
+import type { Editor } from "@tiptap/react";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { useEffect, useRef, useState } from "react";
@@ -42,12 +44,9 @@ import {
   ToolbarSeparator,
 } from "@/components/tiptap-ui-primitive/toolbar";
 import { Button as UIButton } from "@/components/ui/button";
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint";
-import { useWindowSize } from "@/hooks/use-window-size";
 import { normalizeContentForTiptap } from "@/lib/content-utils";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
-import FileHandler from '@tiptap/extension-file-handler'
 
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
@@ -62,6 +61,9 @@ const HEADING_LEVEL_ONE = 1;
 const HEADING_LEVEL_TWO = 2;
 const HEADING_LEVEL_THREE = 3;
 const HEADING_LEVEL_FOUR = 4;
+const KILOBYTE_IN_BYTES = 1024;
+const BYTES_IN_MEGABYTE = KILOBYTE_IN_BYTES * KILOBYTE_IN_BYTES;
+const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
 type NotesEditorProps = {
   initialContent: string;
@@ -185,7 +187,6 @@ export function NotesEditor({
   isSaving = false,
 }: NotesEditorProps) {
   const isMobile = useIsBreakpoint();
-  const { height } = useWindowSize();
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
     "main"
   );
@@ -234,17 +235,20 @@ export function NotesEditor({
         },
       }),
       FileHandler.configure({
-        onPaste: async (editor, files) => {
-          for (const file of files) {
+        onPaste: async (pasteEditor, files) => {
+          const uploadPastedImage = async (
+            editorInstance: Editor,
+            file: File
+          ) => {
             if (!file.type.startsWith("image/")) {
-              continue;
+              return;
             }
 
             if (file.size > MAX_FILE_SIZE) {
               alert(
-                `File size exceeds maximum allowed (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
+                `File size exceeds maximum allowed (${MAX_FILE_SIZE / BYTES_IN_MEGABYTE}MB)`
               );
-              continue;
+              return;
             }
 
             try {
@@ -255,9 +259,10 @@ export function NotesEditor({
                 abortController.signal
               );
 
-              const alt = file.name.replace(/\.[^/.]+$/, "") || "image";
+              const alt =
+                file.name.replace(FILE_EXTENSION_REGEX, "") || "image";
 
-              editor
+              editorInstance
                 .chain()
                 .focus()
                 .setImage({
@@ -271,6 +276,10 @@ export function NotesEditor({
                 error instanceof Error ? error.message : "Image upload failed"
               );
             }
+          };
+
+          for (const file of files) {
+            await uploadPastedImage(pasteEditor, file);
           }
         },
       }),
@@ -281,11 +290,6 @@ export function NotesEditor({
     },
   });
 
-  const rect = useCursorVisibility({
-    editor,
-    overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
-  });
-
   useEffect(() => {
     const content = normalizeContentForTiptap(initialContent);
     editor?.commands.setContent(content);
@@ -293,7 +297,10 @@ export function NotesEditor({
   }, [initialContent, editor]);
 
   useEffect(() => {
-    if (!isMobile && mobileView !== "main") {
+    if (isMobile) {
+      return;
+    }
+    if (mobileView !== "main") {
       setMobileView("main");
     }
   }, [isMobile, mobileView]);
@@ -320,7 +327,7 @@ export function NotesEditor({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [isMobile]);
+  }, []);
 
   const handleSave = () => {
     const html = editor?.getHTML() ?? "";
@@ -341,12 +348,9 @@ export function NotesEditor({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="simple-editor-wrapper flex-1 !h-auto !w-full overflow-auto">
+      <div className="simple-editor-wrapper !h-auto !w-full flex-1 overflow-auto">
         <EditorContext.Provider value={{ editor }}>
-          <Toolbar
-            ref={toolbarRef}
-            className="sticky top-0 z-10"
-          >
+          <Toolbar className="sticky top-0 z-10" ref={toolbarRef}>
             {mobileView === "main" ? (
               <MainToolbarContent
                 isMobile={isMobile}
@@ -364,8 +368,8 @@ export function NotesEditor({
           <EditorContent
             className="simple-editor-content"
             editor={editor}
-            style={{ paddingTop: isMobile ? toolbarHeight : 0 }}
             role="presentation"
+            style={{ paddingTop: isMobile ? toolbarHeight : 0 }}
           />
         </EditorContext.Provider>
       </div>
