@@ -162,7 +162,7 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
         />
       ) : (
         <FileUploadInput
-          accept={[".", ".pdf", ".docx", ".xlsx", ".pptx", ".doc"].join(",")}
+          accept={[".pdf", ".docx", ".xlsx", ".pptx", ".doc"].join(",")}
           isUploading={isUploading}
           maxSize={MAX_FILE_SIZE_MB}
           onFileRemove={handleFileRemove}
