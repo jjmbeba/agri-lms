@@ -71,22 +71,52 @@ function AssignmentItemCard(
   return cardContent;
 }
 
+const HTTP_PREFIX_REGEX = /^http:\/\//i;
 const parseVideoUrls = (content?: string): string[] => {
-  if (!content) return [];
+  if (!content) {
+    return [];
+  }
   try {
     const parsed = JSON.parse(content);
     if (Array.isArray(parsed)) {
       return parsed
         .filter((url) => typeof url === "string" && url.trim())
-        .map((url) => url.replace(/^http:\/\//i, "https://"));
+        .map((url) => url.replace(HTTP_PREFIX_REGEX, "https://"));
     }
   } catch {
     // Not JSON, treat as single url
   }
-  return [content].filter(Boolean).map((url) => url.replace(/^http:\/\//i, "https://"));
+  return [content]
+    .filter(Boolean)
+    .map((url) => url.replace(HTTP_PREFIX_REGEX, "https://"));
 };
 
-const toHttps = (url: string): string => url.replace(/^http:\/\//i, "https://");
+const toHttps = (url: string): string =>
+  url.replace(HTTP_PREFIX_REGEX, "https://");
+
+const extractYouTubeId = (parsed: URL): string | null => {
+  if (parsed.hostname.includes("youtu.be")) {
+    const id = parsed.pathname.slice(1);
+    return id || null;
+  }
+
+  if (parsed.pathname.startsWith("/shorts/")) {
+    const id = parsed.pathname.split("/")[2];
+    return id || null;
+  }
+
+  if (parsed.pathname.startsWith("/embed/")) {
+    const id = parsed.pathname.split("/")[2];
+    return id || null;
+  }
+
+  if (parsed.searchParams.has("v")) {
+    const id = parsed.searchParams.get("v");
+    return id || null;
+  }
+
+  return null;
+};
 
 const getYouTubeEmbedUrl = (rawUrl: string): string | null => {
   const url = toHttps(rawUrl);
@@ -96,27 +126,8 @@ const getYouTubeEmbedUrl = (rawUrl: string): string | null => {
       parsed.hostname.includes("youtube.com") ||
       parsed.hostname.includes("youtu.be")
     ) {
-      // youtu.be/<id>
-      if (parsed.hostname.includes("youtu.be")) {
-        const id = parsed.pathname.slice(1);
-        return id ? `https://www.youtube.com/embed/${id}` : null;
-      }
-
-      // youtube.com/shorts/<id>
-      if (parsed.pathname.startsWith("/shorts/")) {
-        const id = parsed.pathname.split("/")[2];
-        return id ? `https://www.youtube.com/embed/${id}` : null;
-      }
-
-      // youtube.com/embed/<id>
-      if (parsed.pathname.startsWith("/embed/")) {
-        const id = parsed.pathname.split("/")[2];
-        return id ? `https://www.youtube.com/embed/${id}` : null;
-      }
-
-      // youtube.com/watch?v=<id>
-      const videoId = parsed.searchParams.get("v");
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+      const id = extractYouTubeId(parsed);
+      return id ? `https://www.youtube.com/embed/${id}` : null;
     }
   } catch {
     return null;
@@ -205,10 +216,16 @@ function VideoItemCard(
       <div className="space-y-3">
         {urls.length > 0 ? (
           urls.map((url, idx) =>
-            renderVideoPlayer(url, `${item.title} ${idx + 1}`, `${item.title}-${idx}`)
+            renderVideoPlayer(
+              url,
+              `${item.title} ${idx + 1}`,
+              `${item.title}-${idx}`
+            )
           )
         ) : (
-          <p className="text-muted-foreground text-xs">No video source provided.</p>
+          <p className="text-muted-foreground text-xs">
+            No video source provided.
+          </p>
         )}
       </div>
     </section>
