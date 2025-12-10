@@ -38,6 +38,22 @@ const BYTES_PER_KB = 1024;
 const MB_TO_BYTES = BYTES_PER_KB * BYTES_PER_KB;
 const DEFAULT_ROWS = 4;
 const QUIZ_ROWS = 6;
+const URL_EXTRACT_REGEX = /https?:\/\/[^\s"']+/g;
+
+const parseUrlsFromText = (input: string): string[] => {
+  if (!input) return [];
+  const matches = input.match(URL_EXTRACT_REGEX);
+  if (!matches) return [];
+  const uniqueUrls = Array.from(new Set(matches.map((url) => url.trim())));
+  return uniqueUrls.filter(Boolean);
+};
+
+const serializeVideoContent = (raw: string): string => {
+  const urls = parseUrlsFromText(raw);
+  if (urls.length === 0) return raw.trim();
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+};
 
 // Handle type change with content clearing
 const handleTypeChange = (
@@ -335,10 +351,10 @@ const VideoContentInput: React.FC<ContentFieldProps> = ({
       </div>
 
       {uploadMethod === "url" ? (
-        <Input
+        <Textarea
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter video URL (YouTube, Vimeo, etc.)..."
-          type="url"
+          placeholder="Paste one or more video URLs. Example: URL: http://... URL: http://..."
+          rows={DEFAULT_ROWS}
           value={value}
         />
       ) : (
@@ -439,6 +455,14 @@ const ContentForm: React.FC<ContentFormProps> = ({
             dueDate: parsedDate ? parsedDate.toString() : item.dueDate,
           };
         }
+
+        if (item.type === "video") {
+          return {
+            ...item,
+            content: serializeVideoContent(item.content),
+          };
+        }
+
         return item;
       });
       setContent(content);

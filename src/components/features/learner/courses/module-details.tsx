@@ -71,11 +71,134 @@ function AssignmentItemCard(
   return cardContent;
 }
 
+const HTTP_PREFIX_REGEX = /^http:\/\//i;
+const parseVideoUrls = (content?: string): string[] => {
+  if (!content) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((url) => typeof url === "string" && url.trim())
+        .map((url) => url.replace(HTTP_PREFIX_REGEX, "https://"));
+    }
+  } catch {
+    // Not JSON, treat as single url
+  }
+  return [content]
+    .filter(Boolean)
+    .map((url) => url.replace(HTTP_PREFIX_REGEX, "https://"));
+};
+
+const toHttps = (url: string): string =>
+  url.replace(HTTP_PREFIX_REGEX, "https://");
+
+const extractYouTubeId = (parsed: URL): string | null => {
+  if (parsed.hostname.includes("youtu.be")) {
+    const id = parsed.pathname.slice(1);
+    return id || null;
+  }
+
+  if (parsed.pathname.startsWith("/shorts/")) {
+    const id = parsed.pathname.split("/")[2];
+    return id || null;
+  }
+
+  if (parsed.pathname.startsWith("/embed/")) {
+    const id = parsed.pathname.split("/")[2];
+    return id || null;
+  }
+
+  if (parsed.searchParams.has("v")) {
+    const id = parsed.searchParams.get("v");
+    return id || null;
+  }
+
+  return null;
+};
+
+const getYouTubeEmbedUrl = (rawUrl: string): string | null => {
+  const url = toHttps(rawUrl);
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname.includes("youtube.com") ||
+      parsed.hostname.includes("youtu.be")
+    ) {
+      const id = extractYouTubeId(parsed);
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
+const getVimeoEmbedUrl = (rawUrl: string): string | null => {
+  const url = toHttps(rawUrl);
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("vimeo.com")) {
+      const id = parsed.pathname.split("/").filter(Boolean).pop();
+      return id ? `https://player.vimeo.com/video/${id}` : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
+const renderVideoPlayer = (url: string, title: string, key: string) => {
+  const normalizedUrl = toHttps(url);
+  const yt = getYouTubeEmbedUrl(normalizedUrl);
+  if (yt) {
+    return (
+      <iframe
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+        className="aspect-video w-full rounded-md border"
+        key={key}
+        src={yt}
+        title={title}
+      />
+    );
+  }
+
+  const vimeo = getVimeoEmbedUrl(normalizedUrl);
+  if (vimeo) {
+    return (
+      <iframe
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        className="aspect-video w-full rounded-md border"
+        key={key}
+        src={vimeo}
+        title={title}
+      />
+    );
+  }
+
+  return (
+    <video
+      aria-label={title}
+      className="w-full rounded-md border"
+      controls
+      key={key}
+    >
+      <source src={normalizedUrl} />
+      <track kind="captions" />
+    </video>
+  );
+};
+
 function VideoItemCard(
   item: ModuleContentItem,
   courseSlug: string,
   moduleSlug: string
 ) {
+  const urls = parseVideoUrls(item.content);
+
   return (
     <section className="space-y-3" key={`video-${item.position}`}>
       <h2 className="font-semibold text-xl">
@@ -90,12 +213,16 @@ function VideoItemCard(
           item.title
         )}
       </h2>
-      <div>
-        <video aria-label={item.title} className="w-full rounded-md" controls>
-          {item.content ? <source src={item.content} /> : null}
-          <track kind="captions" />
-        </video>
-        {item.content ? null : (
+      <div className="space-y-3">
+        {urls.length > 0 ? (
+          urls.map((url, idx) =>
+            renderVideoPlayer(
+              url,
+              `${item.title} ${idx + 1}`,
+              `${item.title}-${idx}`
+            )
+          )
+        ) : (
           <p className="text-muted-foreground text-xs">
             No video source provided.
           </p>

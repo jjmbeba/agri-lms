@@ -8,6 +8,8 @@ type ModulePageProps = {
   params: { course: string; module: string };
 };
 
+const HTTP_PREFIX_REGEX = /^http:\/\//i;
+
 const Page = async ({ params }: ModulePageProps) => {
   const { course: courseSlug, module: moduleSlug } = await params;
 
@@ -19,6 +21,32 @@ const Page = async ({ params }: ModulePageProps) => {
   if (!moduleData) {
     notFound();
   }
+
+  // Debug: log video URLs (helps identify unavailable videos)
+  const parseVideoUrls = (content?: string): string[] => {
+    if (!content) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((url) => typeof url === "string" && url.trim())
+          .map((url) => url.replace(HTTP_PREFIX_REGEX, "https://"));
+      }
+    } catch {
+      // Not JSON, treat as single url
+    }
+    return [content]
+      .filter(Boolean)
+      .map((url) => url.replace(HTTP_PREFIX_REGEX, "https://"));
+  };
+
+  const videoUrls =
+    moduleData.content
+      ?.filter((item) => item.type === "video")
+      .flatMap((item) => parseVideoUrls(item.content)) ?? [];
+  videoUrls.length;
 
   const preloaded = await preloadQuery(api.modules.getModuleBySlug, {
     courseSlug,
