@@ -41,17 +41,25 @@ const QUIZ_ROWS = 6;
 const URL_EXTRACT_REGEX = /https?:\/\/[^\s"']+/g;
 
 const parseUrlsFromText = (input: string): string[] => {
-  if (!input) return [];
+  if (!input) {
+    return [];
+  }
   const matches = input.match(URL_EXTRACT_REGEX);
-  if (!matches) return [];
+  if (!matches) {
+    return [];
+  }
   const uniqueUrls = Array.from(new Set(matches.map((url) => url.trim())));
   return uniqueUrls.filter(Boolean);
 };
 
 const serializeVideoContent = (raw: string): string => {
   const urls = parseUrlsFromText(raw);
-  if (urls.length === 0) return raw.trim();
-  if (urls.length === 1) return urls[0];
+  if (urls.length === 0) {
+    return raw.trim();
+  }
+  if (urls.length === 1) {
+    return urls[0];
+  }
   return JSON.stringify(urls);
 };
 
@@ -154,7 +162,7 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
         />
       ) : (
         <FileUploadInput
-          accept={[".", ".pdf", ".docx", ".xlsx", ".pptx"].join(",")}
+          accept={[".pdf", ".docx", ".xlsx", ".pptx", ".doc"].join(",")}
           isUploading={isUploading}
           maxSize={MAX_FILE_SIZE_MB}
           onFileRemove={handleFileRemove}
