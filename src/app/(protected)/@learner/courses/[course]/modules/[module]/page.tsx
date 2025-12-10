@@ -20,6 +20,35 @@ const Page = async ({ params }: ModulePageProps) => {
     notFound();
   }
 
+  // Debug: log video URLs (helps identify unavailable videos)
+  const parseVideoUrls = (content?: string): string[] => {
+    if (!content) return [];
+    try {
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((url) => typeof url === "string" && url.trim())
+          .map((url) => url.replace(/^http:\/\//i, "https://"));
+      }
+    } catch {
+      // Not JSON, treat as single url
+    }
+    return [content].filter(Boolean).map((url) => url.replace(/^http:\/\//i, "https://"));
+  };
+
+  const videoUrls =
+    moduleData.content
+      ?.filter((item) => item.type === "video")
+      .flatMap((item) => parseVideoUrls(item.content)) ?? [];
+
+  if (videoUrls.length > 0) {
+    console.log(
+      "[Module videos]",
+      { courseSlug, moduleSlug },
+      videoUrls
+    );
+  }
+
   const preloaded = await preloadQuery(api.modules.getModuleBySlug, {
     courseSlug,
     moduleSlug,

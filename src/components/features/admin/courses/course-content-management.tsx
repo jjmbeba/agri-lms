@@ -144,6 +144,19 @@ const getLessonIcon = (type: string) => {
   }
 };
 
+const parseVideoContent = (content: string): string[] => {
+  if (!content) return [];
+  try {
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item) => typeof item === "string" && item.trim());
+    }
+  } catch {
+    // Not JSON, treat as single URL
+  }
+  return [content].filter(Boolean);
+};
+
 const getLessonTypeColor = (type: string) => {
   switch (type) {
     case "video":
@@ -402,8 +415,7 @@ export function CourseContentManagement({
                             <div className="flex min-w-0 flex-1 items-center gap-2">
                               {getLessonIcon(contentItem.type)}
                               <div className="min-w-0 flex-1">
-                                {contentItem.type === "file" ||
-                                contentItem.type === "video" ? (
+                                {contentItem.type === "file" ? (
                                   <a
                                     className="block max-w-[240px] truncate font-medium text-sm hover:underline sm:max-w-[420px] sm:text-base md:max-w-[560px]"
                                     href={contentItem.content as string}
@@ -412,6 +424,25 @@ export function CourseContentManagement({
                                   >
                                     {capitalize(contentItem.title)}
                                   </a>
+                                ) : contentItem.type === "video" ? (
+                                  <div className="space-y-1">
+                                    <div className="block max-w-[240px] truncate font-medium text-sm sm:max-w-[420px] sm:text-base md:max-w-[560px]">
+                                      {capitalize(contentItem.title)}
+                                    </div>
+                                    {parseVideoContent(contentItem.content as string).map(
+                                      (url, idx) => (
+                                        <a
+                                          className="block max-w-[240px] truncate text-sm text-primary underline-offset-2 hover:underline sm:max-w-[420px] md:max-w-[560px]"
+                                          href={url}
+                                          key={`${contentItem._id}-video-${idx}`}
+                                          rel="noopener noreferrer"
+                                          target="_blank"
+                                        >
+                                          Video {idx + 1}
+                                        </a>
+                                      )
+                                    )}
+                                  </div>
                                 ) : (
                                   <h5 className="block max-w-[240px] truncate font-medium text-sm sm:max-w-[420px] sm:text-base md:max-w-[560px]">
                                     {capitalize(contentItem.title)}
