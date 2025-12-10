@@ -16,6 +16,7 @@ import type * as courses from "../courses.js";
 import type * as dashboard from "../dashboard.js";
 import type * as dashboardEnrollments from "../dashboardEnrollments.js";
 import type * as departments from "../departments.js";
+import type * as emails from "../emails.js";
 import type * as enrollments from "../enrollments.js";
 import type * as modules from "../modules.js";
 import type * as pathways from "../pathways.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   dashboard: typeof dashboard;
   dashboardEnrollments: typeof dashboardEnrollments;
   departments: typeof departments;
+  emails: typeof emails;
   enrollments: typeof enrollments;
   modules: typeof modules;
   pathways: typeof pathways;
