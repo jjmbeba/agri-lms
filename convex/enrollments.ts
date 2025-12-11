@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Easier for MVP */
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
 
@@ -71,7 +72,29 @@ export const createEnrollment = mutation({
       throw new Error("Not authenticated");
     }
 
+    const course = await ctx.db.get(args.courseId);
+    if (!course) {
+      throw new Error("Course not found");
+    }
+
     await ensureCourseEnrollment(ctx, args.courseId, identity.subject);
+
+    if (identity.email) {
+      const siteUrl = (process.env.SITE_URL ?? "").replace(/\/$/, "");
+      const contentUrl = `${siteUrl}/courses/${course.slug}`;
+      const studentName =
+        (identity.metadata as { name?: string })?.name ??
+        identity.name ??
+        identity.email;
+
+      await ctx.scheduler.runAfter(0, api.emails.sendEmail, {
+        studentName,
+        studentEmail: identity.email,
+        scope: "course",
+        courseName: course.title,
+        contentUrl,
+      });
+    }
   },
 });
 

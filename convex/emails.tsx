@@ -1,6 +1,5 @@
 // IMPORTANT: this is a Convex Node Action
 "use node";
-import { Resend } from "@convex-dev/resend";
 import {
   Body,
   Button,
@@ -18,22 +17,24 @@ import {
 } from "@react-email/components";
 import { pretty, render } from "@react-email/render";
 import { v } from "convex/values";
-import { components } from "./_generated/api";
 import { action } from "./_generated/server";
-
-export const resend: Resend = new Resend(components.resend, {
-  testMode: false,
-});
+import { resend } from "./resendClient";
 
 export const sendEmail = action({
   args: {
     studentName: v.string(),
+    studentEmail: v.string(),
     scope: v.union(v.literal("course"), v.literal("module")),
     courseName: v.string(),
     moduleName: v.optional(v.string()),
-    courseUrl: v.string(),
+    contentUrl: v.string(),
   },
   handler: async (ctx, args) => {
+    const subject =
+      args.scope === "module"
+        ? `Module Enrollment Confirmation - ${args.moduleName}`
+        : `Course Enrollment Confirmation - ${args.courseName}`;
+
     // 1. Generate the HTML from your JSX
     // This can come from a custom component in your /emails/ directory
     // if you would like to view your templates locally. For more info see:
@@ -64,7 +65,7 @@ export const sendEmail = action({
                 {/* 1. Thematic Header Image (Wheat Field/Nature) */}
                 <Section className="h-[140px] bg-slate-200">
                   <Img
-                    alt="Header Image"
+                    alt="Staff training local farmers"
                     className="h-[140px] w-full object-cover"
                     height="140"
                     src="https://www.aatiupskill.com/agri-foods-1.webp"
@@ -91,7 +92,10 @@ export const sendEmail = action({
                   <Text className="text-[14px] text-earth leading-[24px]">
                     We are delighted to plant the seeds of knowledge with you.
                     Your enrollment in <strong>{args.courseName}</strong> is now
-                    confirmed.
+                    confirmed. If you purchased an individual module, you will
+                    see{" "}
+                    <strong>{args.moduleName ?? "your selected module"}</strong>{" "}
+                    inside the course dashboard.
                   </Text>
 
                   <Text className="text-[14px] text-earth leading-[24px]">
@@ -104,9 +108,9 @@ export const sendEmail = action({
                   <Section className="mt-[25px] mb-[25px] text-center">
                     <Button
                       className="rounded bg-agriGreen px-6 py-3 text-center font-bold text-[14px] text-white no-underline shadow-md"
-                      href={args.courseUrl}
+                      href={args.contentUrl}
                     >
-                      Enter Class Dashboard
+                      Access Your Learning Materials
                     </Button>
                   </Section>
 
@@ -123,7 +127,7 @@ export const sendEmail = action({
                     </Text>
                     <Link
                       className="font-semibold text-[12px] text-agriGreen underline"
-                      href={args.courseUrl}
+                      href={args.contentUrl}
                     >
                       Download Admission Letter (PDF)
                     </Link>
@@ -144,8 +148,8 @@ export const sendEmail = action({
     // 2. Send your email as usual using the component
     await resend.sendEmail(ctx, {
       from: "Notifications <alerts@notifications.aatiupskill.com>",
-      to: "delivered@resend.dev",
-      subject: "Course Enrollment Confirmation",
+      to: args.studentEmail,
+      subject,
       html,
     });
   },
