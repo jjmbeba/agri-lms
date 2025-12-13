@@ -34,17 +34,19 @@ function extractReadableServerMessage(rawMessage: string) {
   if (!rawMessage) {
     return "";
   }
-  
+
   // Remove "Called by client" prefix if present
   let cleanedMessage = rawMessage.replace(calledByClientPattern, "").trim();
-  
+
   // Handle Convex error format: "[CONVEX M(...)] [Request ID: ...] Server Error"
   // The actual error might be in the cause or after "Uncaught ConvexError:"
-  const convexErrorMatch = cleanedMessage.match(/Uncaught ConvexError:\s*(.+?)(?:\s+at\s|$)/i);
+  const convexErrorMatch = cleanedMessage.match(
+    /Uncaught ConvexError:\s*(.+?)(?:\s+at\s|$)/i
+  );
   if (convexErrorMatch && convexErrorMatch[1]) {
     cleanedMessage = convexErrorMatch[1].trim();
   }
-  
+
   // Try to find the actual error message after "Error:" markers
   const errorMarkers = ["ConvexError:", "Error:", "Uncaught ConvexError:"];
   for (const marker of errorMarkers) {
@@ -59,19 +61,21 @@ function extractReadableServerMessage(rawMessage: string) {
       }
     }
   }
-  
+
   // Remove Convex wrapper format: "[CONVEX M(...)] [Request ID: ...] Server Error"
-  cleanedMessage = cleanedMessage.replace(
-    /\[CONVEX\s+M\([^)]+\)\]\s*\[Request ID:[^\]]+\]\s*Server Error/gi,
-    ""
-  ).trim();
-  
+  cleanedMessage = cleanedMessage
+    .replace(
+      /\[CONVEX\s+M\([^)]+\)\]\s*\[Request ID:[^\]]+\]\s*Server Error/gi,
+      ""
+    )
+    .trim();
+
   // Split by newlines and get the last meaningful line
   const lines = cleanedMessage
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.match(/^at\s+/));
-  
+
   // Return the last line, or the whole message if no lines found
   return lines.length > 0 ? lines[lines.length - 1] : cleanedMessage;
 }
@@ -81,28 +85,28 @@ export function displayToastError(error: Error) {
   // Check error.data, error.cause, or error.message
   const errorData = (error as { data?: unknown; cause?: Error }).data;
   const errorCause = (error as { cause?: Error }).cause;
-  
+
   // Try to extract the actual error message from various possible locations
   let rawMessage = error.message ?? "";
-  
+
   // Collect all possible message sources
   const messageSources: string[] = [rawMessage];
-  
+
   // Check error.stack - often contains the full error message
   if (error.stack) {
     messageSources.push(error.stack);
   }
-  
+
   // Check error.cause - Convex often wraps errors in cause
   if (errorCause?.message) {
     messageSources.push(errorCause.message);
   }
-  
+
   // Check error.cause.stack as well
   if (errorCause?.stack) {
     messageSources.push(errorCause.stack);
   }
-  
+
   // Check if error.data contains the message
   if (errorData && typeof errorData === "object") {
     const dataMessage = (errorData as { message?: string }).message;
@@ -110,7 +114,7 @@ export function displayToastError(error: Error) {
       messageSources.push(dataMessage);
     }
   }
-  
+
   // Try stringifying the error to find nested messages
   try {
     const errorString = JSON.stringify(error, null, 2);
@@ -124,7 +128,7 @@ export function displayToastError(error: Error) {
   } catch {
     // Ignore JSON stringify errors
   }
-  
+
   // Try to find the message that contains the actual error (not just wrapper)
   for (const msg of messageSources) {
     if (
@@ -136,19 +140,25 @@ export function displayToastError(error: Error) {
       break;
     }
   }
-  
+
   // If we still have a wrapper message, try to extract from cause recursively
-  if (rawMessage.includes("[CONVEX") && !rawMessage.includes("Cannot publish")) {
+  if (
+    rawMessage.includes("[CONVEX") &&
+    !rawMessage.includes("Cannot publish")
+  ) {
     if (errorCause?.message && !errorCause.message.includes("[CONVEX")) {
       rawMessage = errorCause.message;
     }
     // Also check if cause has a cause
     const nestedCause = (errorCause as { cause?: Error })?.cause;
-    if (nestedCause?.message && nestedCause.message.includes("Cannot publish")) {
+    if (
+      nestedCause?.message &&
+      nestedCause.message.includes("Cannot publish")
+    ) {
       rawMessage = nestedCause.message;
     }
   }
-  
+
   if (rawMessage.includes("Not authenticated")) {
     toast.error("Not authenticated");
     return;
@@ -170,7 +180,7 @@ export function displayToastError(error: Error) {
   }
 
   const readableMessage = extractReadableServerMessage(rawMessage);
-  
+
   const coursePricingMatch =
     readableMessage.match(coursePricingPattern) ||
     rawMessage.match(coursePricingPattern);
@@ -191,7 +201,7 @@ export function displayToastError(error: Error) {
     );
     return;
   }
-  
+
   // Check for publish pricing error in readable message
   const publishPricingMatch = readableMessage.match(publishPricingPattern);
   if (publishPricingMatch) {
@@ -201,15 +211,16 @@ export function displayToastError(error: Error) {
     );
     return;
   }
-  
+
   // Fallback: check if the message contains the key phrase
   if (
     readableMessage.includes("Cannot publish: module total") ||
     rawMessage.includes("Cannot publish: module total")
   ) {
     // Try to extract numbers from the message
-    const numbers = readableMessage.match(/(\d+(?:,\d+)*)\s*KES/g) || 
-                    rawMessage.match(/(\d+(?:,\d+)*)\s*KES/g);
+    const numbers =
+      readableMessage.match(/(\d+(?:,\d+)*)\s*KES/g) ||
+      rawMessage.match(/(\d+(?:,\d+)*)\s*KES/g);
     if (numbers && numbers.length >= 2) {
       toast.error(
         `Cannot publish: module total ${numbers[0]} must be greater than or equal to the course price ${numbers[1]}. Adjust prices and try again.`

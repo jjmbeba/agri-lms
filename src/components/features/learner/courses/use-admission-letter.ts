@@ -9,12 +9,10 @@ export const useAdmissionLetterUrl = ({
   enrollmentId?: Id<"enrollment">;
   initialUrl?: string | null;
 }) => {
-  const { data } = useQuery(
+  const data = useQuery(
     api.enrollments.getAdmissionLetterUrl,
     enrollmentId ? { enrollmentId } : "skip"
   );
 
   return initialUrl ?? data ?? null;
 };
-
-

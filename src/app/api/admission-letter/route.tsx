@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { fetchMutation } from "convex/nextjs";
 import { NextResponse } from "next/server";
@@ -22,6 +23,12 @@ const BodySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const json = await request.json();
     const parsed = BodySchema.safeParse(json);
     if (!parsed.success) {
@@ -32,7 +39,7 @@ export async function POST(request: Request) {
     }
     const args = parsed.data;
 
-    const utapi = env.UPLOADTHING_TOKEN?.trim()
+    const utapi = env.UPLOADTHING_TOKEN.trim()
       ? new UTApi({ token: env.UPLOADTHING_TOKEN })
       : null;
 
@@ -61,7 +68,7 @@ export async function POST(request: Request) {
       );
       const uploaded = await utapi.uploadFiles([file]);
       const result = Array.isArray(uploaded) ? uploaded[0] : uploaded;
-      uploadedUrl = result?.data?.ufsUrl ?? result?.data?.ufsUrl ?? null;
+      uploadedUrl = result?.data?.ufsUrl ?? null;
     }
 
     const url = uploadedUrl ?? dataUrl;

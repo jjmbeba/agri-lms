@@ -109,6 +109,13 @@ const EnrollCourseBtn = ({
                   refNumber: result.refNumber,
                 }),
               });
+
+              if (!uploadRes.ok) {
+                throw new Error(
+                  `Failed to upload admission letter: ${uploadRes.statusText}`
+                );
+              }
+
               const uploadJson = (await uploadRes.json()) as { url?: string };
               const letterUrl = uploadJson.url;
 
@@ -129,7 +136,9 @@ const EnrollCourseBtn = ({
                 admissionLetterUrl: letterUrl,
               });
             } catch (error) {
-              displayToastError(error);
+              displayToastError(
+                error instanceof Error ? error : new Error(String(error))
+              );
             }
           },
         }

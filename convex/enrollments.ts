@@ -103,10 +103,7 @@ export const getAdmissionLetterUrl = query({
   args: { enrollmentId: v.id("enrollment") },
   handler: async (ctx, args) => {
     const enrollment = await ctx.db.get(args.enrollmentId);
-    return (
-      (enrollment as { admissionLetterUrl?: string } | null)
-        ?.admissionLetterUrl ?? null
-    );
+    return enrollment?.admissionLetterUrl ?? null;
   },
 });
 
