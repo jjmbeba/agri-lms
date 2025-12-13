@@ -82,6 +82,64 @@ const EnrollCourseBtn = ({
   const isProcessing = isEnrolling || isPaymentPending || isGrantingFreeAccess;
   const buttonLabel = label ?? (moduleId ? "Unlock Module" : "Enroll Now");
 
+  const handleAdmissionLetterAndEmail = async (result: {
+    enrollmentId: Id<"enrollment">;
+    courseTitle: string;
+    courseSlug: string;
+    studentName: string;
+    studentEmail: string;
+    studentId: string;
+    admissionDate: string;
+    refNumber: string;
+  }) => {
+    try {
+      const uploadRes = await fetch("/api/admission-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enrollmentId: result.enrollmentId,
+          courseName: result.courseTitle,
+          courseSlug: result.courseSlug,
+          studentName: result.studentName,
+          studentEmail: result.studentEmail,
+          studentId: result.studentId,
+          admissionDate: result.admissionDate,
+          refNumber: result.refNumber,
+        }),
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(
+          `Failed to upload admission letter: ${uploadRes.statusText}`
+        );
+      }
+
+      const uploadJson = (await uploadRes.json()) as { url?: string };
+      const letterUrl = uploadJson.url;
+
+      const contentUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/courses/${result.courseSlug}`
+          : `/courses/${result.courseSlug}`;
+
+      await sendEmail({
+        studentName: result.studentName,
+        studentEmail: result.studentEmail,
+        scope: "course",
+        courseName: result.courseTitle,
+        contentUrl,
+        admissionDate: result.admissionDate,
+        refNumber: result.refNumber,
+        studentId: result.studentId,
+        admissionLetterUrl: letterUrl,
+      });
+    } catch (error) {
+      displayToastError(
+        error instanceof Error ? error : new Error(String(error))
+      );
+    }
+  };
+
   const handleFreeEnrollment = () => {
     if (moduleId) {
       grantFreeModuleAccess({ courseId, moduleId });
@@ -91,54 +149,8 @@ const EnrollCourseBtn = ({
         {
           onSuccess: async (result) => {
             toast.success("Enrolled in course successfully");
-            if (!result?.enrollmentId) {
-              return;
-            }
-            try {
-              const uploadRes = await fetch("/api/admission-letter", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  enrollmentId: result.enrollmentId,
-                  courseName: result.courseTitle,
-                  courseSlug: result.courseSlug,
-                  studentName: result.studentName,
-                  studentEmail: result.studentEmail,
-                  studentId: result.studentId,
-                  admissionDate: result.admissionDate,
-                  refNumber: result.refNumber,
-                }),
-              });
-
-              if (!uploadRes.ok) {
-                throw new Error(
-                  `Failed to upload admission letter: ${uploadRes.statusText}`
-                );
-              }
-
-              const uploadJson = (await uploadRes.json()) as { url?: string };
-              const letterUrl = uploadJson.url;
-
-              const contentUrl =
-                typeof window !== "undefined"
-                  ? `${window.location.origin}/courses/${result.courseSlug}`
-                  : `/courses/${result.courseSlug}`;
-
-              await sendEmail({
-                studentName: result.studentName,
-                studentEmail: result.studentEmail,
-                scope: "course",
-                courseName: result.courseTitle,
-                contentUrl,
-                admissionDate: result.admissionDate,
-                refNumber: result.refNumber,
-                studentId: result.studentId,
-                admissionLetterUrl: letterUrl,
-              });
-            } catch (error) {
-              displayToastError(
-                error instanceof Error ? error : new Error(String(error))
-              );
+            if (result?.enrollmentId) {
+              await handleAdmissionLetterAndEmail(result);
             }
           },
         }
