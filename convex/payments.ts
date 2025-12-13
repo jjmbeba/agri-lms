@@ -1,98 +1,7 @@
 import { v } from "convex/values";
-import { api } from "./_generated/api";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation } from "./_generated/server";
 import { ensureCourseEnrollment } from "./enrollments";
-
-const buildContentUrl = (courseSlug: string, moduleSlug?: string) => {
-  const siteUrl = (process.env.SITE_URL ?? "").replace(/\/$/, "");
-  const basePath = `/courses/${courseSlug}`;
-  if (moduleSlug) {
-    return `${siteUrl}${basePath}/modules/${moduleSlug}`;
-  }
-  return `${siteUrl}${basePath}`;
-};
-
-const scheduleEnrollmentEmail = async (
-  ctx: MutationCtx,
-  params: {
-    accessScope: "course" | "module";
-    course: Doc<"course">;
-    moduleDoc?: Doc<"module"> | null;
-    studentEmail: string;
-    studentName: string;
-  }
-) => {
-  const contentUrl = buildContentUrl(
-    params.course.slug,
-    params.moduleDoc?.slug
-  );
-
-  await ctx.scheduler.runAfter(0, api.emails.sendEmail, {
-    studentName: params.studentName,
-    studentEmail: params.studentEmail,
-    scope: params.accessScope,
-    courseName: params.course.title,
-    moduleName: params.moduleDoc?.title,
-    contentUrl,
-  });
-};
-
-const toTrimmed = (value: unknown): string | undefined => {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
-};
-
-const resolveStudentContact = (
-  args: {
-    metadata?: unknown;
-    rawEvent?: unknown;
-    userId: string;
-  }
-): { studentEmail?: string; studentName?: string } => {
-  const meta =
-    args.metadata && typeof args.metadata === "object"
-      ? (args.metadata as Record<string, unknown>)
-      : {};
-  const raw =
-    args.rawEvent && typeof args.rawEvent === "object"
-      ? (args.rawEvent as { data?: unknown })
-      : {};
-  const data =
-    raw.data && typeof raw.data === "object"
-      ? (raw.data as Record<string, unknown>)
-      : undefined;
-  const customer =
-    data &&
-    "customer" in data &&
-    data.customer &&
-    typeof data.customer === "object"
-      ? (data.customer as Record<string, unknown>)
-      : undefined;
-
-  const email =
-    toTrimmed(meta.studentEmail) ??
-    toTrimmed(meta.email) ??
-    toTrimmed(customer?.email);
-
-  const firstName =
-    toTrimmed(meta.studentFirstName) ?? toTrimmed(customer?.first_name);
-  const lastName =
-    toTrimmed(meta.studentLastName) ?? toTrimmed(customer?.last_name);
-  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-
-  const name =
-    toTrimmed(meta.studentName) ??
-    (fullName ? fullName : undefined) ??
-    toTrimmed(customer?.name) ??
-    email ??
-    args.userId;
-
-  return { studentEmail: email, studentName: name };
-};
 
 async function assertModuleBelongsToCourse(
   ctx: MutationCtx,
@@ -172,7 +81,6 @@ export const recordPaystackTransaction = mutation({
       .first();
 
     let transactionId: Id<"transaction">;
-    const wasAlreadySuccess = existingTransaction?.status === "success";
 
     if (existingTransaction) {
       transactionId = existingTransaction._id;
@@ -209,9 +117,14 @@ export const recordPaystackTransaction = mutation({
       });
     }
 
+    let enrollmentId: Id<"enrollment"> | undefined;
     if (args.status === "success") {
       if (args.accessScope === "course") {
-        await ensureCourseEnrollment(ctx, args.courseId, args.userId);
+        enrollmentId = await ensureCourseEnrollment(
+          ctx,
+          args.courseId,
+          args.userId
+        );
       } else if (args.moduleId) {
         await grantModuleAccess(ctx, {
           courseId: args.courseId,
@@ -221,33 +134,10 @@ export const recordPaystackTransaction = mutation({
         });
       }
 
-      const course = await ctx.db.get(args.courseId);
-      if (!course) {
-        throw new Error("Course not found for transaction email");
-      }
-
-      const moduleDoc = args.moduleId
-        ? await ctx.db.get(args.moduleId)
-        : undefined;
-
-      const contact = resolveStudentContact({
-        metadata: args.metadata,
-        rawEvent: args.rawEvent,
-        userId: args.userId,
-      });
-
-      if (!wasAlreadySuccess && contact.studentEmail) {
-        await scheduleEnrollmentEmail(ctx, {
-          accessScope: args.accessScope,
-          course,
-          moduleDoc,
-          studentEmail: contact.studentEmail,
-          studentName: contact.studentName ?? "Learner",
-        });
-      }
+      // email handled after upload (webhook)
     }
 
-    return { success: true, transactionId } as const;
+    return { success: true, transactionId, enrollmentId } as const;
   },
 });
 
@@ -288,24 +178,6 @@ export const grantFreeModuleAccess = mutation({
       transactionId,
       userId: identity.subject,
     });
-
-    const course = await ctx.db.get(args.courseId);
-    const moduleDoc = await ctx.db.get(args.moduleId);
-
-    if (course && moduleDoc && identity.email) {
-      const studentName =
-        (identity.metadata as { name?: string })?.name ??
-        identity.name ??
-        identity.email;
-
-      await scheduleEnrollmentEmail(ctx, {
-        accessScope: "module",
-        course,
-        moduleDoc,
-        studentEmail: identity.email,
-        studentName,
-      });
-    }
 
     return { success: true, transactionId } as const;
   },

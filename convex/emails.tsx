@@ -28,12 +28,19 @@ export const sendEmail = action({
     courseName: v.string(),
     moduleName: v.optional(v.string()),
     contentUrl: v.string(),
+    admissionDate: v.string(),
+    refNumber: v.string(),
+    studentId: v.string(),
+    transactionId: v.optional(v.string()),
+    admissionLetterUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const subject =
       args.scope === "module"
         ? `Module Enrollment Confirmation - ${args.moduleName}`
         : `Course Enrollment Confirmation - ${args.courseName}`;
+
+    const pdfDataUrl = args.admissionLetterUrl ?? args.contentUrl;
 
     // 1. Generate the HTML from your JSX
     // This can come from a custom component in your /emails/ directory
@@ -122,12 +129,11 @@ export const sendEmail = action({
                       📄 Official Documents
                     </Text>
                     <Text className="m-0 mb-3 text-[12px] text-earth">
-                      Please keep a copy of your admission letter for your
-                      records.
+                      Your admission letter is available below.
                     </Text>
                     <Link
                       className="font-semibold text-[12px] text-agriGreen underline"
-                      href={args.contentUrl}
+                      href={pdfDataUrl}
                     >
                       Download Admission Letter (PDF)
                     </Link>
@@ -147,7 +153,7 @@ export const sendEmail = action({
 
     // 2. Send your email as usual using the component
     await resend.sendEmail(ctx, {
-      from: "Notifications <alerts@notifications.aatiupskill.com>",
+      from: "AATI UPSKILL LMS - Notifications <alerts@notifications.aatiupskill.com>",
       to: args.studentEmail,
       subject,
       html,

@@ -48,6 +48,7 @@ type EnrolledCourseViewProps = {
     department: Doc<"department"> | null;
     modulesCount: number;
     isEnrolled: boolean;
+    admissionLetterUrl: string | null;
   };
   modules: CourseContentItem[];
   progress: {
@@ -335,6 +336,18 @@ export const EnrolledCourseView = ({
               </Badge>
             ) : null}
           </div>
+          {course.admissionLetterUrl ? (
+            <a
+              aria-label="Download admission letter"
+              className="inline-flex w-fit items-center gap-2 rounded-md bg-green-700 px-4 py-2 font-semibold text-sm text-white shadow transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              download
+              href={course.admissionLetterUrl}
+              rel="noopener"
+              target="_blank"
+            >
+              Download Admission Letter
+            </a>
+          ) : null}
           <p className="text-lg text-muted-foreground">{c.description}</p>
           {hasHandout ? (
             <Card>

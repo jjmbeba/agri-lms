@@ -1,6 +1,5 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Easier for MVP */
 import { v } from "convex/values";
-import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
 
@@ -77,24 +76,47 @@ export const createEnrollment = mutation({
       throw new Error("Course not found");
     }
 
-    await ensureCourseEnrollment(ctx, args.courseId, identity.subject);
+    const enrollmentId = await ensureCourseEnrollment(
+      ctx,
+      args.courseId,
+      identity.subject
+    );
 
-    if (identity.email) {
-      const siteUrl = (process.env.SITE_URL ?? "").replace(/\/$/, "");
-      const contentUrl = `${siteUrl}/courses/${course.slug}`;
-      const studentName =
+    return {
+      enrollmentId,
+      courseSlug: course.slug,
+      courseTitle: course.title,
+      studentName:
         (identity.metadata as { name?: string })?.name ??
         identity.name ??
-        identity.email;
+        identity.email ??
+        "Learner",
+      studentEmail: identity.email ?? "",
+      studentId: identity.subject,
+      refNumber: `enrollment-${enrollmentId}`,
+      admissionDate: new Date().toISOString(),
+    } as const;
+  },
+});
 
-      await ctx.scheduler.runAfter(0, api.emails.sendEmail, {
-        studentName,
-        studentEmail: identity.email,
-        scope: "course",
-        courseName: course.title,
-        contentUrl,
-      });
-    }
+export const getAdmissionLetterUrl = query({
+  args: { enrollmentId: v.id("enrollment") },
+  handler: async (ctx, args) => {
+    const enrollment = await ctx.db.get(args.enrollmentId);
+    return (
+      (enrollment as { admissionLetterUrl?: string } | null)
+        ?.admissionLetterUrl ?? null
+    );
+  },
+});
+
+export const setAdmissionLetterUrl = mutation({
+  args: {
+    enrollmentId: v.id("enrollment"),
+    url: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.enrollmentId, { admissionLetterUrl: args.url });
   },
 });
 

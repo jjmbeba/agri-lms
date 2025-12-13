@@ -44,6 +44,7 @@ async function buildCourseResponse(ctx: QueryCtx, course: Doc<"course">) {
   const identity = await ctx.auth.getUserIdentity();
   let isEnrolled = false;
   let moduleAccessIds: Id<"module">[] = [];
+  let admissionLetterUrl: string | null = null;
   if (identity) {
     const enrollment = await ctx.db
       .query("enrollment")
@@ -55,6 +56,9 @@ async function buildCourseResponse(ctx: QueryCtx, course: Doc<"course">) {
       )
       .first();
     isEnrolled = Boolean(enrollment);
+    admissionLetterUrl =
+      (enrollment as { admissionLetterUrl?: string } | null)
+        ?.admissionLetterUrl ?? null;
 
     if (!isEnrolled) {
       const accessRows = await ctx.db
@@ -72,6 +76,7 @@ async function buildCourseResponse(ctx: QueryCtx, course: Doc<"course">) {
     department,
     modulesCount,
     isEnrolled,
+    admissionLetterUrl,
     moduleAccess: {
       count: moduleAccessIds.length,
       moduleIds: moduleAccessIds,
@@ -438,14 +443,20 @@ export const getCoursesWithDepartmentStats = query({
 export const getCourseStats = query({
   args: {},
   handler: async (ctx) => {
+    const PERCENT_MULTIPLIER = 100;
+
     const courses = await ctx.db.query("course").collect();
     const enrollments = await ctx.db.query("enrollment").collect();
     const courseProgress = await ctx.db.query("courseProgress").collect();
 
     const totalCourses = courses.length;
-    const activeCourses = courses.filter((course) => course.status === "published").length;
+    const activeCourses = courses.filter(
+      (course) => course.status === "published"
+    ).length;
 
-    const uniqueStudents = new Set(enrollments.map((enrollment) => enrollment.userId));
+    const uniqueStudents = new Set(
+      enrollments.map((enrollment) => enrollment.userId)
+    );
     const totalStudents = uniqueStudents.size;
 
     const totalEnrollments = enrollments.length;
@@ -455,7 +466,9 @@ export const getCourseStats = query({
     const completionRate =
       totalEnrollments === 0
         ? 0
-        : Math.round((completedEnrollments / totalEnrollments) * 100);
+        : Math.round(
+            (completedEnrollments / totalEnrollments) * PERCENT_MULTIPLIER
+          );
 
     return {
       totalCourses,

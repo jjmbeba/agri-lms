@@ -98,7 +98,7 @@ type AdmissionLetterProps = {
   admissionDate: string;
   refNumber: string;
   studentId: string;
-  transactionId: string;
+  transactionId?: string;
 };
 
 const AdmissionLetterPdf = ({
@@ -147,7 +147,7 @@ const AdmissionLetterPdf = ({
       <View style={styles.recipientSection}>
         <Text style={{ fontWeight: "bold" }}>To:</Text>
         <Text>{studentName}</Text>
-        <Text>{studentEmail}</Text>ö
+        <Text>{studentEmail}</Text>
       </View>
 
       {/* Body */}
@@ -184,10 +184,14 @@ const AdmissionLetterPdf = ({
             })}
           </Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Payment Status:</Text>
-          <Text style={styles.detailValue}>Paid in Full ({transactionId})</Text>
-        </View>
+        {transactionId ? (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Payment Status:</Text>
+            <Text style={styles.detailValue}>
+              Paid in Full ({transactionId})
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <Text style={styles.text}>
