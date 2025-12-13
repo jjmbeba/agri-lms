@@ -1,5 +1,6 @@
+/** biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: webhook handler combines validation, mutation, upload, email */
 import crypto from "node:crypto";
-import { fetchMutation } from "convex/nextjs";
+import { fetchAction, fetchMutation } from "convex/nextjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
 import { api } from "../../../../../convex/_generated/api";
@@ -91,6 +92,8 @@ const parseEvent = (rawBody: string): WebhookEvent => {
   return JSON.parse(rawBody) as WebhookEvent;
 };
 
+const trailingSlashRegex = /\/$/;
+
 const extractMetadata = (
   metadata: Record<string, unknown>
 ): ParsedMetadata | null => {
@@ -172,18 +175,70 @@ export async function POST(request: NextRequest) {
     const verifiedData = await verifyPaystackTransaction(reference);
     const transactionStatus = normalizeStatus(verifiedData?.status);
 
-    await fetchMutation(api.payments.recordPaystackTransaction, {
-      reference,
-      status: transactionStatus,
-      amountCents: verifiedData?.amount ?? event?.data?.amount ?? 0,
-      currency: verifiedData?.currency ?? event?.data?.currency ?? "KES",
-      userId: parsedMetadata.userId,
-      courseId: parsedMetadata.courseId,
-      moduleId: parsedMetadata.moduleId,
-      accessScope: parsedMetadata.accessScope,
-      metadata,
-      rawEvent: event,
-    });
+    const recordResult = await fetchMutation(
+      api.payments.recordPaystackTransaction,
+      {
+        reference,
+        status: transactionStatus,
+        amountCents: verifiedData?.amount ?? event?.data?.amount ?? 0,
+        currency: verifiedData?.currency ?? event?.data?.currency ?? "KES",
+        userId: parsedMetadata.userId,
+        courseId: parsedMetadata.courseId,
+        moduleId: parsedMetadata.moduleId,
+        accessScope: parsedMetadata.accessScope,
+        metadata,
+        rawEvent: event,
+      }
+    );
+
+    if (recordResult?.enrollmentId && parsedMetadata.accessScope === "course") {
+      try {
+        await fetch(`${env.SITE_URL}/api/admission-letter`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            enrollmentId: recordResult.enrollmentId,
+            courseName:
+              (metadata as { courseTitle?: string })?.courseTitle ?? "Course",
+            courseSlug:
+              (metadata as { courseSlug?: string })?.courseSlug ?? "course",
+            studentName:
+              (metadata as { studentName?: string })?.studentName ?? "Learner",
+            studentEmail:
+              (metadata as { studentEmail?: string })?.studentEmail ??
+              (metadata as { email?: string })?.email ??
+              parsedMetadata.userId,
+            studentId: parsedMetadata.userId,
+            admissionDate: new Date().toISOString(),
+            refNumber: reference,
+            transactionId: recordResult?.transactionId ?? reference,
+          }),
+        });
+        const contentUrl = `${env.SITE_URL.replace(trailingSlashRegex, "")}/courses/${
+          (metadata as { courseSlug?: string })?.courseSlug ?? "course"
+        }`;
+        await fetchAction(api.emails.sendEmail, {
+          studentName:
+            (metadata as { studentName?: string })?.studentName ?? "Learner",
+          studentEmail:
+            (metadata as { studentEmail?: string })?.studentEmail ??
+            (metadata as { email?: string })?.email ??
+            parsedMetadata.userId,
+          scope: "course",
+          courseName:
+            (metadata as { courseTitle?: string })?.courseTitle ?? "Course",
+          contentUrl,
+          admissionDate: new Date().toISOString(),
+          refNumber: reference,
+          studentId: parsedMetadata.userId,
+          transactionId: recordResult?.transactionId ?? reference,
+          admissionLetterUrl: undefined, // stored in Convex; email action will fall back to contentUrl
+        });
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Replace with a logger
+        console.error("admission-letter webhook call failed", error);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

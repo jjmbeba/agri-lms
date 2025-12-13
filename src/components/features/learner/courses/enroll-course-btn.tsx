@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -43,11 +43,9 @@ const EnrollCourseBtn = ({
   const [isPaymentPending, setIsPaymentPending] = useState(false);
   const accessScope: "course" | "module" = moduleId ? "module" : "course";
 
+  const sendEmail = useConvexAction(api.emails.sendEmail);
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
     mutationFn: useConvexMutation(api.enrollments.createEnrollment),
-    onSuccess: () => {
-      toast.success("Enrolled in course successfully");
-    },
     onError: (error) => {
       displayToastError(error);
     },
@@ -88,7 +86,63 @@ const EnrollCourseBtn = ({
     if (moduleId) {
       grantFreeModuleAccess({ courseId, moduleId });
     } else {
-      enroll({ courseId });
+      enroll(
+        { courseId },
+        {
+          onSuccess: async (result) => {
+            toast.success("Enrolled in course successfully");
+            if (!result?.enrollmentId) {
+              return;
+            }
+            try {
+              const uploadRes = await fetch("/api/admission-letter", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  enrollmentId: result.enrollmentId,
+                  courseName: result.courseTitle,
+                  courseSlug: result.courseSlug,
+                  studentName: result.studentName,
+                  studentEmail: result.studentEmail,
+                  studentId: result.studentId,
+                  admissionDate: result.admissionDate,
+                  refNumber: result.refNumber,
+                }),
+              });
+
+              if (!uploadRes.ok) {
+                throw new Error(
+                  `Failed to upload admission letter: ${uploadRes.statusText}`
+                );
+              }
+
+              const uploadJson = (await uploadRes.json()) as { url?: string };
+              const letterUrl = uploadJson.url;
+
+              const contentUrl =
+                typeof window !== "undefined"
+                  ? `${window.location.origin}/courses/${result.courseSlug}`
+                  : `/courses/${result.courseSlug}`;
+
+              await sendEmail({
+                studentName: result.studentName,
+                studentEmail: result.studentEmail,
+                scope: "course",
+                courseName: result.courseTitle,
+                contentUrl,
+                admissionDate: result.admissionDate,
+                refNumber: result.refNumber,
+                studentId: result.studentId,
+                admissionLetterUrl: letterUrl,
+              });
+            } catch (error) {
+              displayToastError(
+                error instanceof Error ? error : new Error(String(error))
+              );
+            }
+          },
+        }
+      );
     }
   };
 
