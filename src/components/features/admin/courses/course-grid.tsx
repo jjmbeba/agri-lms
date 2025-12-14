@@ -1,11 +1,10 @@
 "use client";
 
-import { IconBook, IconClock, IconUsers } from "@tabler/icons-react";
+import { IconBook, IconUsers } from "@tabler/icons-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { capitalize } from "@/lib/utils";
 import type { Doc } from "../../../../../convex/_generated/dataModel";
 import CreateCourseButton from "./create-course-btn";
@@ -41,57 +40,55 @@ export function CourseGrid({ coursesWithDepartment }: CourseGridProps) {
         const courseSlug =
           courseWithDept.course.slug ?? courseWithDept.course._id;
         return (
-        <Card
-          className="group transition-shadow hover:shadow-lg"
-          key={courseWithDept.course._id}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <Link href={`/courses/${courseSlug}`}>
-                  <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
-                    {courseWithDept.course.title}
-                  </CardTitle>
-                </Link>
-              </div>
-              <Badge
-                variant={
-                  courseWithDept.course.status === "active"
-                    ? "default"
-                    : "outline"
-                }
-              >
-                {capitalize(courseWithDept.course?.status ?? "")}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="line-clamp-2 text-muted-foreground text-sm">
-              {courseWithDept.course.description}
-            </p>
-
-            <div className="flex items-center gap-4 text-muted-foreground text-sm">
-              <div className="flex items-center gap-1">
-                <IconUsers className="h-4 w-4" />
-                {courseWithDept.enrollments} student(s)
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                <EditCourseButton
-                  courseDetails={courseWithDept.course}
-                  text="Edit"
-                />
-                <Button asChild size="sm">
+          <Card
+            className="group transition-shadow hover:shadow-lg"
+            key={courseWithDept.course._id}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
                   <Link href={`/courses/${courseSlug}`}>
-                    View Details
+                    <CardTitle className="line-clamp-2 text-lg transition-colors group-hover:text-primary">
+                      {courseWithDept.course.title}
+                    </CardTitle>
                   </Link>
-                </Button>
+                </div>
+                <Badge
+                  variant={
+                    courseWithDept.course.status === "published"
+                      ? "default"
+                      : "outline"
+                  }
+                >
+                  {capitalize(courseWithDept.course?.status ?? "")}
+                </Badge>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="line-clamp-2 text-muted-foreground text-sm">
+                {courseWithDept.course.description}
+              </p>
+
+              <div className="flex items-center gap-4 text-muted-foreground text-sm">
+                <div className="flex items-center gap-1">
+                  <IconUsers className="h-4 w-4" />
+                  {courseWithDept.enrollments} student(s)
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2">
+                  <EditCourseButton
+                    courseDetails={courseWithDept.course}
+                    text="Edit"
+                  />
+                  <Button asChild size="sm">
+                    <Link href={`/courses/${courseSlug}`}>View Details</Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         );
       })}
     </div>
