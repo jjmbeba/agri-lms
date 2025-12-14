@@ -86,7 +86,6 @@ const CourseForm = (props: CourseFormProps) => {
         if (res[0]?.ufsUrl) {
           form.setFieldValue("handout", res[0].ufsUrl);
           setSelectedHandoutFile(null);
-          toast.success("Handout uploaded successfully");
         }
       },
       onUploadError: (error) => {
@@ -454,6 +453,7 @@ const CourseForm = (props: CourseFormProps) => {
                             accept=".pdf,.docx,.xlsx,.pptx,.doc"
                             className="flex-1"
                             disabled={isUploadingHandout}
+                            id="handout"
                             onChange={handleFileChange}
                             type="file"
                           />
@@ -547,14 +547,16 @@ const CourseForm = (props: CourseFormProps) => {
                 isCreatingCourse ||
                 isSubmitting ||
                 isLoadingDepartments ||
-                isEditingCourse
+                isEditingCourse ||
+                isUploadingHandout
               }
               type="submit"
             >
               {isSubmitting ||
               isCreatingCourse ||
               isLoadingDepartments ||
-              isEditingCourse ? (
+              isEditingCourse ||
+              isUploadingHandout ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 `${action} Course`
