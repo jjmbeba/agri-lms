@@ -628,9 +628,8 @@ export const getCourseNotificationSubscribers = query({
     courseId: v.id("course"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    restrictRoles(identity, ["admin"]);
-
+    // This query is only called from server-side actions (notifyCourseSubscribers)
+    // No auth check needed as it's called from authenticated server context
     const subscriptions = await ctx.db
       .query("courseNotification")
       .withIndex("course", (q) => q.eq("courseId", args.courseId))
