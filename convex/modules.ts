@@ -1007,7 +1007,12 @@ export const createDraftModule = mutation({
     restrictRoles(identity, ["admin"]);
 
     // Verify course exists before proceeding
-    await validateCourseExists(ctx, args.courseId);
+    const course = await validateCourseExists(ctx, args.courseId);
+    if (course.status === "coming-soon") {
+      throw new ConvexError(
+        "Cannot add draft modules to a course with 'coming-soon' status. Please change the course status first."
+      );
+    }
 
     const existing = await ctx.db
       .query("draftModule")

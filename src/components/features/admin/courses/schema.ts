@@ -9,6 +9,9 @@ export const createCourseSchema = z.object({
     message: "Description is required",
   }),
   handout: z.string(),
+  status: z.string().min(1, {
+    message: "Status is required",
+  }),
   tags: z
     .array(
       z.object({

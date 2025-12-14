@@ -125,6 +125,15 @@ export function displayToastError(error: Error) {
         messageSources.push(match[0].replace(/"/g, ""));
       }
     }
+    // Check for coming-soon errors in JSON string
+    if (errorString.includes("coming-soon")) {
+      const comingSoonMatch = errorString.match(
+        /"Cannot (?:set course status to 'coming-soon'|add draft modules to a course with 'coming-soon' status)[^"]*"/
+      );
+      if (comingSoonMatch) {
+        messageSources.push(comingSoonMatch[0].replace(/"/g, ""));
+      }
+    }
   } catch {
     // Ignore JSON stringify errors
   }
@@ -134,6 +143,7 @@ export function displayToastError(error: Error) {
     if (
       msg.includes("Cannot publish") ||
       msg.includes("module total") ||
+      msg.includes("coming-soon") ||
       (msg.includes("ConvexError") && !msg.includes("[CONVEX M("))
     ) {
       rawMessage = msg;
@@ -144,7 +154,8 @@ export function displayToastError(error: Error) {
   // If we still have a wrapper message, try to extract from cause recursively
   if (
     rawMessage.includes("[CONVEX") &&
-    !rawMessage.includes("Cannot publish")
+    !rawMessage.includes("Cannot publish") &&
+    !rawMessage.includes("coming-soon")
   ) {
     if (errorCause?.message && !errorCause.message.includes("[CONVEX")) {
       rawMessage = errorCause.message;
@@ -153,7 +164,8 @@ export function displayToastError(error: Error) {
     const nestedCause = (errorCause as { cause?: Error })?.cause;
     if (
       nestedCause?.message &&
-      nestedCause.message.includes("Cannot publish")
+      (nestedCause.message.includes("Cannot publish") ||
+        nestedCause.message.includes("coming-soon"))
     ) {
       rawMessage = nestedCause.message;
     }
@@ -165,6 +177,25 @@ export function displayToastError(error: Error) {
   }
   if (rawMessage.includes("Unauthorized")) {
     toast.error("You are not authorized to perform this action.");
+    return;
+  }
+
+  // Check for coming-soon status errors early (before extraction)
+  // This handles cases where the error might be wrapped
+  if (rawMessage.includes("Cannot set course status to 'coming-soon'")) {
+    toast.error(
+      "Cannot set course status to 'coming-soon' when draft modules exist. Please delete all draft modules first."
+    );
+    return;
+  }
+  if (
+    rawMessage.includes(
+      "Cannot add draft modules to a course with 'coming-soon' status"
+    )
+  ) {
+    toast.error(
+      "Cannot add draft modules to a course with 'coming-soon' status. Please change the course status first."
+    );
     return;
   }
 
@@ -180,6 +211,24 @@ export function displayToastError(error: Error) {
   }
 
   const readableMessage = extractReadableServerMessage(rawMessage);
+
+  // Check for coming-soon status errors in extracted message as fallback
+  if (readableMessage.includes("Cannot set course status to 'coming-soon'")) {
+    toast.error(
+      "Cannot set course status to 'coming-soon' when draft modules exist. Please delete all draft modules first."
+    );
+    return;
+  }
+  if (
+    readableMessage.includes(
+      "Cannot add draft modules to a course with 'coming-soon' status"
+    )
+  ) {
+    toast.error(
+      "Cannot add draft modules to a course with 'coming-soon' status. Please change the course status first."
+    );
+    return;
+  }
 
   const coursePricingMatch =
     readableMessage.match(coursePricingPattern) ||

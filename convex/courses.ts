@@ -21,6 +21,18 @@ async function getDraftModulesTotalPrice(
   );
 }
 
+// Helper function to check if a course has draft modules
+async function hasDraftModules(
+  ctx: MutationCtx,
+  courseId: Id<"course">
+): Promise<boolean> {
+  const draftModule = await ctx.db
+    .query("draftModule")
+    .filter((q) => q.eq(q.field("courseId"), courseId))
+    .first();
+  return draftModule !== null;
+}
+
 async function buildCourseResponse(ctx: QueryCtx, course: Doc<"course">) {
   const department = await ctx.db.get(course.departmentId);
 
@@ -92,6 +104,7 @@ export const createCourse = mutation({
     departmentId: v.id("department"),
     priceShillings: v.number(),
     handout: v.optional(v.string()),
+    status: v.union(v.literal("draft"), v.literal("coming-soon")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -110,7 +123,7 @@ export const createCourse = mutation({
       description: args.description,
       tags: args.tags,
       departmentId: args.departmentId,
-      status: "draft",
+      status: args.status,
       priceShillings: args.priceShillings,
       handout: args.handout ?? "",
     });
@@ -281,10 +294,25 @@ export const editCourse = mutation({
     departmentId: v.id("department"),
     priceShillings: v.number(),
     handout: v.optional(v.string()),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("coming-soon"),
+      v.literal("published")
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
+
+    // Check if trying to set status to 'coming-soon' with draft modules
+    if (args.status === "coming-soon") {
+      const hasDrafts = await hasDraftModules(ctx, args.id);
+      if (hasDrafts) {
+        throw new ConvexError(
+          "Cannot set course status to 'coming-soon' when draft modules exist. Please delete all draft modules first."
+        );
+      }
+    }
 
     // Validate that course price does not exceed total module prices
     const moduleTotal = await getDraftModulesTotalPrice(ctx, args.id);
@@ -313,6 +341,7 @@ export const editCourse = mutation({
       departmentId: args.departmentId,
       priceShillings: args.priceShillings,
       handout: args.handout ?? existingCourse.handout ?? "",
+      status: args.status,
     });
     return await ctx.db.get(args.id);
   },
