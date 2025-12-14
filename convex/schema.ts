@@ -198,6 +198,27 @@ export default defineSchema({
     gradedAt: v.optional(v.string()),
     gradedBy: v.optional(v.string()),
   }),
+  quizSubmission: defineTable({
+    quizId: v.id("quiz"),
+    userId: v.string(),
+    userName: v.string(),
+    enrollmentId: v.id("enrollment"),
+    answers: v.array(
+      v.object({
+        questionIndex: v.number(),
+        selectedOptionIndex: v.number(),
+      })
+    ),
+    score: v.number(),
+    maxScore: v.number(),
+    percentage: v.number(),
+    submittedAt: v.string(),
+    timeSpentSeconds: v.optional(v.number()),
+    attemptNumber: v.number(),
+    status: v.union(v.literal("submitted"), v.literal("completed")),
+  })
+    .index("user_quiz", ["userId", "quizId"])
+    .index("quiz", ["quizId"]),
   certificationPathway: defineTable({
     name: v.string(),
     courseIds: v.array(v.id("course")),

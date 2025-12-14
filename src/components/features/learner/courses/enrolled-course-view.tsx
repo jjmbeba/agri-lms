@@ -3,6 +3,7 @@
 import { BookOpen, Clock, Download, Lock, MessageSquare, Play } from "lucide-react";
 import Link from "next/link";
 import { AssignmentItem } from "@/components/features/learner/assignments/assignment-item";
+import { QuizItem } from "@/components/features/learner/quizzes/quiz-item";
 import {
   Accordion,
   AccordionContent,
@@ -39,6 +40,10 @@ type CourseContentItem = {
     maxScore?: number;
     submissionType?: "file" | "text" | "url";
     instructions?: string;
+    // Quiz-specific fields
+    quizId?: Id<"quiz">;
+    timerMinutes?: number;
+    timerSeconds?: number;
   }>;
 };
 
@@ -93,6 +98,18 @@ function ModuleListItem({
         isCompleted={isCompleted}
         key={`${moduleSlug}-${item.position}`}
         orderIndex={item.orderIndex}
+        title={item.title}
+      />
+    );
+  }
+
+  if (item.type === "quiz" && item.quizId) {
+    return (
+      <QuizItem
+        isCompleted={isCompleted}
+        key={`${moduleSlug}-${item.position}`}
+        orderIndex={item.orderIndex}
+        quizId={item.quizId}
         title={item.title}
       />
     );
