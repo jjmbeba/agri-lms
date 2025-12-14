@@ -43,7 +43,7 @@ const EnrollCourseBtn = ({
   const [isPaymentPending, setIsPaymentPending] = useState(false);
   const accessScope: "course" | "module" = moduleId ? "module" : "course";
 
-  const sendEmail = useConvexAction(api.emails.sendEmail);
+  const sendEnrollmentEmail = useConvexAction(api.emails.sendEnrollmentEmail);
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
     mutationFn: useConvexMutation(api.enrollments.createEnrollment),
     onError: (error) => {
@@ -122,7 +122,7 @@ const EnrollCourseBtn = ({
           ? `${window.location.origin}/courses/${result.courseSlug}`
           : `/courses/${result.courseSlug}`;
 
-      await sendEmail({
+      await sendEnrollmentEmail({
         studentName: result.studentName,
         studentEmail: result.studentEmail,
         scope: "course",

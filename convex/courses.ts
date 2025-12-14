@@ -358,7 +358,12 @@ export const getPublishedCourses = query({
 
     const courses = await ctx.db
       .query("course")
-      .filter((q) => q.eq(q.field("status"), "published"))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "published"),
+          q.eq(q.field("status"), "coming-soon")
+        )
+      )
       .collect();
     const departments = await ctx.db.query("department").collect();
 
@@ -505,5 +510,93 @@ export const getCourseStats = query({
       totalStudents,
       completionRate,
     } as const;
+  },
+});
+
+export const subscribeToCourseNotification = mutation({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    // Verify course exists and is coming-soon
+    const course = await ctx.db.get(args.courseId);
+    if (!course) {
+      throw new ConvexError("Course not found");
+    }
+    if (course.status !== "coming-soon") {
+      throw new ConvexError("Can only subscribe to coming-soon courses");
+    }
+
+    // Check if already subscribed
+    const existing = await ctx.db
+      .query("courseNotification")
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
+      )
+      .first();
+
+    if (existing) {
+      return { success: true, alreadySubscribed: true } as const;
+    }
+
+    // Create subscription
+    await ctx.db.insert("courseNotification", {
+      userId: identity.subject,
+      courseId: args.courseId,
+      subscribedAt: new Date().toISOString(),
+    });
+
+    return { success: true, alreadySubscribed: false } as const;
+  },
+});
+
+export const unsubscribeFromCourseNotification = mutation({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const subscription = await ctx.db
+      .query("courseNotification")
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
+      )
+      .first();
+
+    if (subscription) {
+      await ctx.db.delete(subscription._id);
+    }
+
+    return { success: true } as const;
+  },
+});
+
+export const isSubscribedToCourse = query({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return false;
+    }
+
+    const subscription = await ctx.db
+      .query("courseNotification")
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
+      )
+      .first();
+
+    return subscription !== null;
   },
 });

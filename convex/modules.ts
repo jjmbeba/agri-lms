@@ -1384,6 +1384,8 @@ export const publishDraftModules = mutation({
 
     await publishModules(ctx, updatedDraftModulesData, courseVersionId);
 
+    //Trigger email notification to students that coming-soon course is now available
+
     await ctx.db.patch(args.courseId, { status: "published" });
     await reseedDrafts(ctx, args.courseId, courseVersionId);
 

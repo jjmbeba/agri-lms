@@ -20,7 +20,7 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { resend } from "./resendClient";
 
-export const sendEmail = action({
+export const sendEnrollmentEmail = action({
   args: {
     studentName: v.string(),
     studentEmail: v.string(),

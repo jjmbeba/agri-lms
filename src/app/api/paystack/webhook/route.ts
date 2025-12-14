@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
         const contentUrl = `${env.SITE_URL.replace(trailingSlashRegex, "")}/courses/${
           (metadata as { courseSlug?: string })?.courseSlug ?? "course"
         }`;
-        await fetchAction(api.emails.sendEmail, {
+        await fetchAction(api.emails.sendEnrollmentEmail, {
           studentName:
             (metadata as { studentName?: string })?.studentName ?? "Learner",
           studentEmail:
