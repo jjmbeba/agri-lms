@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Clock, Lock, MessageSquare, Play } from "lucide-react";
+import { BookOpen, Clock, Download, Lock, MessageSquare, Play } from "lucide-react";
 import Link from "next/link";
 import { AssignmentItem } from "@/components/features/learner/assignments/assignment-item";
 import {
@@ -70,6 +70,10 @@ type EnrolledCourseViewProps = {
 
 // Extracted helpers to reduce cognitive complexity
 type ModuleItem = CourseContentItem["content"][number];
+
+function isUrl(str: string): boolean {
+  return str.trim().startsWith("http://") || str.trim().startsWith("https://");
+}
 
 function ModuleListItem({
   courseSlug,
@@ -349,7 +353,20 @@ export const EnrolledCourseView = ({
             </a>
           ) : null}
           <p className="text-lg text-muted-foreground">{c.description}</p>
-          {hasHandout ? (
+          {hasHandout && isUrl(handoutText) ? (
+            <a
+              aria-label="Download course handout"
+              className="inline-flex w-fit items-center gap-2 rounded-md bg-green-700 px-4 py-2 font-semibold text-sm text-white shadow transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              download
+              href={handoutText}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Download className="size-4" />
+              Download Course Handout
+            </a>
+          ) : null}
+          {hasHandout && !isUrl(handoutText) ? (
             <Card>
               <CardHeader>
                 <CardTitle>Course Handout</CardTitle>

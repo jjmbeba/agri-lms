@@ -9,6 +9,7 @@ import {
   BookOpen,
   CheckCircle,
   Clock,
+  Download,
   Loader2,
   Play,
   Star,
@@ -68,6 +69,10 @@ const NotificationButton = ({
   );
 };
 
+function isUrl(str: string): boolean {
+  return str.trim().startsWith("http://") || str.trim().startsWith("https://");
+}
+
 type CourseContentItem = {
   _id: Id<"module">;
   title: string;
@@ -104,7 +109,8 @@ export const NonEnrolledCourseView = ({
 }: NonEnrolledCourseViewProps) => {
   const c = course.course;
   const d = course.department;
-  const hasHandout = Boolean(c.handout && c.handout.trim().length > 0);
+  const handout = c.handout ?? "";
+  const hasHandout = handout.trim().length > 0;
   const isComingSoon = c.status === "coming-soon";
 
   const { data: isSubscribed } = useQuery(
@@ -209,16 +215,29 @@ export const NonEnrolledCourseView = ({
               />
             )}
           </div>
+          {hasHandout && isUrl(handout) ? (
+            <a
+              aria-label="Download course handout"
+              className="inline-flex w-fit items-center gap-2 rounded-md bg-green-700 px-4 py-2 font-semibold text-sm text-white shadow transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              download
+              href={handout}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Download className="size-4" />
+              Download Course Handout
+            </a>
+          ) : null}
         </div>
 
-        {hasHandout ? (
+        {hasHandout && !isUrl(handout) ? (
           <Card>
             <CardHeader>
               <CardTitle>Course Handout</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-muted-foreground text-sm">
-                {c.handout}
+                {handout}
               </p>
             </CardContent>
           </Card>
