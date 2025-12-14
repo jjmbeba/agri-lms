@@ -4,8 +4,8 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { type Tag, TagInput } from "emblor";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { File, Loader2, Upload, X } from "lucide-react";
+import { type ChangeEvent, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUploadThing } from "@/lib/uploadthing";
 import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
@@ -38,12 +39,18 @@ type EditCourseFormProps = {
 type CourseFormProps = CreateCourseFormProps | EditCourseFormProps;
 type CourseStatus = "draft" | "coming-soon" | "published";
 
+const BYTES_PER_KB = 1024;
+const MB_TO_BYTES = BYTES_PER_KB * BYTES_PER_KB;
+
 const CourseForm = (props: CourseFormProps) => {
   const { type, ...rest } = props;
 
   const action = type === "create" ? "Create" : "Update";
 
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
+  const [selectedHandoutFile, setSelectedHandoutFile] = useState<File | null>(
+    null
+  );
   const { data: departments, isLoading: isLoadingDepartments } = useQuery(
     convexQuery(api.departments.getDepartments, {})
   );
@@ -71,6 +78,21 @@ const CourseForm = (props: CourseFormProps) => {
       displayToastError(error);
     },
   });
+
+  const { startUpload, isUploading: isUploadingHandout } = useUploadThing(
+    "fileUploader",
+    {
+      onClientUploadComplete: (res) => {
+        if (res[0]?.ufsUrl) {
+          form.setFieldValue("handout", res[0].ufsUrl);
+          setSelectedHandoutFile(null);
+        }
+      },
+      onUploadError: (error) => {
+        toast.error(`Upload failed: ${error.message}`);
+      },
+    }
+  );
 
   const form = useForm({
     defaultValues:
@@ -343,24 +365,175 @@ const CourseForm = (props: CourseFormProps) => {
               </form.Field>
             </div>
             <form.Field name="handout">
-              {(field) => (
-                <div className="grid w-full gap-3">
-                  <Label htmlFor="handout">Course Handout</Label>
-                  <Textarea
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    id="handout"
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Add course handout text"
-                    value={field.state.value}
-                  />
-                  {field.state.meta.errors.map((error) => (
-                    <FormError
-                      key={error?.message}
-                      message={error?.message ?? ""}
-                    />
-                  ))}
-                </div>
-              )}
+              {(field) => {
+                const handoutUrl = field.state.value;
+                const hasExistingHandout =
+                  handoutUrl && handoutUrl.trim() !== "";
+                const isShowingUpload = selectedHandoutFile !== null;
+
+                const handleFileSelect = (file: File) => {
+                  setSelectedHandoutFile(file);
+                  toast.promise(startUpload([file]), {
+                    loading: "Uploading handout...",
+                    success: "Handout uploaded successfully",
+                    error: "Upload failed",
+                  });
+                };
+
+                const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleFileSelect(file);
+                  }
+                };
+
+                const handleRemoveFile = () => {
+                  setSelectedHandoutFile(null);
+                  field.handleChange("");
+                };
+
+                const handleReplaceFile = () => {
+                  setSelectedHandoutFile(null);
+                  field.handleChange("");
+                };
+
+                const getFileNameFromUrl = (url: string): string => {
+                  try {
+                    const urlObj = new URL(url);
+                    const pathname = urlObj.pathname;
+                    const fileName =
+                      pathname.split("/").pop() ?? "Course Handout";
+                    return decodeURIComponent(fileName);
+                  } catch {
+                    return "Course Handout";
+                  }
+                };
+
+                const renderHandoutField = () => {
+                  if (hasExistingHandout && !isShowingUpload) {
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 rounded-lg border p-3">
+                          <File className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="max-w-[4rem] overflow-hidden text-ellipsis whitespace-nowrap font-medium text-sm">
+                              {getFileNameFromUrl(handoutUrl)}
+                            </p>
+                            <a
+                              className="text-primary text-xs underline hover:no-underline"
+                              href={handoutUrl}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              View/Download
+                            </a>
+                          </div>
+                          <Button
+                            onClick={handleReplaceFile}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            Replace
+                          </Button>
+                          <Button
+                            onClick={handleRemoveFile}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isUploadingHandout && (
+                            <Loader2 className="size-4 animate-spin" />
+                          )}
+                          <Input
+                            accept=".pdf,.docx,.xlsx,.pptx,.doc"
+                            className="flex-1"
+                            disabled={isUploadingHandout}
+                            id="handout"
+                            onChange={handleFileChange}
+                            type="file"
+                          />
+                          <p className="text-muted-foreground text-xs">
+                            Max 4MB
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (isShowingUpload) {
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 rounded-lg border p-3">
+                          <Upload className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {selectedHandoutFile.name}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {(selectedHandoutFile.size / MB_TO_BYTES).toFixed(
+                                2
+                              )}{" "}
+                              MB
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              setSelectedHandoutFile(null);
+                              field.handleChange("");
+                            }}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {isUploadingHandout && (
+                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                            <Loader2 className="size-4 animate-spin" />
+                            <span>Uploading...</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="flex items-center gap-2">
+                      {isUploadingHandout && (
+                        <Loader2 className="size-4 animate-spin" />
+                      )}
+                      <Input
+                        accept=".pdf,.docx,.xlsx,.pptx,.doc"
+                        className="flex-1"
+                        disabled={isUploadingHandout}
+                        id="handout"
+                        onChange={handleFileChange}
+                        type="file"
+                      />
+                      <p className="text-muted-foreground text-xs">Max 4MB</p>
+                    </div>
+                  );
+                };
+
+                return (
+                  <div className="grid w-full gap-3">
+                    <Label htmlFor="handout">Course Handout</Label>
+                    {renderHandoutField()}
+                    {field.state.meta.errors.map((error) => (
+                      <FormError
+                        key={error?.message}
+                        message={error?.message ?? ""}
+                      />
+                    ))}
+                  </div>
+                );
+              }}
             </form.Field>
           </div>
         </ScrollArea>
@@ -374,14 +547,16 @@ const CourseForm = (props: CourseFormProps) => {
                 isCreatingCourse ||
                 isSubmitting ||
                 isLoadingDepartments ||
-                isEditingCourse
+                isEditingCourse ||
+                isUploadingHandout
               }
               type="submit"
             >
               {isSubmitting ||
               isCreatingCourse ||
               isLoadingDepartments ||
-              isEditingCourse ? (
+              isEditingCourse ||
+              isUploadingHandout ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 `${action} Course`
