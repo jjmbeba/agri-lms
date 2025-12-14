@@ -23,7 +23,6 @@ import type * as pathways from "../pathways.js";
 import type * as payments from "../payments.js";
 import type * as resendClient from "../resendClient.js";
 import type * as reviews from "../reviews.js";
-import type * as sendEmails from "../sendEmails.js";
 import type * as utils_slug from "../utils/slug.js";
 
 import type {
@@ -56,7 +55,6 @@ declare const fullApi: ApiFromModules<{
   payments: typeof payments;
   resendClient: typeof resendClient;
   reviews: typeof reviews;
-  sendEmails: typeof sendEmails;
   "utils/slug": typeof utils_slug;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

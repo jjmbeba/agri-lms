@@ -36,6 +36,7 @@ type EditCourseFormProps = {
 };
 
 type CourseFormProps = CreateCourseFormProps | EditCourseFormProps;
+type CourseStatus = "draft" | "coming-soon" | "published";
 
 const CourseForm = (props: CourseFormProps) => {
   const { type, ...rest } = props;
@@ -46,6 +47,10 @@ const CourseForm = (props: CourseFormProps) => {
   const { data: departments, isLoading: isLoadingDepartments } = useQuery(
     convexQuery(api.departments.getDepartments, {})
   );
+  const isPublished =
+    type === "edit" &&
+    "courseDetails" in rest &&
+    rest.courseDetails.status === "published";
 
   const { mutate: createCourse, isPending: isCreatingCourse } = useMutation({
     mutationFn: useConvexMutation(api.courses.createCourse),
@@ -80,6 +85,9 @@ const CourseForm = (props: CourseFormProps) => {
             departmentId: rest.courseDetails.departmentId,
             priceShillings: rest.courseDetails.priceShillings,
             handout: rest.courseDetails.handout ?? "",
+            status:
+              (rest.courseDetails.status as CourseStatus | undefined) ??
+              "draft",
           }
         : {
             title: "",
@@ -88,6 +96,7 @@ const CourseForm = (props: CourseFormProps) => {
             departmentId: "",
             priceShillings: 0,
             handout: "",
+            status: "draft",
           },
     validationLogic: revalidateLogic(),
     validators: {
@@ -102,6 +111,7 @@ const CourseForm = (props: CourseFormProps) => {
           departmentId: value.departmentId as Id<"department">,
           priceShillings: value.priceShillings,
           handout: value.handout ?? "",
+          status: value.status as "draft" | "coming-soon",
         });
       } else if (type === "edit" && "id" in rest) {
         editCourse({
@@ -112,6 +122,7 @@ const CourseForm = (props: CourseFormProps) => {
           departmentId: value.departmentId as Id<"department">,
           priceShillings: value.priceShillings,
           handout: value.handout ?? "",
+          status: value.status as "draft" | "coming-soon" | "published",
         });
       }
     },
@@ -187,6 +198,44 @@ const CourseForm = (props: CourseFormProps) => {
                     type="number"
                     value={field.state.value}
                   />
+                  {field.state.meta.errors.map((error) => (
+                    <FormError
+                      key={error?.message}
+                      message={error?.message ?? ""}
+                    />
+                  ))}
+                </div>
+              )}
+            </form.Field>
+            <form.Field name="status">
+              {(field) => (
+                <div className="grid gap-3">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    defaultValue={field.state.value}
+                    disabled={isPublished}
+                    onValueChange={(value) => field.handleChange(value)}
+                  >
+                    <SelectTrigger
+                      aria-invalid={field.state.meta.errors.length > 0}
+                      className="w-full"
+                      disabled={isPublished}
+                    >
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isPublished ? (
+                        <SelectItem value="published">Published</SelectItem>
+                      ) : (
+                        <>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="coming-soon">
+                            Coming soon
+                          </SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
                   {field.state.meta.errors.map((error) => (
                     <FormError
                       key={error?.message}

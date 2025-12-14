@@ -12,7 +12,11 @@ export default defineSchema({
     title: v.string(),
     slug: v.string(),
     tags: v.array(v.string()),
-    status: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("coming-soon"),
+      v.literal("published")
+    ),
     departmentId: v.id("department"),
     description: v.string(),
     priceShillings: v.number(),
@@ -84,8 +88,7 @@ export default defineSchema({
     userId: v.string(),
     enrolledAt: v.string(),
     admissionLetterUrl: v.optional(v.string()),
-  })
-    .index("user_course", ["userId", "courseId"]),
+  }).index("user_course", ["userId", "courseId"]),
   moduleProgress: defineTable({
     moduleId: v.id("module"),
     userId: v.string(),
@@ -180,4 +183,13 @@ export default defineSchema({
     reason: v.string(),
     createdAt: v.string(),
   }).index("user", ["userId"]),
+  courseNotification: defineTable({
+    userId: v.string(),
+    userEmail: v.string(),
+    userName: v.string(),
+    courseId: v.id("course"),
+    subscribedAt: v.string(),
+  })
+    .index("user_course", ["userId", "courseId"])
+    .index("course", ["courseId"]),
 });

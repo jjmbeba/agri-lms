@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
@@ -19,6 +20,18 @@ async function getDraftModulesTotalPrice(
     (total, module) => total + module.priceShillings,
     0
   );
+}
+
+// Helper function to check if a course has draft modules
+async function hasDraftModules(
+  ctx: MutationCtx,
+  courseId: Id<"course">
+): Promise<boolean> {
+  const draftModule = await ctx.db
+    .query("draftModule")
+    .filter((q) => q.eq(q.field("courseId"), courseId))
+    .first();
+  return draftModule !== null;
 }
 
 async function buildCourseResponse(ctx: QueryCtx, course: Doc<"course">) {
@@ -92,6 +105,7 @@ export const createCourse = mutation({
     departmentId: v.id("department"),
     priceShillings: v.number(),
     handout: v.optional(v.string()),
+    status: v.union(v.literal("draft"), v.literal("coming-soon")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -110,7 +124,7 @@ export const createCourse = mutation({
       description: args.description,
       tags: args.tags,
       departmentId: args.departmentId,
-      status: "draft",
+      status: args.status,
       priceShillings: args.priceShillings,
       handout: args.handout ?? "",
     });
@@ -281,10 +295,25 @@ export const editCourse = mutation({
     departmentId: v.id("department"),
     priceShillings: v.number(),
     handout: v.optional(v.string()),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("coming-soon"),
+      v.literal("published")
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     restrictRoles(identity, ["admin"]);
+
+    // Check if trying to set status to 'coming-soon' with draft modules
+    if (args.status === "coming-soon") {
+      const hasDrafts = await hasDraftModules(ctx, args.id);
+      if (hasDrafts) {
+        throw new ConvexError(
+          "Cannot set course status to 'coming-soon' when draft modules exist. Please delete all draft modules first."
+        );
+      }
+    }
 
     // Validate that course price does not exceed total module prices
     const moduleTotal = await getDraftModulesTotalPrice(ctx, args.id);
@@ -305,6 +334,8 @@ export const editCourse = mutation({
       ? await generateCourseSlug(ctx, args.title, args.id)
       : existingCourse.slug;
 
+    const isNowPublished = args.status === "published";
+
     await ctx.db.patch(args.id, {
       title: args.title,
       slug,
@@ -313,7 +344,25 @@ export const editCourse = mutation({
       departmentId: args.departmentId,
       priceShillings: args.priceShillings,
       handout: args.handout ?? existingCourse.handout ?? "",
+      status: args.status,
     });
+
+    // Trigger email notification if status is becoming published and course has subscribers
+    if (isNowPublished && slug) {
+      const hasSubscribers = await ctx.db
+        .query("courseNotification")
+        .withIndex("course", (q) => q.eq("courseId", args.id))
+        .first();
+
+      if (hasSubscribers) {
+        await ctx.scheduler.runAfter(0, api.emails.notifyCourseSubscribers, {
+          courseId: args.id,
+          courseName: args.title,
+          courseSlug: slug,
+        });
+      }
+    }
+
     return await ctx.db.get(args.id);
   },
 });
@@ -329,7 +378,12 @@ export const getPublishedCourses = query({
 
     const courses = await ctx.db
       .query("course")
-      .filter((q) => q.eq(q.field("status"), "published"))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "published"),
+          q.eq(q.field("status"), "coming-soon")
+        )
+      )
       .collect();
     const departments = await ctx.db.query("department").collect();
 
@@ -476,5 +530,128 @@ export const getCourseStats = query({
       totalStudents,
       completionRate,
     } as const;
+  },
+});
+
+export const subscribeToCourseNotification = mutation({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    // Verify course exists and is coming-soon
+    const course = await ctx.db.get(args.courseId);
+    if (!course) {
+      throw new ConvexError("Course not found");
+    }
+    if (course.status !== "coming-soon") {
+      throw new ConvexError("Can only subscribe to coming-soon courses");
+    }
+
+    // Check if already subscribed
+    const existing = await ctx.db
+      .query("courseNotification")
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
+      )
+      .first();
+
+    if (existing) {
+      return { success: true, alreadySubscribed: true } as const;
+    }
+
+    // Create subscription
+    await ctx.db.insert("courseNotification", {
+      userId: identity.subject,
+      userEmail: identity.email ?? "",
+      userName: identity.name ?? identity.email ?? "Learner",
+      courseId: args.courseId,
+      subscribedAt: new Date().toISOString(),
+    });
+
+    return { success: true, alreadySubscribed: false } as const;
+  },
+});
+
+export const unsubscribeFromCourseNotification = mutation({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+
+    const subscription = await ctx.db
+      .query("courseNotification")
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
+      )
+      .first();
+
+    if (subscription) {
+      await ctx.db.delete(subscription._id);
+    }
+
+    return { success: true } as const;
+  },
+});
+
+export const isSubscribedToCourse = query({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return false;
+    }
+
+    const subscription = await ctx.db
+      .query("courseNotification")
+      .withIndex("user_course", (q) =>
+        q.eq("userId", identity.subject).eq("courseId", args.courseId)
+      )
+      .first();
+
+    return subscription !== null;
+  },
+});
+
+export const getCourseNotificationSubscribers = query({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
+
+    const subscriptions = await ctx.db
+      .query("courseNotification")
+      .withIndex("course", (q) => q.eq("courseId", args.courseId))
+      .collect();
+
+    return subscriptions.map((sub) => ({
+      notificationId: sub._id,
+      userId: sub.userId,
+      userEmail: sub.userEmail,
+      userName: sub.userName,
+    }));
+  },
+});
+
+export const deleteCourseNotification = mutation({
+  args: {
+    notificationId: v.id("courseNotification"),
+  },
+  handler: async (ctx, args) => {
+    // This mutation is only called from the notification action
+    // No additional auth check needed as it's called server-side
+    await ctx.db.delete(args.notificationId);
   },
 });

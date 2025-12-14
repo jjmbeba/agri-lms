@@ -1,16 +1,25 @@
 "use client";
 
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Award,
+  Bell,
+  BellOff,
   BookOpen,
   CheckCircle,
   Clock,
+  Loader2,
   Play,
   Star,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { displayToastError } from "@/lib/utils";
+import { api } from "../../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import EnrollCourseBtn from "./enroll-course-btn";
 
@@ -21,6 +30,43 @@ const modulePriceFormatter = new Intl.NumberFormat("en-KE", {
 });
 
 const MAX_PREVIEW_MODULES = 3;
+
+type NotificationButtonProps = {
+  courseId: Id<"course">;
+  isComingSoon: boolean;
+  isSubscribed: boolean | undefined;
+  isNotificationPending: boolean;
+  onToggle: () => void;
+  getNotificationIcon: () => React.ReactElement;
+};
+
+const NotificationButton = ({
+  isComingSoon,
+  isSubscribed,
+  isNotificationPending,
+  onToggle,
+  getNotificationIcon,
+}: NotificationButtonProps) => {
+  if (!isComingSoon) {
+    return null;
+  }
+
+  return (
+    <Button
+      aria-label={
+        isSubscribed
+          ? "Unsubscribe from notifications"
+          : "Subscribe to notifications"
+      }
+      disabled={isNotificationPending}
+      onClick={onToggle}
+      variant={isSubscribed ? "outline" : "default"}
+    >
+      {getNotificationIcon()}
+      {isSubscribed ? "Subscribed" : "Notify Me When Available"}
+    </Button>
+  );
+};
 
 type CourseContentItem = {
   _id: Id<"module">;
@@ -59,6 +105,62 @@ export const NonEnrolledCourseView = ({
   const c = course.course;
   const d = course.department;
   const hasHandout = Boolean(c.handout && c.handout.trim().length > 0);
+  const isComingSoon = c.status === "coming-soon";
+
+  const { data: isSubscribed } = useQuery(
+    convexQuery(
+      api.courses.isSubscribedToCourse,
+      isComingSoon ? { courseId: c._id } : "skip"
+    )
+  );
+
+  const { mutate: subscribe, isPending: isSubscribing } = useMutation({
+    mutationFn: useConvexMutation(api.courses.subscribeToCourseNotification),
+    onSuccess: (result: { success: boolean; alreadySubscribed: boolean }) => {
+      if (result.alreadySubscribed) {
+        toast.info(
+          "You're already subscribed to notifications for this course"
+        );
+      } else {
+        toast.success("You'll be notified when this course becomes available");
+      }
+    },
+    onError: (error) => {
+      displayToastError(error);
+    },
+  });
+
+  const { mutate: unsubscribe, isPending: isUnsubscribing } = useMutation({
+    mutationFn: useConvexMutation(
+      api.courses.unsubscribeFromCourseNotification
+    ),
+    onSuccess: () => {
+      toast.success("You've unsubscribed from notifications");
+    },
+    onError: (error) => {
+      displayToastError(error);
+    },
+  });
+
+  const handleNotificationToggle = () => {
+    if (isSubscribed) {
+      unsubscribe({ courseId: c._id });
+    } else {
+      subscribe({ courseId: c._id });
+    }
+  };
+
+  const isNotificationPending = isSubscribing || isUnsubscribing;
+
+  const getNotificationIcon = () => {
+    if (isNotificationPending) {
+      return <Loader2 className="mr-2 size-4 animate-spin" />;
+    }
+    if (isSubscribed) {
+      return <BellOff className="mr-2 size-4" />;
+    }
+    return <Bell className="mr-2 size-4" />;
+  };
 
   const courseStats = {
     averageRating: 4.8,
@@ -81,15 +183,31 @@ export const NonEnrolledCourseView = ({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-bold text-2xl tracking-tight">{c.title}</h1>
-            <Badge variant="secondary">Preview</Badge>
+            {isComingSoon ? (
+              <Badge className="bg-amber-100 text-amber-800" variant="outline">
+                Coming Soon
+              </Badge>
+            ) : (
+              <Badge variant="secondary">Preview</Badge>
+            )}
           </div>
           <p className="text-lg text-muted-foreground">{c.description}</p>
-          <div className="flex">
-            <EnrollCourseBtn
+          <div className="flex flex-wrap items-center gap-3">
+            <NotificationButton
               courseId={courseId}
-              isEnrolled={isEnrolled}
-              priceShillings={c.priceShillings}
+              getNotificationIcon={getNotificationIcon}
+              isComingSoon={isComingSoon}
+              isNotificationPending={isNotificationPending}
+              isSubscribed={isSubscribed}
+              onToggle={handleNotificationToggle}
             />
+            {!isComingSoon && (
+              <EnrollCourseBtn
+                courseId={courseId}
+                isEnrolled={isEnrolled}
+                priceShillings={c.priceShillings}
+              />
+            )}
           </div>
         </div>
 
@@ -291,11 +409,21 @@ export const NonEnrolledCourseView = ({
             </div>
           </div>
 
-          <EnrollCourseBtn
+          <NotificationButton
             courseId={courseId}
-            isEnrolled={false}
-            priceShillings={c.priceShillings}
+            getNotificationIcon={getNotificationIcon}
+            isComingSoon={isComingSoon}
+            isNotificationPending={isNotificationPending}
+            isSubscribed={isSubscribed}
+            onToggle={handleNotificationToggle}
           />
+          {!isComingSoon && (
+            <EnrollCourseBtn
+              courseId={courseId}
+              isEnrolled={false}
+              priceShillings={c.priceShillings}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
