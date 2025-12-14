@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
@@ -1384,7 +1385,20 @@ export const publishDraftModules = mutation({
 
     await publishModules(ctx, updatedDraftModulesData, courseVersionId);
 
-    //Trigger email notification to students that coming-soon course is now available
+    // Trigger email notification to subscribers if course has any
+    const hasSubscribers = await ctx.db
+      .query("courseNotification")
+      .withIndex("course", (q) => q.eq("courseId", args.courseId))
+      .first();
+
+    if (hasSubscribers && courseDoc.slug) {
+      // Schedule notification action (non-blocking)
+      await ctx.scheduler.runAfter(0, api.emails.notifyCourseSubscribers, {
+        courseId: args.courseId,
+        courseName: courseDoc.title,
+        courseSlug: courseDoc.slug,
+      });
+    }
 
     await ctx.db.patch(args.courseId, { status: "published" });
     await reseedDrafts(ctx, args.courseId, courseVersionId);

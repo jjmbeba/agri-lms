@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 import { restrictRoles } from "./auth";
 import { generateCourseSlug } from "./utils/slug";
 
@@ -333,6 +334,8 @@ export const editCourse = mutation({
       ? await generateCourseSlug(ctx, args.title, args.id)
       : existingCourse.slug;
 
+    const isNowPublished = args.status === "published";
+
     await ctx.db.patch(args.id, {
       title: args.title,
       slug,
@@ -343,6 +346,27 @@ export const editCourse = mutation({
       handout: args.handout ?? existingCourse.handout ?? "",
       status: args.status,
     });
+
+    // Trigger email notification if status is becoming published and course has subscribers
+    if (isNowPublished && slug) {
+      const hasSubscribers = await ctx.db
+        .query("courseNotification")
+        .withIndex("course", (q) => q.eq("courseId", args.id))
+        .first();
+
+      if (hasSubscribers) {
+        await ctx.scheduler.runAfter(
+          0,
+          api.emails.notifyCourseSubscribers,
+          {
+            courseId: args.id,
+            courseName: args.title,
+            courseSlug: slug,
+          }
+        );
+      }
+    }
+
     return await ctx.db.get(args.id);
   },
 });
@@ -547,6 +571,8 @@ export const subscribeToCourseNotification = mutation({
     // Create subscription
     await ctx.db.insert("courseNotification", {
       userId: identity.subject,
+      userEmail: identity.email ?? "",
+      userName: identity.name ?? identity.email ?? "Learner",
       courseId: args.courseId,
       subscribedAt: new Date().toISOString(),
     });
@@ -598,5 +624,35 @@ export const isSubscribedToCourse = query({
       .first();
 
     return subscription !== null;
+  },
+});
+
+export const getCourseNotificationSubscribers = query({
+  args: {
+    courseId: v.id("course"),
+  },
+  handler: async (ctx, args) => {
+    const subscriptions = await ctx.db
+      .query("courseNotification")
+      .withIndex("course", (q) => q.eq("courseId", args.courseId))
+      .collect();
+
+    return subscriptions.map((sub) => ({
+      notificationId: sub._id,
+      userId: sub.userId,
+      userEmail: sub.userEmail,
+      userName: sub.userName,
+    }));
+  },
+});
+
+export const deleteCourseNotification = mutation({
+  args: {
+    notificationId: v.id("courseNotification"),
+  },
+  handler: async (ctx, args) => {
+    // This mutation is only called from the notification action
+    // No additional auth check needed as it's called server-side
+    await ctx.db.delete(args.notificationId);
   },
 });

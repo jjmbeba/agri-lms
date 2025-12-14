@@ -185,6 +185,8 @@ export default defineSchema({
   }).index("user", ["userId"]),
   courseNotification: defineTable({
     userId: v.string(),
+    userEmail: v.string(),
+    userName: v.string(),
     courseId: v.id("course"),
     subscribedAt: v.string(),
   })
