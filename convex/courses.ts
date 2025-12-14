@@ -1,8 +1,8 @@
 import { ConvexError, v } from "convex/values";
+import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
 import { restrictRoles } from "./auth";
 import { generateCourseSlug } from "./utils/slug";
 
@@ -355,15 +355,11 @@ export const editCourse = mutation({
         .first();
 
       if (hasSubscribers) {
-        await ctx.scheduler.runAfter(
-          0,
-          api.emails.notifyCourseSubscribers,
-          {
-            courseId: args.id,
-            courseName: args.title,
-            courseSlug: slug,
-          }
-        );
+        await ctx.scheduler.runAfter(0, api.emails.notifyCourseSubscribers, {
+          courseId: args.id,
+          courseName: args.title,
+          courseSlug: slug,
+        });
       }
     }
 
@@ -632,6 +628,9 @@ export const getCourseNotificationSubscribers = query({
     courseId: v.id("course"),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    restrictRoles(identity, ["admin"]);
+
     const subscriptions = await ctx.db
       .query("courseNotification")
       .withIndex("course", (q) => q.eq("courseId", args.courseId))

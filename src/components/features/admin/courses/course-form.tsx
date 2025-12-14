@@ -69,7 +69,6 @@ const CourseForm = (props: CourseFormProps) => {
     },
     onError: (error) => {
       displayToastError(error);
-      console.log(error);
     },
   });
 

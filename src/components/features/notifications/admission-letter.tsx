@@ -116,7 +116,7 @@ const AdmissionLetterPdf = ({
       <View style={styles.header}>
         {/* Replace source with your actual logo URL or base64 */}
         <Image
-          src="https://via.placeholder.com/50"
+          src="https://www.aatiupskill.com/aati-logo.png"
           style={styles.logoPlaceholder}
         />
         <View>
@@ -209,12 +209,15 @@ const AdmissionLetterPdf = ({
       {/* Signature Section */}
       <View style={styles.signatureSection}>
         {/* Placeholder for Signature Image */}
-        {/* <Image style={{width: 100, height: 40}} src="/path-to-signature.png" /> */}
+        <Image
+          src="https://www.aatiupskill.com/email-signature.png"
+          style={{ width: 100, height: 40 }}
+        />
         <View style={styles.signatureLine} />
         <Text style={[styles.footerText, { fontWeight: "bold" }]}>
           Dr. Jimmy Mutunga
         </Text>
-        <Text style={styles.footerText}>CEO</Text>
+        <Text style={styles.footerText}>Director</Text>
         <Text style={styles.footerText}>AATI</Text>
       </View>
     </Page>

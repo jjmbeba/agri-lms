@@ -83,7 +83,14 @@ export const sendEnrollmentEmail = action({
 
                 <Section className="p-[30px]">
                   {/* Logo / Brand Header */}
-                  <Section className="mb-[20px]">
+                  <Section className="mb-[20px] flex flex-col items-center">
+                    <Img
+                      alt="AATI Upskill Institute Logo"
+                      className="mx-auto mb-2"
+                      height="64"
+                      src="https://www.aatiupskill.com/aati-logo.png"
+                      width="64"
+                    />
                     <Text className="m-0 mt-2 text-center font-bold text-[20px] text-agriGreen">
                       AATI UPSKILL INSTITUTE
                     </Text>
@@ -209,7 +216,14 @@ export const sendCourseAvailableEmail = action({
 
                 <Section className="p-[30px]">
                   {/* Logo / Brand Header */}
-                  <Section className="mb-[20px]">
+                  <Section className="mb-[20px] flex flex-col items-center">
+                    <Img
+                      alt="AATI Upskill Institute Logo"
+                      className="mx-auto mb-2"
+                      height="60"
+                      src="https://www.aatiupskill.com/aati-logo.png"
+                      width="60"
+                    />
                     <Text className="m-0 mt-2 text-center font-bold text-[20px] text-agriGreen">
                       AATI UPSKILL INSTITUTE
                     </Text>
@@ -312,7 +326,12 @@ export const notifyCourseSubscribers = action({
             notificationId: subscriber.notificationId,
           });
           return true;
-        } catch {
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Implement logger later
+          console.error(
+            `Failed to send notification email to ${subscriber.userEmail}:`,
+            error
+          );
           // Silently fail for individual emails to not block others
           return false;
         }
