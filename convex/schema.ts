@@ -83,6 +83,44 @@ export default defineSchema({
       v.literal("url")
     ),
   }),
+  draftQuiz: defineTable({
+    draftModuleContentId: v.id("draftModuleContent"),
+    questions: v.array(
+      v.object({
+        question: v.string(),
+        options: v.array(
+          v.object({
+            text: v.string(),
+            isCorrect: v.boolean(),
+          })
+        ),
+        points: v.number(),
+      })
+    ),
+    timerMinutes: v.optional(v.number()),
+    timerSeconds: v.optional(v.number()),
+    maxScore: v.number(),
+    instructions: v.optional(v.string()),
+  }),
+  quiz: defineTable({
+    moduleContentId: v.id("moduleContent"),
+    questions: v.array(
+      v.object({
+        question: v.string(),
+        options: v.array(
+          v.object({
+            text: v.string(),
+            isCorrect: v.boolean(),
+          })
+        ),
+        points: v.number(),
+      })
+    ),
+    timerMinutes: v.optional(v.number()),
+    timerSeconds: v.optional(v.number()),
+    maxScore: v.number(),
+    instructions: v.optional(v.string()),
+  }),
   enrollment: defineTable({
     courseId: v.id("course"),
     userId: v.string(),

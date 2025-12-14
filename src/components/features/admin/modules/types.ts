@@ -6,6 +6,15 @@ export type ContentType =
   | "assignment"
   | "project";
 
+export type QuizQuestion = {
+  question: string;
+  options: Array<{
+    text: string;
+    isCorrect: boolean;
+  }>;
+  points: number;
+};
+
 export type ContentItem = {
   type: ContentType;
   title: string;
@@ -16,6 +25,11 @@ export type ContentItem = {
   dueDate?: string;
   maxScore?: number;
   submissionType?: "file" | "text" | "url";
+  // Quiz-specific fields
+  questions?: QuizQuestion[];
+  timerMinutes?: number;
+  timerSeconds?: number;
+  instructions?: string;
 };
 
 export type ContentFormData = {

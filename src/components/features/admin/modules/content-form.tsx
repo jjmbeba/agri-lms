@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUploadThing } from "@/lib/uploadthing";
 import { moduleTypes } from "./constants";
 import { useModuleFormContext } from "./module-form-context";
+import QuizForm from "./quiz-form";
 import { contentSchema } from "./schema";
 import type {
   ContentFieldProps,
@@ -225,20 +226,21 @@ const renderContentInput = (
       );
 
     case "quiz":
+      // Quiz content field is set to instructions for backend compatibility
+      // The actual quiz data is managed via QuizForm component
       return (
         <div className="space-y-2">
           <Textarea
+            disabled
             onChange={(e) => field.onChange(e.target.value)}
-            placeholder="Enter quiz questions and options..."
-            rows={QUIZ_ROWS}
+            placeholder="Quiz data is managed in the quiz form below"
+            rows={2}
             value={field.value}
           />
           <p className="text-muted-foreground text-xs">
-            Format: Question 1? A) Option 1 B) Option 2 C) Option 3
+            Quiz questions and settings are configured below. The content field
+            is automatically set to quiz instructions.
           </p>
-          {field.errors.map((error) => (
-            <FormError key={error} message={error} />
-          ))}
         </div>
       );
 
@@ -729,6 +731,51 @@ const ContentForm: React.FC<ContentFormProps> = ({
                                     )
                                   )}
                                 </div>
+                              )}
+                            </form.Field>
+                          </>
+                        )}
+
+                        {/* Quiz-specific fields - only show for quiz type */}
+                        {item.type === "quiz" && (
+                          <>
+                            <form.Field name={`content[${i}].questions`}>
+                              {(subField) => (
+                                <QuizForm
+                                  errors={subField.state.meta.errors.map(
+                                    (e) => e?.message ?? ""
+                                  )}
+                                  onChange={(quizData) => {
+                                    subField.handleChange(quizData.questions);
+                                    // Also update other quiz fields and content field
+                                    const currentItem = form.getFieldValue(
+                                      `content[${i}]`
+                                    ) as ContentItem;
+                                    // Set content field to instructions for backend compatibility
+                                    const contentValue =
+                                      quizData.instructions ?? "";
+                                    form.setFieldValue(`content[${i}]`, {
+                                      ...currentItem,
+                                      content: contentValue,
+                                      questions: quizData.questions,
+                                      timerMinutes: quizData.timerMinutes,
+                                      timerSeconds: quizData.timerSeconds,
+                                      instructions: quizData.instructions,
+                                    });
+                                  }}
+                                  value={{
+                                    questions: subField.state.value,
+                                    timerMinutes: form.getFieldValue(
+                                      `content[${i}].timerMinutes`
+                                    ) as number | undefined,
+                                    timerSeconds: form.getFieldValue(
+                                      `content[${i}].timerSeconds`
+                                    ) as number | undefined,
+                                    instructions: form.getFieldValue(
+                                      `content[${i}].instructions`
+                                    ) as string | undefined,
+                                  }}
+                                />
                               )}
                             </form.Field>
                           </>
