@@ -5,18 +5,13 @@ import {
   IconBuilding,
   IconChartBar,
   IconDashboard,
-  IconHelp,
   IconLink,
-  IconReport,
   IconSettings,
   IconUsers,
-  IconWorld,
 } from "@tabler/icons-react";
-import { GalleryVerticalEndIcon } from "lucide-react";
 import Link from "next/link";
 import type * as React from "react";
 import { NavMain } from "@/components/features/admin/dashboard/nav-main";
-import { NavSecondary } from "@/components/features/admin/dashboard/nav-secondary";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Logo from "../../common/logo";
 
 const data = {
   adminNavMain: [
@@ -96,7 +92,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link href="/">
-                <GalleryVerticalEndIcon className="!size-5" />
+                <Logo />
                 <span className="font-semibold text-base">AATI LMS</span>
               </Link>
             </SidebarMenuButton>

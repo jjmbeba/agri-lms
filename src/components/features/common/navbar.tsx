@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/sheet";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { isPublicPage } from "../auth/utils";
-import AuthLogo from "./logo";
+import Logo from "./logo";
 
 const Navbar = ({ children }: PropsWithChildren) => {
   const pathname = usePathname();
@@ -75,7 +75,9 @@ const Navbar = ({ children }: PropsWithChildren) => {
     <section className="px-10 py-4">
       <div className="container">
         <nav className="flex items-center justify-between">
-          <AuthLogo />
+          <div className="flex items-center gap-2">
+              <Logo showText={true} />
+          </div>
           <NavigationMenu className="hidden lg:block">
             <NavigationMenuList>
               <NavigationMenuItem>

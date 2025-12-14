@@ -60,6 +60,15 @@ export const convertPlainTextToHTML = (text: string): string => {
  * @returns Escaped HTML string
  */
 const escapeHTML = (text: string): string => {
+  if (typeof document === "undefined") {
+    // Server-side: use simple string replacement
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;

@@ -30,6 +30,11 @@ type QuizTakingProps = {
   timerMinutes?: number;
   timerSeconds?: number;
   instructions?: string;
+  answers: Map<number, number>;
+  timeRemaining: number | null;
+  startTime: number | null;
+  onAnswersChange: (answers: Map<number, number>) => void;
+  onTimeRemainingChange: (timeRemaining: number | null) => void;
   onSubmissionComplete: (submissionId: Id<"quizSubmission">) => void;
 };
 
@@ -39,51 +44,23 @@ export function QuizTaking({
   timerMinutes,
   timerSeconds,
   instructions,
+  answers,
+  timeRemaining,
+  startTime,
+  onAnswersChange,
+  onTimeRemainingChange,
   onSubmissionComplete,
 }: QuizTakingProps) {
-  const [answers, setAnswers] = useState<Map<number, number>>(new Map());
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [startTime, setStartTime] = useState<number | null>(null);
 
   const hasTimer = Boolean(timerMinutes || timerSeconds);
-  const totalSeconds = hasTimer
-    ? (timerMinutes ?? 0) * 60 + (timerSeconds ?? 0)
-    : null;
-
-  // Initialize timer
-  useEffect(() => {
-    if (totalSeconds !== null) {
-      setTimeRemaining(totalSeconds);
-      setStartTime(Date.now());
-    }
-  }, [totalSeconds]);
-
-  // Timer countdown
-  useEffect(() => {
-    if (timeRemaining === null || timeRemaining <= 0) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev === null || prev <= 1) {
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [timeRemaining]);
 
   // Auto-submit when timer reaches 0
   useEffect(() => {
     if (timeRemaining === 0 && !isSubmitting) {
       handleSubmit(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining, isSubmitting]);
 
   const { mutate: submitQuiz } = useMutation({
@@ -100,11 +77,9 @@ export function QuizTaking({
   });
 
   const handleAnswerChange = (questionIndex: number, optionIndex: number) => {
-    setAnswers((prev) => {
-      const newAnswers = new Map(prev);
-      newAnswers.set(questionIndex, optionIndex);
-      return newAnswers;
-    });
+    const newAnswers = new Map(answers);
+    newAnswers.set(questionIndex, optionIndex);
+    onAnswersChange(newAnswers);
   };
 
   const handleSubmit = (isAutoSubmit = false) => {
@@ -142,7 +117,7 @@ export function QuizTaking({
       }
     }
 
-    // Calculate time spent
+    // Calculate time spent (accounting for paused time if needed)
     const timeSpent =
       startTime !== null ? Math.floor((Date.now() - startTime) / 1000) : undefined;
 
