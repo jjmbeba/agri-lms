@@ -5,7 +5,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { type Tag, TagInput } from "emblor";
 import { File, Loader2, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { type ChangeEvent, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import FormError from "@/components/ui/form-error";
@@ -85,6 +85,7 @@ const CourseForm = (props: CourseFormProps) => {
       onClientUploadComplete: (res) => {
         if (res[0]?.ufsUrl) {
           form.setFieldValue("handout", res[0].ufsUrl);
+          setSelectedHandoutFile(null);
           toast.success("Handout uploaded successfully");
         }
       },
@@ -380,9 +381,7 @@ const CourseForm = (props: CourseFormProps) => {
                   });
                 };
 
-                const handleFileChange = (
-                  e: React.ChangeEvent<HTMLInputElement>
-                ) => {
+                const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     handleFileSelect(file);
