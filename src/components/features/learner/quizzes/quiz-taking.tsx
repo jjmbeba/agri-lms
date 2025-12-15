@@ -53,9 +53,17 @@ export function QuizTaking({
 
   const hasTimer = Boolean(timerMinutes || timerSeconds);
 
+  type SubmitQuizResult = {
+    submissionId: Id<"quizSubmission">;
+    score: number;
+    maxScore: number;
+    percentage: number;
+    attemptNumber: number;
+  };
+
   const { mutate: submitQuiz } = useMutation({
     mutationFn: useConvexMutation(api.quizzes.submitQuiz),
-    onSuccess: (result) => {
+    onSuccess: (result: SubmitQuizResult) => {
       toast.success("Quiz submitted successfully");
       setIsSubmitting(false);
       onSubmissionComplete(result.submissionId);
