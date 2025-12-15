@@ -7,9 +7,11 @@ import { usePreloadedQuery } from "convex/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { NotesViewer } from "@/components/features/learner/courses/notes-viewer";
+import { QuizItem } from "@/components/features/learner/quizzes/quiz-item";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 
 type ModuleContentDetailsProps = {
   courseSlug: string;
@@ -76,6 +78,41 @@ function TextContentCard(content: { title: string; content?: string }) {
   );
 }
 
+function QuizContentCard(content: {
+  title: string;
+  quizId?: Id<"quiz">;
+  instructions?: string;
+  maxScore?: number;
+  timerMinutes?: number;
+  timerSeconds?: number;
+}) {
+  if (!content.quizId) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{content.title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            Quiz content unavailable.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="my-4">
+      <QuizItem
+        isCompleted={false}
+        orderIndex={0}
+        quizId={content.quizId}
+        title={content.title}
+      />
+    </div>
+  );
+}
+
 export function ModuleContentDetails({
   courseSlug,
   moduleSlug,
@@ -122,6 +159,25 @@ export function ModuleContentDetails({
           instructions={assignmentContent.instructions}
           maxScore={assignmentContent.maxScore}
           title={assignmentContent.title}
+        />
+      );
+    }
+    if (content.type === "quiz") {
+      const quizContent = content as typeof content & {
+        quizId?: Id<"quiz">;
+        instructions?: string;
+        maxScore?: number;
+        timerMinutes?: number;
+        timerSeconds?: number;
+      };
+      return (
+        <QuizContentCard
+          instructions={quizContent.instructions}
+          maxScore={quizContent.maxScore}
+          quizId={quizContent.quizId}
+          timerMinutes={quizContent.timerMinutes}
+          timerSeconds={quizContent.timerSeconds}
+          title={quizContent.title}
         />
       );
     }

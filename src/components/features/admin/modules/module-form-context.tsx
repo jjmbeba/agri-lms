@@ -12,6 +12,17 @@ type ModuleWithContent = Doc<"draftModule"> & {
     dueDate?: string;
     maxScore?: number;
     submissionType?: "file" | "text" | "url";
+    questions?: Array<{
+      question: string;
+      options: Array<{
+        text: string;
+        isCorrect: boolean;
+      }>;
+      points: number;
+    }>;
+    timerMinutes?: number;
+    timerSeconds?: number;
+    instructions?: string;
   })[];
 };
 
@@ -95,6 +106,17 @@ export const ModuleFormProvider = ({ children }: ModuleFormProviderProps) => {
           dueDate: item.dueDate,
           maxScore: item.maxScore,
           submissionType: item.submissionType,
+        };
+      }
+
+      // Add quiz-specific fields if this is a quiz
+      if (item.type === "quiz" && "questions" in item) {
+        return {
+          ...baseItem,
+          questions: item.questions,
+          timerMinutes: item.timerMinutes,
+          timerSeconds: item.timerSeconds,
+          instructions: item.instructions,
         };
       }
 

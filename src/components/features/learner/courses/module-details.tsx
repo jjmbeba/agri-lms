@@ -9,13 +9,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { NotesViewer } from "@/components/features/learner/courses/notes-viewer";
+import { QuizItem } from "@/components/features/learner/quizzes/quiz-item";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 type ModuleContentItem = {
-  type: "text" | "video" | "assignment" | string;
+  type: "text" | "video" | "assignment" | "quiz" | string;
   title: string;
   slug?: string;
   content?: string;
@@ -26,6 +27,10 @@ type ModuleContentItem = {
   maxScore?: number;
   submissionType?: "file" | "text" | "url";
   instructions?: string;
+  // Quiz-specific fields
+  quizId?: Id<"quiz">;
+  timerMinutes?: number;
+  timerSeconds?: number;
 };
 
 function AssignmentItemCard(
@@ -371,6 +376,18 @@ export function ModuleDetails({
   function renderContentItem(item: ModuleContentItem, moduleSlug: string) {
     if (item.type === "assignment") {
       return AssignmentItemCard(item, courseSlug, moduleSlug);
+    }
+    if (item.type === "quiz" && item.quizId) {
+      return (
+        <div key={`quiz-${item.position}`} className="my-4">
+          <QuizItem
+            isCompleted={false}
+            orderIndex={item.orderIndex}
+            quizId={item.quizId}
+            title={item.title}
+          />
+        </div>
+      );
     }
     if (item.type === "video") {
       return VideoItemCard(item, courseSlug, moduleSlug);

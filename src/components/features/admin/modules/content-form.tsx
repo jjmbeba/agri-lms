@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUploadThing } from "@/lib/uploadthing";
 import { moduleTypes } from "./constants";
 import { useModuleFormContext } from "./module-form-context";
+import QuizForm from "./quiz-form";
 import { contentSchema } from "./schema";
 import type {
   ContentFieldProps,
@@ -103,7 +104,7 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
   errors,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadMethod, setUploadMethod] = useState<"url" | "file">("file");
+  const [uploadMethod, setUploadMethod] = useState<"url" | "file">("url");
   const { startUpload, isUploading } = useUploadThing("fileUploader", {
     onClientUploadComplete: (res) => {
       onChange(res?.[0].ufsUrl);
@@ -179,9 +180,12 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
 };
 
 // Type-safe content input renderer
+// form and index are used for types that need access to the full ContentItem (e.g. quiz)
 const renderContentInput = (
   type: ContentType,
-  field: ContentFieldProps
+  field: ContentFieldProps,
+  form: unknown,
+  index: number
 ): React.JSX.Element => {
   // biome-ignore lint/nursery/noUnnecessaryConditions: Does not make sense. Switch is not exhaustive.
   switch (type) {
@@ -224,23 +228,68 @@ const renderContentInput = (
         />
       );
 
-    case "quiz":
+    case "quiz": {
+      // Inline quiz builder using QuizForm
+      // We need access to the full ContentItem via the form instance
+      type FormFieldComponent = (props: {
+        name: string;
+        children: (subField: unknown) => React.ReactNode;
+      }) => React.JSX.Element;
+
+      const typedForm = form as {
+        Field: FormFieldComponent;
+        getFieldValue: (path: string) => unknown;
+        setFieldValue: (path: string, value: unknown) => void;
+      };
+
+      const TypedField = typedForm.Field;
+
       return (
-        <div className="space-y-2">
-          <Textarea
-            onChange={(e) => field.onChange(e.target.value)}
-            placeholder="Enter quiz questions and options..."
-            rows={QUIZ_ROWS}
-            value={field.value}
-          />
+        <div className="space-y-4">
+          <TypedField name={`content[${index}]`}>
+            {(subField) => {
+              const itemField = subField as {
+                handleChange: (value: ContentItem) => void;
+                state: {
+                  value: ContentItem;
+                  meta: { errors: { message?: string }[] };
+                };
+              };
+
+              return (
+                <QuizForm
+                  errors={itemField.state.meta.errors.map(
+                    (error: { message?: string }) => error.message ?? ""
+                  )}
+                  onChange={(quizData) => {
+                    const contentValue = quizData.instructions ?? "";
+
+                    itemField.handleChange({
+                      ...itemField.state.value,
+                      content: contentValue,
+                      questions: quizData.questions,
+                      timerMinutes: quizData.timerMinutes,
+                      timerSeconds: quizData.timerSeconds,
+                      instructions: quizData.instructions,
+                    });
+                  }}
+                  value={{
+                    questions: itemField.state.value.questions ?? [],
+                    timerMinutes: itemField.state.value.timerMinutes,
+                    timerSeconds: itemField.state.value.timerSeconds,
+                    instructions: itemField.state.value.instructions,
+                  }}
+                />
+              );
+            }}
+          </TypedField>
           <p className="text-muted-foreground text-xs">
-            Format: Question 1? A) Option 1 B) Option 2 C) Option 3
+            Quiz questions and settings are configured here. The content field
+            is automatically set to quiz instructions.
           </p>
-          {field.errors.map((error) => (
-            <FormError key={error} message={error} />
-          ))}
         </div>
       );
+    }
 
     case "assignment":
       return (
@@ -622,14 +671,19 @@ const ContentForm: React.FC<ContentFormProps> = ({
                               </form.Field>
                               <form.Field name={`content[${i}].type`}>
                                 {(typeField) =>
-                                  renderContentInput(typeField.state.value, {
-                                    value: subField.state.value,
-                                    onChange: subField.handleChange,
-                                    onBlur: subField.handleBlur,
-                                    errors: subField.state.meta.errors.map(
-                                      (e) => e?.message ?? ""
-                                    ),
-                                  })
+                                  renderContentInput(
+                                    typeField.state.value as ContentType,
+                                    {
+                                      value: subField.state.value,
+                                      onChange: subField.handleChange,
+                                      onBlur: subField.handleBlur,
+                                      errors: subField.state.meta.errors.map(
+                                        (e) => e?.message ?? ""
+                                      ),
+                                    },
+                                    form,
+                                    i
+                                  )
                                 }
                               </form.Field>
                             </div>

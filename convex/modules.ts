@@ -35,6 +35,24 @@ const contentItemValidator = v.object({
   submissionType: v.optional(
     v.union(v.literal("file"), v.literal("text"), v.literal("url"))
   ),
+  // Quiz-specific fields (optional)
+  questions: v.optional(
+    v.array(
+      v.object({
+        question: v.string(),
+        options: v.array(
+          v.object({
+            text: v.string(),
+            isCorrect: v.boolean(),
+          })
+        ),
+        points: v.number(),
+      })
+    )
+  ),
+  timerMinutes: v.optional(v.number()),
+  timerSeconds: v.optional(v.number()),
+  instructions: v.optional(v.string()),
 });
 
 const contentValidator = v.object({
@@ -206,6 +224,37 @@ async function publishModuleContent(
           dueDate: draftAssignment.dueDate,
         });
       }
+    } else if (item.type === "quiz") {
+      // Get the corresponding draftQuiz first to avoid orphaned moduleContent
+      const draftQuiz = await ctx.db
+        .query("draftQuiz")
+        .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+        .first();
+
+      if (!draftQuiz) {
+        throw new Error(
+          `Draft quiz not found for draft module content ${item._id}`
+        );
+      }
+
+      const moduleContentId = await ctx.db.insert("moduleContent", {
+        moduleId: publishedModuleId,
+        type: item.type,
+        title: item.title,
+        slug,
+        content: item.content,
+        orderIndex: item.orderIndex,
+        position: i + 1,
+      });
+
+      await ctx.db.insert("quiz", {
+        moduleContentId,
+        questions: draftQuiz.questions,
+        timerMinutes: draftQuiz.timerMinutes,
+        timerSeconds: draftQuiz.timerSeconds,
+        maxScore: draftQuiz.maxScore,
+        instructions: draftQuiz.instructions,
+      });
     } else {
       await ctx.db.insert("moduleContent", {
         moduleId: publishedModuleId,
@@ -288,6 +337,37 @@ async function reseedModuleContent(
           dueDate: publishedAssignment.dueDate,
         });
       }
+    } else if (c.type === "quiz") {
+      // Get the corresponding published quiz first to avoid orphaned draftModuleContent
+      const publishedQuiz = await ctx.db
+        .query("quiz")
+        .filter((q) => q.eq(q.field("moduleContentId"), c._id))
+        .first();
+
+      if (!publishedQuiz) {
+        throw new Error(
+          `Published quiz not found for module content ${c._id}`
+        );
+      }
+
+      const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+        draftModuleId,
+        type: c.type,
+        title: c.title,
+        slug,
+        content: c.content,
+        orderIndex: c.orderIndex,
+        position: c.position,
+      });
+
+      await ctx.db.insert("draftQuiz", {
+        draftModuleContentId,
+        questions: publishedQuiz.questions,
+        timerMinutes: publishedQuiz.timerMinutes,
+        timerSeconds: publishedQuiz.timerSeconds,
+        maxScore: publishedQuiz.maxScore,
+        instructions: publishedQuiz.instructions,
+      });
     } else {
       await ctx.db.insert("draftModuleContent", {
         draftModuleId,
@@ -300,6 +380,185 @@ async function reseedModuleContent(
       });
     }
   }
+}
+
+type ContentItemType = {
+  type: string;
+  title: string;
+  content: string;
+  metadata?: unknown;
+  dueDate?: string;
+  maxScore?: number;
+  submissionType?: "file" | "text" | "url";
+  questions?: Array<{
+    question: string;
+    options: Array<{
+      text: string;
+      isCorrect: boolean;
+    }>;
+    points: number;
+  }>;
+  timerMinutes?: number;
+  timerSeconds?: number;
+  instructions?: string;
+};
+
+async function createDraftContentItem(
+  ctx: MutationCtx,
+  item: ContentItemType,
+  draftModuleId: Id<"draftModule">,
+  index: number
+) {
+  const contentSlug = await generateDraftModuleContentSlug(
+    ctx,
+    item.title,
+    draftModuleId
+  );
+
+  if (item.type === "assignment") {
+    const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+      draftModuleId,
+      type: item.type,
+      title: item.title,
+      slug: contentSlug,
+      content: item.content,
+      orderIndex: index,
+      position: index + 1,
+    });
+
+    await ctx.db.insert("draftAssignment", {
+      draftModuleContentId,
+      instructions: item.content,
+      maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
+      submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
+      dueDate: item.dueDate,
+    });
+    return;
+  }
+
+  if (item.type === "quiz") {
+    // Use instructions as content field for quizzes, or empty string if no instructions
+    const quizContent = item.instructions ?? item.content ?? "";
+    const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
+      draftModuleId,
+      type: item.type,
+      title: item.title,
+      slug: contentSlug,
+      content: quizContent,
+      orderIndex: index,
+      position: index + 1,
+    });
+
+    const questions = item.questions ?? [];
+    const maxScore = questions.reduce(
+      (sum: number, q: { points: number }) => sum + (q.points ?? 0),
+      0
+    );
+
+    await ctx.db.insert("draftQuiz", {
+      draftModuleContentId,
+      questions,
+      timerMinutes: item.timerMinutes,
+      timerSeconds: item.timerSeconds,
+      maxScore,
+      instructions: item.instructions,
+    });
+    return;
+  }
+
+  await ctx.db.insert("draftModuleContent", {
+    draftModuleId,
+    type: item.type,
+    title: item.title,
+    slug: contentSlug,
+    content: item.content,
+    orderIndex: index,
+    position: index + 1,
+  });
+}
+
+async function mergeDraftContentWithAssignmentsAndQuizzes(
+  ctx: QueryCtx,
+  content: Doc<"draftModuleContent">[]
+) {
+  const assignmentContentIds = content
+    .filter((item) => item.type === "assignment")
+    .map((item) => item._id);
+
+  const draftAssignments =
+    assignmentContentIds.length > 0
+      ? await ctx.db
+          .query("draftAssignment")
+          .filter((q) =>
+            q.or(
+              ...assignmentContentIds.map((id) =>
+                q.eq(q.field("draftModuleContentId"), id)
+              )
+            )
+          )
+          .collect()
+      : [];
+
+  const quizContentIds = content
+    .filter((item) => item.type === "quiz")
+    .map((item) => item._id);
+
+  const draftQuizzes =
+    quizContentIds.length > 0
+      ? await ctx.db
+          .query("draftQuiz")
+          .filter((q) =>
+            q.or(
+              ...quizContentIds.map((id) =>
+                q.eq(q.field("draftModuleContentId"), id)
+              )
+            )
+          )
+          .collect()
+      : [];
+
+  const assignmentMap = new Map(
+    draftAssignments.map((assignment) => [
+      assignment.draftModuleContentId,
+      assignment,
+    ])
+  );
+
+  const quizMap = new Map(
+    draftQuizzes.map((quiz) => [quiz.draftModuleContentId, quiz])
+  );
+
+  return content.map((item) => {
+    if (item.type === "assignment") {
+      const assignment = assignmentMap.get(item._id);
+      if (!assignment) {
+        throw new Error(
+          `Draft assignment not found for module content ${item._id}`
+        );
+      }
+      return {
+        ...item,
+        dueDate: assignment.dueDate,
+        maxScore: assignment.maxScore,
+        submissionType: assignment.submissionType,
+      };
+    }
+    if (item.type === "quiz") {
+      const quiz = quizMap.get(item._id);
+      if (!quiz) {
+        throw new Error(`Draft quiz not found for module content ${item._id}`);
+      }
+      return {
+        ...item,
+        questions: quiz.questions,
+        timerMinutes: quiz.timerMinutes,
+        timerSeconds: quiz.timerSeconds,
+        maxScore: quiz.maxScore,
+        instructions: quiz.instructions,
+      };
+    }
+    return item;
+  });
 }
 
 async function reseedDrafts(
@@ -402,8 +661,31 @@ export const getModuleWithContentById = query({
             .collect()
         : [];
 
+    // Batch fetch all quizzes for quiz content items
+    const quizContentIds = content
+      .filter((item) => item.type === "quiz")
+      .map((item) => item._id);
+
+    const quizzes =
+      quizContentIds.length > 0
+        ? await ctx.db
+            .query("quiz")
+            .filter((q) =>
+              q.or(
+                ...quizContentIds.map((id) =>
+                  q.eq(q.field("moduleContentId"), id)
+                )
+              )
+            )
+            .collect()
+        : [];
+
     const assignmentMap = new Map(
       assignments.map((assignment) => [assignment.moduleContentId, assignment])
+    );
+
+    const quizMap = new Map(
+      quizzes.map((quiz) => [quiz.moduleContentId, quiz])
     );
 
     const contentWithAssignments = content.map((item) => {
@@ -422,6 +704,22 @@ export const getModuleWithContentById = query({
           maxScore: assignment.maxScore,
           submissionType: assignment.submissionType,
           instructions: assignment.instructions,
+        };
+      }
+      if (item.type === "quiz") {
+        const quiz = quizMap.get(item._id);
+        if (!quiz) {
+          throw new Error(`Quiz not found for module content ${item._id}`);
+        }
+
+        return {
+          ...item,
+          quizId: quiz._id,
+          questions: quiz.questions,
+          timerMinutes: quiz.timerMinutes,
+          timerSeconds: quiz.timerSeconds,
+          maxScore: quiz.maxScore,
+          instructions: quiz.instructions,
         };
       }
       return item;
@@ -521,8 +819,31 @@ export const getModuleBySlug = query({
             .collect()
         : [];
 
+    // Batch fetch all quizzes for quiz content items
+    const quizContentIds = content
+      .filter((item) => item.type === "quiz")
+      .map((item) => item._id);
+
+    const quizzes =
+      quizContentIds.length > 0
+        ? await ctx.db
+            .query("quiz")
+            .filter((q) =>
+              q.or(
+                ...quizContentIds.map((id) =>
+                  q.eq(q.field("moduleContentId"), id)
+                )
+              )
+            )
+            .collect()
+        : [];
+
     const assignmentMap = new Map(
       assignments.map((assignment) => [assignment.moduleContentId, assignment])
+    );
+
+    const quizMap = new Map(
+      quizzes.map((quiz) => [quiz.moduleContentId, quiz])
     );
 
     const contentWithAssignments = content.map((item) => {
@@ -541,6 +862,22 @@ export const getModuleBySlug = query({
           maxScore: assignment.maxScore,
           submissionType: assignment.submissionType,
           instructions: assignment.instructions,
+        };
+      }
+      if (item.type === "quiz") {
+        const quiz = quizMap.get(item._id);
+        if (!quiz) {
+          throw new Error(`Quiz not found for module content ${item._id}`);
+        }
+
+        return {
+          ...item,
+          quizId: quiz._id,
+          questions: quiz.questions,
+          timerMinutes: quiz.timerMinutes,
+          timerSeconds: quiz.timerSeconds,
+          maxScore: quiz.maxScore,
+          instructions: quiz.instructions,
         };
       }
       return item;
@@ -596,34 +933,55 @@ const getContentNavigationSlugs = (
   };
 };
 
-// Helper function to enrich content with assignment details
+// Helper function to enrich content with assignment or quiz details
 const enrichContentWithAssignment = async (
   ctx: QueryCtx,
   moduleContent: Doc<"moduleContent">
 ) => {
-  if (moduleContent.type !== "assignment") {
-    return moduleContent;
+  if (moduleContent.type === "assignment") {
+    const assignment = await ctx.db
+      .query("assignment")
+      .filter((q) => q.eq(q.field("moduleContentId"), moduleContent._id))
+      .first();
+
+    if (!assignment) {
+      throw new Error(
+        `Assignment not found for module content ${moduleContent._id}`
+      );
+    }
+
+    return {
+      ...moduleContent,
+      assignmentId: assignment._id,
+      dueDate: assignment.dueDate,
+      maxScore: assignment.maxScore,
+      submissionType: assignment.submissionType,
+      instructions: assignment.instructions,
+    };
   }
 
-  const assignment = await ctx.db
-    .query("assignment")
-    .filter((q) => q.eq(q.field("moduleContentId"), moduleContent._id))
-    .first();
+  if (moduleContent.type === "quiz") {
+    const quiz = await ctx.db
+      .query("quiz")
+      .filter((q) => q.eq(q.field("moduleContentId"), moduleContent._id))
+      .first();
 
-  if (!assignment) {
-    throw new Error(
-      `Assignment not found for module content ${moduleContent._id}`
-    );
+    if (!quiz) {
+      throw new Error(`Quiz not found for module content ${moduleContent._id}`);
+    }
+
+    return {
+      ...moduleContent,
+      quizId: quiz._id,
+      questions: quiz.questions,
+      timerMinutes: quiz.timerMinutes,
+      timerSeconds: quiz.timerSeconds,
+      maxScore: quiz.maxScore,
+      instructions: quiz.instructions,
+    };
   }
 
-  return {
-    ...moduleContent,
-    assignmentId: assignment._id,
-    dueDate: assignment.dueDate,
-    maxScore: assignment.maxScore,
-    submissionType: assignment.submissionType,
-    instructions: assignment.instructions,
-  };
+  return moduleContent;
 };
 
 export const getModuleContentBySlug = query({
@@ -817,52 +1175,8 @@ export const getDraftModulesByCourseId = query({
           .collect();
         content.sort((a, b) => a.orderIndex - b.orderIndex);
 
-        // Batch fetch all draft assignments for assignment content items
-        const assignmentContentIds = content
-          .filter((item) => item.type === "assignment")
-          .map((item) => item._id);
-
-        const draftAssignments =
-          assignmentContentIds.length > 0
-            ? await ctx.db
-                .query("draftAssignment")
-                .filter((q) =>
-                  q.or(
-                    ...assignmentContentIds.map((id) =>
-                      q.eq(q.field("draftModuleContentId"), id)
-                    )
-                  )
-                )
-                .collect()
-            : [];
-
-        // Create a map of draftModuleContentId to draft assignment for quick lookup
-        const assignmentMap = new Map(
-          draftAssignments.map((assignment) => [
-            assignment.draftModuleContentId,
-            assignment,
-          ])
-        );
-
-        // Merge assignment data with content items
-        const contentWithAssignments = content.map((item) => {
-          if (item.type === "assignment") {
-            const assignment = assignmentMap.get(item._id);
-            if (!assignment) {
-              throw new Error(
-                `Draft assignment not found for module content ${item._id}`
-              );
-            }
-
-            return {
-              ...item,
-              dueDate: assignment.dueDate,
-              maxScore: assignment.maxScore,
-              submissionType: assignment.submissionType,
-            };
-          }
-          return item;
-        });
+        const contentWithAssignments =
+          await mergeDraftContentWithAssignmentsAndQuizzes(ctx, content);
 
         return { ...m, content: contentWithAssignments };
       })
@@ -941,6 +1255,25 @@ export const getModulesByLatestVersionId = query({
                 .collect()
             : [];
 
+        // Batch fetch all quizzes for quiz content items
+        const quizContentIds = content
+          .filter((item) => item.type === "quiz")
+          .map((item) => item._id);
+
+        const quizzes =
+          quizContentIds.length > 0
+            ? await ctx.db
+                .query("quiz")
+                .filter((q) =>
+                  q.or(
+                    ...quizContentIds.map((id) =>
+                      q.eq(q.field("moduleContentId"), id)
+                    )
+                  )
+                )
+                .collect()
+            : [];
+
         // Create a map of moduleContentId to assignment for quick lookup
         const assignmentMap = new Map(
           assignments.map((assignment) => [
@@ -949,7 +1282,12 @@ export const getModulesByLatestVersionId = query({
           ])
         );
 
-        // Merge assignment data with content items
+        // Create a map of moduleContentId to quiz for quick lookup
+        const quizMap = new Map(
+          quizzes.map((quiz) => [quiz.moduleContentId, quiz])
+        );
+
+        // Merge assignment and quiz data with content items
         const contentWithAssignments = content.map((item) => {
           if (item.type === "assignment") {
             const assignment = assignmentMap.get(item._id);
@@ -966,6 +1304,22 @@ export const getModulesByLatestVersionId = query({
               maxScore: assignment.maxScore,
               submissionType: assignment.submissionType,
               instructions: assignment.instructions,
+            };
+          }
+          if (item.type === "quiz") {
+            const quiz = quizMap.get(item._id);
+            if (!quiz) {
+              throw new Error(`Quiz not found for module content ${item._id}`);
+            }
+
+            return {
+              ...item,
+              quizId: quiz._id,
+              questions: quiz.questions,
+              timerMinutes: quiz.timerMinutes,
+              timerSeconds: quiz.timerSeconds,
+              maxScore: quiz.maxScore,
+              instructions: quiz.instructions,
             };
           }
           return item;
@@ -1038,43 +1392,7 @@ export const createDraftModule = mutation({
 
     const items = args.content.content ?? [];
     for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-
-      const contentSlug = await generateDraftModuleContentSlug(
-        ctx,
-        item.title,
-        draftModuleId
-      );
-
-      if (item.type === "assignment") {
-        const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
-          draftModuleId,
-          type: item.type,
-          title: item.title,
-          slug: contentSlug,
-          content: item.content,
-          orderIndex: i,
-          position: i + 1,
-        });
-
-        await ctx.db.insert("draftAssignment", {
-          draftModuleContentId,
-          instructions: item.content,
-          maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
-          submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
-          dueDate: item.dueDate,
-        });
-      } else {
-        await ctx.db.insert("draftModuleContent", {
-          draftModuleId,
-          type: item.type,
-          title: item.title,
-          slug: contentSlug,
-          content: item.content,
-          orderIndex: i,
-          position: i + 1,
-        });
-      }
+      await createDraftContentItem(ctx, items[i], draftModuleId, i);
     }
 
     return await ctx.db.get(draftModuleId);
@@ -1141,52 +1459,8 @@ export const getDraftModuleById = query({
       .collect();
     content.sort((a, b) => a.orderIndex - b.orderIndex);
 
-    // Batch fetch all draft assignments for assignment content items
-    const assignmentContentIds = content
-      .filter((item) => item.type === "assignment")
-      .map((item) => item._id);
-
-    const draftAssignments =
-      assignmentContentIds.length > 0
-        ? await ctx.db
-            .query("draftAssignment")
-            .filter((q) =>
-              q.or(
-                ...assignmentContentIds.map((id) =>
-                  q.eq(q.field("draftModuleContentId"), id)
-                )
-              )
-            )
-            .collect()
-        : [];
-
-    // Create a map of draftModuleContentId to draft assignment for quick lookup
-    const assignmentMap = new Map(
-      draftAssignments.map((assignment) => [
-        assignment.draftModuleContentId,
-        assignment,
-      ])
-    );
-
-    // Merge assignment data with content items
-    const contentWithAssignments = content.map((item) => {
-      if (item.type === "assignment") {
-        const assignment = assignmentMap.get(item._id);
-        if (!assignment) {
-          throw new Error(
-            `Draft assignment not found for module content ${item._id}`
-          );
-        }
-
-        return {
-          ...item,
-          dueDate: assignment.dueDate,
-          maxScore: assignment.maxScore,
-          submissionType: assignment.submissionType,
-        };
-      }
-      return item;
-    });
+    const contentWithAssignments =
+      await mergeDraftContentWithAssignmentsAndQuizzes(ctx, content);
 
     return { ...m, content: contentWithAssignments };
   },
@@ -1230,7 +1504,7 @@ export const updateDraftModule = mutation({
       .filter((q) => q.eq(q.field("draftModuleId"), args.moduleId))
       .collect();
 
-    // Delete existing draftAssignment records for assignment content items
+    // Delete existing draftAssignment and draftQuiz records for assignment/quiz content items
     for (const c of oldContent) {
       if (c.type === "assignment") {
         const existingAssignment = await ctx.db
@@ -1240,49 +1514,21 @@ export const updateDraftModule = mutation({
         if (existingAssignment) {
           await ctx.db.delete(existingAssignment._id);
         }
+      } else if (c.type === "quiz") {
+        const existingQuiz = await ctx.db
+          .query("draftQuiz")
+          .filter((q) => q.eq(q.field("draftModuleContentId"), c._id))
+          .first();
+        if (existingQuiz) {
+          await ctx.db.delete(existingQuiz._id);
+        }
       }
       await ctx.db.delete(c._id);
     }
 
     const items = args.content.content ?? [];
     for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-
-      const contentSlug = await generateDraftModuleContentSlug(
-        ctx,
-        item.title,
-        args.moduleId
-      );
-
-      if (item.type === "assignment") {
-        const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
-          draftModuleId: args.moduleId,
-          type: item.type,
-          title: item.title,
-          slug: contentSlug,
-          content: item.content,
-          orderIndex: i,
-          position: i + 1,
-        });
-
-        await ctx.db.insert("draftAssignment", {
-          draftModuleContentId,
-          instructions: item.content,
-          maxScore: item.maxScore ?? DEFAULT_MAX_SCORE,
-          submissionType: item.submissionType ?? DEFAULT_SUBMISSION_TYPE,
-          dueDate: item.dueDate,
-        });
-      } else {
-        await ctx.db.insert("draftModuleContent", {
-          draftModuleId: args.moduleId,
-          type: item.type,
-          title: item.title,
-          slug: contentSlug,
-          content: item.content,
-          orderIndex: i,
-          position: i + 1,
-        });
-      }
+      await createDraftContentItem(ctx, items[i], args.moduleId, i);
     }
 
     return await ctx.db.get(args.moduleId);

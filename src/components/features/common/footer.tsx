@@ -83,7 +83,7 @@ const Footer = () => {
           <div className="flex w-full flex-col justify-between gap-6 lg:items-start">
             {/* Logo */}
             <div className="flex items-center gap-2 lg:justify-start">
-              <Logo />
+              <Logo showText={true} />
             </div>
             <p className="max-w-[70%] text-muted-foreground text-sm">
               {description}
