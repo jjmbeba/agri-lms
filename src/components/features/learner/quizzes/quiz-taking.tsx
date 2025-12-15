@@ -17,6 +17,14 @@ import type { QuizAnswer } from "@/types/quiz";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
+type SubmitQuizResult = {
+  submissionId: Id<"quizSubmission">;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  attemptNumber: number;
+};
+
 type QuizTakingProps = {
   quizId: Id<"quiz">;
   questions: Array<{
@@ -55,7 +63,7 @@ export function QuizTaking({
 
   const { mutate: submitQuiz } = useMutation({
     mutationFn: useConvexMutation(api.quizzes.submitQuiz),
-    onSuccess: (result) => {
+    onSuccess: (result: SubmitQuizResult) => {
       toast.success("Quiz submitted successfully");
       setIsSubmitting(false);
       onSubmissionComplete(result.submissionId);

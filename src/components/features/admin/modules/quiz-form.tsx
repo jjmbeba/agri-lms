@@ -41,10 +41,11 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
+      id: crypto.randomUUID(),
       question: "",
       options: [
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false },
+        { id: crypto.randomUUID(), text: "", isCorrect: false },
+        { id: crypto.randomUUID(), text: "", isCorrect: false },
       ],
       points: 1,
     };
@@ -54,8 +55,8 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
     });
   };
 
-  const removeQuestion = (index: number) => {
-    const newQuestions = questions.filter((_, i) => i !== index);
+  const removeQuestion = (questionId: string) => {
+    const newQuestions = questions.filter((q) => q.id !== questionId);
     onChange({
       ...value,
       questions: newQuestions,
@@ -63,13 +64,17 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
   };
 
   const updateQuestion = (
-    index: number,
+    questionId: string,
     field: keyof QuizQuestion,
     fieldValue: unknown
   ) => {
+    const questionIndex = questions.findIndex((q) => q.id === questionId);
+    if (questionIndex === -1) {
+      return;
+    }
     const newQuestions = [...questions];
-    newQuestions[index] = {
-      ...newQuestions[index],
+    newQuestions[questionIndex] = {
+      ...newQuestions[questionIndex],
       [field]: fieldValue,
     };
     onChange({
@@ -78,59 +83,77 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
     });
   };
 
-  const updateQuestionText = (index: number, text: string) => {
-    updateQuestion(index, "question", text);
+  const updateQuestionText = (questionId: string, text: string) => {
+    updateQuestion(questionId, "question", text);
   };
 
-  const updateQuestionPoints = (index: number, points: number) => {
+  const updateQuestionPoints = (questionId: string, points: number) => {
     const pointsValue = Number.isNaN(points) ? 0 : Math.max(0, points);
-    updateQuestion(index, "points", pointsValue);
+    updateQuestion(questionId, "points", pointsValue);
   };
 
-  const addOption = (questionIndex: number) => {
+  const addOption = (questionId: string) => {
+    const questionIndex = questions.findIndex((q) => q.id === questionId);
+    if (questionIndex === -1) {
+      return;
+    }
     const question = questions[questionIndex];
     if (question.options.length >= MAX_OPTIONS) {
       return;
     }
-    const newOptions = [...question.options, { text: "", isCorrect: false }];
-    updateQuestion(questionIndex, "options", newOptions);
+    const newOptions = [
+      ...question.options,
+      { id: crypto.randomUUID(), text: "", isCorrect: false },
+    ];
+    updateQuestion(questionId, "options", newOptions);
   };
 
-  const removeOption = (questionIndex: number, optionIndex: number) => {
+  const removeOption = (questionId: string, optionId: string) => {
+    const questionIndex = questions.findIndex((q) => q.id === questionId);
+    if (questionIndex === -1) {
+      return;
+    }
     const question = questions[questionIndex];
     if (question.options.length <= MIN_OPTIONS) {
       return;
     }
-    const newOptions = question.options.filter((_, i) => i !== optionIndex);
+    const optionToRemove = question.options.find((opt) => opt.id === optionId);
+    const hadCorrectAnswer = optionToRemove?.isCorrect;
+    const newOptions = question.options.filter((opt) => opt.id !== optionId);
     // If we removed the correct answer, mark the first option as correct
-    const hadCorrectAnswer = question.options[optionIndex]?.isCorrect;
     if (hadCorrectAnswer && newOptions.length > 0) {
-      newOptions[0].isCorrect = true;
+      newOptions[0] = { ...newOptions[0], isCorrect: true };
     }
-    updateQuestion(questionIndex, "options", newOptions);
+    updateQuestion(questionId, "options", newOptions);
   };
 
   const updateOptionText = (
-    questionIndex: number,
-    optionIndex: number,
+    questionId: string,
+    optionId: string,
     text: string
   ) => {
+    const questionIndex = questions.findIndex((q) => q.id === questionId);
+    if (questionIndex === -1) {
+      return;
+    }
     const question = questions[questionIndex];
-    const newOptions = [...question.options];
-    newOptions[optionIndex] = {
-      ...newOptions[optionIndex],
-      text,
-    };
-    updateQuestion(questionIndex, "options", newOptions);
+    const newOptions = question.options.map((opt) =>
+      opt.id === optionId ? { ...opt, text } : opt
+    );
+    updateQuestion(questionId, "options", newOptions);
   };
 
-  const setCorrectAnswer = (questionIndex: number, optionIndex: number) => {
+  const setCorrectAnswer = (questionId: string, optionId: string) => {
+    const questionIndex = questions.findIndex((q) => q.id === questionId);
+    if (questionIndex === -1) {
+      return;
+    }
     const question = questions[questionIndex];
-    const newOptions = question.options.map((opt, i) => ({
+    const newOptions = question.options.map((opt) => ({
       ...opt,
-      isCorrect: i === optionIndex,
+      isCorrect: opt.id === optionId,
     }));
-    updateQuestion(questionIndex, "options", newOptions);
+    updateQuestion(questionId, "options", newOptions);
   };
 
   const handleTimerToggle = (checked: boolean) => {
@@ -205,10 +228,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
       <ScrollArea className="h-[400px]">
         <div className="space-y-4 pr-4">
           {questions.map((question, questionIndex) => (
-            <div
-              className="rounded-lg border bg-card p-4"
-              key={`${question.question}-${questionIndex}`}
-            >
+            <div className="rounded-lg border bg-card p-4" key={question.id}>
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex-1">
                   <Label className="mb-2 block font-medium text-sm">
@@ -216,7 +236,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                   </Label>
                   <Textarea
                     onChange={(e) =>
-                      updateQuestionText(questionIndex, e.target.value)
+                      updateQuestionText(question.id, e.target.value)
                     }
                     placeholder="Enter your question here..."
                     rows={2}
@@ -225,7 +245,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                 </div>
                 {questions.length > 1 && (
                   <Button
-                    onClick={() => removeQuestion(questionIndex)}
+                    onClick={() => removeQuestion(question.id)}
                     size="sm"
                     type="button"
                     variant="ghost"
@@ -237,13 +257,13 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
               <div className="mb-4 flex items-center gap-4">
                 <div className="flex-1">
-                  <Label htmlFor={`points-${questionIndex}`}>Points</Label>
+                  <Label htmlFor={`points-${question.id}`}>Points</Label>
                   <Input
-                    id={`points-${questionIndex}`}
+                    id={`points-${question.id}`}
                     min="0"
                     onChange={(e) => {
                       const points = Number.parseFloat(e.target.value) || 0;
-                      updateQuestionPoints(questionIndex, points);
+                      updateQuestionPoints(question.id, points);
                     }}
                     step="0.5"
                     type="number"
@@ -257,7 +277,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                   <Label className="font-medium text-sm">Options</Label>
                   {question.options.length < MAX_OPTIONS && (
                     <Button
-                      onClick={() => addOption(questionIndex)}
+                      onClick={() => addOption(question.id)}
                       size="sm"
                       type="button"
                       variant="outline"
@@ -271,24 +291,20 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                 {question.options.map((option, optionIndex) => (
                   <div
                     className="flex items-start gap-2 rounded-md border p-2"
-                    key={`${option.text}-${optionIndex}`}
+                    key={option.id}
                   >
                     <div className="mt-1">
                       <Checkbox
                         checked={option.isCorrect}
                         onCheckedChange={() =>
-                          setCorrectAnswer(questionIndex, optionIndex)
+                          setCorrectAnswer(question.id, option.id)
                         }
                       />
                     </div>
                     <Input
                       className="flex-1"
                       onChange={(e) =>
-                        updateOptionText(
-                          questionIndex,
-                          optionIndex,
-                          e.target.value
-                        )
+                        updateOptionText(question.id, option.id, e.target.value)
                       }
                       placeholder={`Option ${String.fromCharCode(
                         ASCII_CODE_A + optionIndex
@@ -297,7 +313,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                     />
                     {question.options.length > MIN_OPTIONS && (
                       <Button
-                        onClick={() => removeOption(questionIndex, optionIndex)}
+                        onClick={() => removeOption(question.id, option.id)}
                         size="sm"
                         type="button"
                         variant="ghost"
