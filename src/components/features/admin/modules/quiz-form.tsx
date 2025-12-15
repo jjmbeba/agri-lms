@@ -227,117 +227,152 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
       <ScrollArea className="h-[400px]">
         <div className="space-y-4 pr-4">
-          {questions.map((question, questionIndex) => (
-            <div className="rounded-lg border bg-card p-4" key={question.id}>
-              <div className="mb-4 flex items-start justify-between">
-                <div className="flex-1">
-                  <Label className="mb-2 block font-medium text-sm">
-                    Question {questionIndex + 1}
-                  </Label>
-                  <Textarea
-                    onChange={(e) =>
-                      updateQuestionText(question.id, e.target.value)
-                    }
-                    placeholder="Enter your question here..."
-                    rows={2}
-                    value={question.question}
-                  />
-                </div>
-                {questions.length > 1 && (
-                  <Button
-                    onClick={() => removeQuestion(question.id)}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+          {questions.map((question, questionIndex) => {
+            // Use ID if present, otherwise fallback to index (IDs should always be present in practice)
+            const questionId = question.id ?? `question-${questionIndex}`;
 
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex-1">
-                  <Label htmlFor={`points-${question.id}`}>Points</Label>
-                  <Input
-                    id={`points-${question.id}`}
-                    min="0"
-                    onChange={(e) => {
-                      const points = Number.parseFloat(e.target.value) || 0;
-                      updateQuestionPoints(question.id, points);
-                    }}
-                    step="0.5"
-                    type="number"
-                    value={question.points}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="font-medium text-sm">Options</Label>
-                  {question.options.length < MAX_OPTIONS && (
+            return (
+              <div className="rounded-lg border bg-card p-4" key={questionId}>
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="flex-1">
+                    <Label className="mb-2 block font-medium text-sm">
+                      Question {questionIndex + 1}
+                    </Label>
+                    <Textarea
+                      onChange={(e) => {
+                        if (question.id) {
+                          updateQuestionText(question.id, e.target.value);
+                        }
+                      }}
+                      placeholder="Enter your question here..."
+                      rows={2}
+                      value={question.question}
+                    />
+                  </div>
+                  {questions.length > 1 && (
                     <Button
-                      onClick={() => addOption(question.id)}
+                      onClick={() => {
+                        if (question.id) {
+                          removeQuestion(question.id);
+                        }
+                      }}
                       size="sm"
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                     >
-                      <Plus className="mr-1 h-3 w-3" />
-                      Add Option
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
 
-                {question.options.map((option, optionIndex) => (
-                  <div
-                    className="flex items-start gap-2 rounded-md border p-2"
-                    key={option.id}
-                  >
-                    <div className="mt-1">
-                      <Checkbox
-                        checked={option.isCorrect}
-                        onCheckedChange={() =>
-                          setCorrectAnswer(question.id, option.id)
-                        }
-                      />
-                    </div>
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor={`points-${questionId}`}>Points</Label>
                     <Input
-                      className="flex-1"
-                      onChange={(e) =>
-                        updateOptionText(question.id, option.id, e.target.value)
-                      }
-                      placeholder={`Option ${String.fromCharCode(
-                        ASCII_CODE_A + optionIndex
-                      )}`}
-                      value={option.text}
+                      id={`points-${questionId}`}
+                      min="0"
+                      onChange={(e) => {
+                        if (question.id) {
+                          const points = Number.parseFloat(e.target.value) || 0;
+                          updateQuestionPoints(question.id, points);
+                        }
+                      }}
+                      step="0.5"
+                      type="number"
+                      value={question.points}
                     />
-                    {question.options.length > MIN_OPTIONS && (
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-medium text-sm">Options</Label>
+                    {question.options.length < MAX_OPTIONS && (
                       <Button
-                        onClick={() => removeOption(question.id, option.id)}
+                        onClick={() => {
+                          if (question.id) {
+                            addOption(question.id);
+                          }
+                        }}
                         size="sm"
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                       >
-                        <X className="h-4 w-4" />
+                        <Plus className="mr-1 h-3 w-3" />
+                        Add Option
                       </Button>
                     )}
                   </div>
-                ))}
 
-                {question.options.length < MIN_OPTIONS && (
-                  <p className="text-destructive text-xs">
-                    Each question must have at least {MIN_OPTIONS} options
-                  </p>
-                )}
+                  {question.options.map((option, optionIndex) => {
+                    // Use ID if present, otherwise fallback to composite key
+                    const optionId =
+                      option.id ?? `${questionId}-option-${optionIndex}`;
 
-                {!question.options.some((opt) => opt.isCorrect) && (
-                  <p className="text-destructive text-xs">
-                    Please mark the correct answer
-                  </p>
-                )}
+                    return (
+                      <div
+                        className="flex items-start gap-2 rounded-md border p-2"
+                        key={optionId}
+                      >
+                        <div className="mt-1">
+                          <Checkbox
+                            checked={option.isCorrect}
+                            onCheckedChange={() => {
+                              if (question.id && option.id) {
+                                setCorrectAnswer(question.id, option.id);
+                              }
+                            }}
+                          />
+                        </div>
+                        <Input
+                          className="flex-1"
+                          onChange={(e) => {
+                            if (question.id && option.id) {
+                              updateOptionText(
+                                question.id,
+                                option.id,
+                                e.target.value
+                              );
+                            }
+                          }}
+                          placeholder={`Option ${String.fromCharCode(
+                            ASCII_CODE_A + optionIndex
+                          )}`}
+                          value={option.text}
+                        />
+                        {question.options.length > MIN_OPTIONS && (
+                          <Button
+                            onClick={() => {
+                              if (question.id && option.id) {
+                                removeOption(question.id, option.id);
+                              }
+                            }}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {question.options.length < MIN_OPTIONS && (
+                    <p className="text-destructive text-xs">
+                      Each question must have at least {MIN_OPTIONS} options
+                    </p>
+                  )}
+
+                  {!question.options.some((opt) => opt.isCorrect) && (
+                    <p className="text-destructive text-xs">
+                      Please mark the correct answer
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </ScrollArea>
 
