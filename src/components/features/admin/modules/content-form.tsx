@@ -104,7 +104,7 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
   errors,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadMethod, setUploadMethod] = useState<"url" | "file">("file");
+  const [uploadMethod, setUploadMethod] = useState<"url" | "file">("url");
   const { startUpload, isUploading } = useUploadThing("fileUploader", {
     onClientUploadComplete: (res) => {
       onChange(res?.[0].ufsUrl);
@@ -246,31 +246,26 @@ const renderContentInput = (
 
       return (
         <div className="space-y-4">
-          <TypedField name={`content[${index}].instructions`}>
+          <TypedField name={`content[${index}]`}>
             {(subField) => {
-              const quizField = subField as {
-                handleChange: (value: string) => void;
+              const itemField = subField as {
+                handleChange: (value: ContentItem) => void;
                 state: {
-                  value: string;
+                  value: ContentItem;
                   meta: { errors: { message?: string }[] };
                 };
               };
 
               return (
                 <QuizForm
-                  errors={quizField.state.meta.errors.map(
+                  errors={itemField.state.meta.errors.map(
                     (error: { message?: string }) => error.message ?? ""
                   )}
                   onChange={(quizData) => {
-                    quizField.handleChange(quizData.instructions ?? "");
-                    // Also update other quiz fields and content field
-                    const currentItem = typedForm.getFieldValue(
-                      `content[${index}]`
-                    ) as ContentItem;
-                    // Set content field to instructions for backend compatibility
                     const contentValue = quizData.instructions ?? "";
-                    typedForm.setFieldValue(`content[${index}]`, {
-                      ...currentItem,
+
+                    itemField.handleChange({
+                      ...itemField.state.value,
                       content: contentValue,
                       questions: quizData.questions,
                       timerMinutes: quizData.timerMinutes,
@@ -279,19 +274,10 @@ const renderContentInput = (
                     });
                   }}
                   value={{
-                    questions:
-                      (typedForm.getFieldValue(
-                        `content[${index}].questions`
-                      ) as ContentItem["questions"]) ?? [],
-                    timerMinutes: typedForm.getFieldValue(
-                      `content[${index}].timerMinutes`
-                    ) as number | undefined,
-                    timerSeconds: typedForm.getFieldValue(
-                      `content[${index}].timerSeconds`
-                    ) as number | undefined,
-                    instructions: typedForm.getFieldValue(
-                      `content[${index}].instructions`
-                    ) as string | undefined,
+                    questions: itemField.state.value.questions ?? [],
+                    timerMinutes: itemField.state.value.timerMinutes,
+                    timerSeconds: itemField.state.value.timerSeconds,
+                    instructions: itemField.state.value.instructions,
                   }}
                 />
               );

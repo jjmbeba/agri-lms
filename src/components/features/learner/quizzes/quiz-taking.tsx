@@ -34,7 +34,6 @@ type QuizTakingProps = {
   timeRemaining: number | null;
   startTime: number | null;
   onAnswersChange: (answers: Map<number, number>) => void;
-  onTimeRemainingChange: (timeRemaining: number | null) => void;
   onSubmissionComplete: (submissionId: Id<"quizSubmission">) => void;
 };
 
@@ -215,7 +214,8 @@ export function QuizTaking({
         <div className="space-y-6 pr-4">
           {questions.map((question, questionIndex) => {
             const selectedAnswer = answers.get(questionIndex);
-            const optionLabels = ["A", "B", "C", "D", "E", "F"];
+            const optionLabelFor = (index: number) =>
+              String.fromCharCode("A".charCodeAt(0) + index);
 
             return (
               <Card key={`${question.question}-${questionIndex}`}>
@@ -254,7 +254,7 @@ export function QuizTaking({
                           htmlFor={`q${questionIndex}-opt${optionIndex}`}
                         >
                           <span className="mr-2 font-semibold">
-                            {optionLabels[optionIndex]}.
+                            {optionLabelFor(optionIndex)}.
                           </span>
                           {option.text}
                         </Label>
