@@ -39,6 +39,7 @@ import {
   ModuleFormProvider,
   useModuleFormContext,
 } from "./module-form-context";
+import { stripQuizIds } from "./quiz-utils";
 import ReviewForm from "./review-form";
 import type { ModuleFormData } from "./types";
 
@@ -129,9 +130,12 @@ const CreateModuleForm = ({
       return;
     }
 
+    // Strip IDs from quiz questions/options before sending to backend
+    const contentWithoutIds = stripQuizIds(values.content);
+
     createDraftModule({
       basicInfo: values.basicInfo,
-      content: { content: values.content },
+      content: { content: contentWithoutIds },
       courseId: courseId as Id<"course">,
     });
   };
