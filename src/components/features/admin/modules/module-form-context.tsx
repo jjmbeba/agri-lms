@@ -113,7 +113,9 @@ export const ModuleFormProvider = ({ children }: ModuleFormProviderProps) => {
       if (item.type === "quiz" && "questions" in item) {
         return {
           ...baseItem,
-          questions: item.questions,
+          questions: item.questions?.map((q) =>
+            q.id ? q : { ...q, id: crypto.randomUUID() }
+          ),
           timerMinutes: item.timerMinutes,
           timerSeconds: item.timerSeconds,
           instructions: item.instructions,
