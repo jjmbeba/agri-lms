@@ -7,10 +7,10 @@ export type ContentType =
   | "project";
 
 export type QuizQuestion = {
-  id: string;
+  id?: string;
   question: string;
   options: Array<{
-    id: string;
+    id?: string;
     text: string;
     isCorrect: boolean;
   }>;
