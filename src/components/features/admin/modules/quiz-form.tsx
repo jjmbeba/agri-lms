@@ -122,7 +122,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
     const newOptions = question.options.filter((opt) => opt.id !== optionId);
     // If we removed the correct answer, mark the first option as correct
     if (hadCorrectAnswer && newOptions.length > 0) {
-      newOptions[0].isCorrect = true;
+      newOptions[0] = { ...newOptions[0], isCorrect: true };
     }
     updateQuestion(questionId, "options", newOptions);
   };

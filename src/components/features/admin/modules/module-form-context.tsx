@@ -13,8 +13,10 @@ type ModuleWithContent = Doc<"draftModule"> & {
     maxScore?: number;
     submissionType?: "file" | "text" | "url";
     questions?: Array<{
+      id?: string;
       question: string;
       options: Array<{
+        id?: string;
         text: string;
         isCorrect: boolean;
       }>;
