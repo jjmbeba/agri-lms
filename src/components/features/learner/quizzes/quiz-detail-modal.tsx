@@ -241,10 +241,6 @@ export function QuizDetailModal({
     setAnswers(newAnswers);
   };
 
-  const handleTimeRemainingChange = (newTimeRemaining: number | null) => {
-    setTimeRemaining(newTimeRemaining);
-  };
-
   // Get the submission to display (new submission takes priority)
   const matchedSubmission =
     submissionId !== null
@@ -313,7 +309,6 @@ export function QuizDetailModal({
               instructions={quiz.instructions}
               onAnswersChange={handleAnswersChange}
               onSubmissionComplete={handleSubmissionComplete}
-              onTimeRemainingChange={handleTimeRemainingChange}
               questions={quiz.questions.map((q) => ({
                 question: q.question,
                 options: q.options.map((opt) => ({
