@@ -10,6 +10,7 @@ export type QuizQuestion = {
   id: string;
   question: string;
   options: Array<{
+    id: string;
     text: string;
     isCorrect: boolean;
   }>;
