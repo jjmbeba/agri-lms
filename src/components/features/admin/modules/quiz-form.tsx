@@ -205,10 +205,8 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
       <ScrollArea className="h-[400px]">
         <div className="space-y-4 pr-4">
           {questions.map((question, questionIndex) => (
-            <div
-              className="rounded-lg border bg-card p-4"
-              key={`${question.question}-${questionIndex}`}
-            >
+            // biome-ignore lint/correctness/useJsxKeyInIterable: index key is stable within quiz builder questions
+            <div className="rounded-lg border bg-card p-4" key={questionIndex}>
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex-1">
                   <Label className="mb-2 block font-medium text-sm">
@@ -269,9 +267,10 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                 </div>
 
                 {question.options.map((option, optionIndex) => (
+                  // biome-ignore lint/correctness/useJsxKeyInIterable: index key is stable within quiz builder options
                   <div
                     className="flex items-start gap-2 rounded-md border p-2"
-                    key={`${option.text}-${optionIndex}`}
+                    key={optionIndex}
                   >
                     <div className="mt-1">
                       <Checkbox
