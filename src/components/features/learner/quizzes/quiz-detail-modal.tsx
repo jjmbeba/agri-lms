@@ -237,6 +237,10 @@ export function QuizDetailModal({
     onClose();
   };
 
+  const handleAnswersChange = (newAnswers: Map<number, number>) => {
+    setAnswers(newAnswers);
+  };
+
   // Get the submission to display (new submission takes priority)
   const matchedSubmission =
     submissionId !== null
@@ -303,6 +307,7 @@ export function QuizDetailModal({
             <QuizTaking
               answers={answers}
               instructions={quiz.instructions}
+              onAnswersChange={handleAnswersChange}
               onSubmissionComplete={handleSubmissionComplete}
               questions={quiz.questions.map((q) => ({
                 question: q.question,
