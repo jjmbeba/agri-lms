@@ -1,8 +1,7 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
-import { Loader2 } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -23,6 +22,41 @@ type QuizDetailModalProps = {
   onClose: () => void;
 };
 
+type QuizTimeLimitCardProps = {
+  timerMinutes?: number | null;
+  timerSeconds?: number | null;
+};
+
+function QuizTimeLimitCard({
+  timerMinutes,
+  timerSeconds,
+}: QuizTimeLimitCardProps) {
+  const hasTimeLimit =
+    timerMinutes !== undefined && timerMinutes !== null
+      ? true
+      : timerSeconds !== undefined && timerSeconds !== null;
+
+  if (!hasTimeLimit) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="font-medium text-muted-foreground text-sm">
+          Time Limit
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="font-bold text-2xl">
+          {String(timerMinutes ?? 0).padStart(2, "0")}:
+          {String(timerSeconds ?? 0).padStart(2, "0")}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function QuizDetailModal({
   quizId,
   isOpen,
@@ -41,25 +75,12 @@ export function QuizDetailModal({
   const [lastPauseTime, setLastPauseTime] = useState<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasPausedRef = useRef<boolean>(false);
+  const TIMER_TICK_INTERVAL_MS = 1000;
+  const MILLISECONDS_PER_SECOND = 1000;
 
   const { data: quizData } = useSuspenseQuery(
     convexQuery(api.quizzes.getQuizWithSubmissions, { quizId })
   );
-
-  if (!quizData) {
-    return (
-      <Dialog onOpenChange={onClose} open={isOpen}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Loading Quiz...</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   const { quiz, latestSubmission } = quizData;
   const hasSubmission = latestSubmission !== null;
@@ -79,7 +100,7 @@ export function QuizDetailModal({
 
   // Handle timer pause when dialog closes
   useEffect(() => {
-    if (!isOpen && !hasPausedRef.current) {
+    if (!(isOpen || hasPausedRef.current)) {
       // Dialog closed - pause timer
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
@@ -94,16 +115,27 @@ export function QuizDetailModal({
 
   // Handle timer resume when dialog opens
   useEffect(() => {
-    if (isOpen && hasPausedRef.current && timeRemaining !== null && lastPauseTime !== null && startTime !== null && totalSeconds !== null) {
+    if (
+      isOpen &&
+      hasPausedRef.current &&
+      timeRemaining !== null &&
+      lastPauseTime !== null &&
+      startTime !== null &&
+      totalSeconds !== null
+    ) {
       // Dialog opened - resume timer
       // Calculate how long the dialog was closed (paused duration)
       const now = Date.now();
-      const pausedDuration = Math.floor((now - lastPauseTime) / 1000);
-      
+      const pausedDuration = Math.floor(
+        (now - lastPauseTime) / MILLISECONDS_PER_SECOND
+      );
+
       // Calculate total elapsed time since start (accounting for all pauses)
-      const totalElapsed = Math.floor((now - startTime) / 1000) - (pausedTime ?? 0);
+      const totalElapsed =
+        Math.floor((now - startTime) / MILLISECONDS_PER_SECOND) -
+        (pausedTime ?? 0);
       const remaining = totalSeconds - totalElapsed;
-      
+
       if (remaining <= 0) {
         // Timer expired while dialog was closed
         setTimeRemaining(0);
@@ -117,7 +149,14 @@ export function QuizDetailModal({
         hasPausedRef.current = false;
       }
     }
-  }, [isOpen, timeRemaining, lastPauseTime, startTime, pausedTime, totalSeconds]);
+  }, [
+    isOpen,
+    timeRemaining,
+    lastPauseTime,
+    startTime,
+    pausedTime,
+    totalSeconds,
+  ]);
 
   // Start timer countdown when dialog is open and timer is active
   useEffect(() => {
@@ -130,7 +169,11 @@ export function QuizDetailModal({
       return;
     }
 
-    if (timeRemaining !== null && timeRemaining > 0 && !timerIntervalRef.current) {
+    if (
+      timeRemaining !== null &&
+      timeRemaining > 0 &&
+      !timerIntervalRef.current
+    ) {
       timerIntervalRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev === null || prev <= 1) {
@@ -142,7 +185,7 @@ export function QuizDetailModal({
           }
           return prev - 1;
         });
-      }, 1000);
+      }, TIMER_TICK_INTERVAL_MS);
     }
 
     return () => {
@@ -203,10 +246,12 @@ export function QuizDetailModal({
   };
 
   // Get the submission to display (new submission takes priority)
-  const displaySubmission =
-    submissionId && quizData.submissions.find((s) => s._id === submissionId)
-      ? quizData.submissions.find((s) => s._id === submissionId)!
-      : latestSubmission;
+  const matchedSubmission =
+    submissionId !== null
+      ? (quizData.submissions.find((s) => s._id === submissionId) ?? null)
+      : null;
+
+  const displaySubmission = matchedSubmission ?? latestSubmission;
 
   // Show results if:
   // 1. We just submitted (submissionId is set), OR
@@ -227,37 +272,28 @@ export function QuizDetailModal({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="font-medium text-muted-foreground text-sm">
                   Max Score
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{quiz.maxScore} points</div>
+                <div className="font-bold text-2xl">{quiz.maxScore} points</div>
               </CardContent>
             </Card>
-            {quiz.timerMinutes !== undefined || quiz.timerSeconds !== undefined ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Time Limit
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {String(quiz.timerMinutes ?? 0).padStart(2, "0")}:
-                    {String(quiz.timerSeconds ?? 0).padStart(2, "0")}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
+            <QuizTimeLimitCard
+              timerMinutes={quiz.timerMinutes}
+              timerSeconds={quiz.timerSeconds}
+            />
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="font-medium text-muted-foreground text-sm">
                   Questions
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{quiz.questions.length}</div>
+                <div className="font-bold text-2xl">
+                  {quiz.questions.length}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -287,9 +323,9 @@ export function QuizDetailModal({
               }))}
               quizId={quizId}
               startTime={startTime}
+              timeRemaining={timeRemaining}
               timerMinutes={quiz.timerMinutes}
               timerSeconds={quiz.timerSeconds}
-              timeRemaining={timeRemaining}
             />
           )}
         </div>
@@ -297,4 +333,3 @@ export function QuizDetailModal({
     </Dialog>
   );
 }
-

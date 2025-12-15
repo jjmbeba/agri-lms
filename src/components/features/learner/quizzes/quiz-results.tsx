@@ -71,13 +71,13 @@ export function QuizResults({
         </CardHeader>
         <CardContent>
           <div className="text-center">
-            <div className="mb-2 text-4xl font-bold">
+            <div className="mb-2 font-bold text-4xl">
               {submission.score} / {submission.maxScore}
             </div>
-            <div className="mb-4 text-2xl font-semibold text-muted-foreground">
+            <div className="mb-4 font-semibold text-2xl text-muted-foreground">
               {submission.percentage}%
             </div>
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-4 text-muted-foreground text-sm">
               <span>Attempt #{submission.attemptNumber}</span>
               {submission.timeSpentSeconds && (
                 <>
@@ -104,12 +104,12 @@ export function QuizResults({
 
           return (
             <Card
-              key={questionIndex}
               className={
                 result.isCorrect
                   ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20"
                   : "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20"
               }
+              key={`${question.question}-${questionIndex}`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -137,7 +137,7 @@ export function QuizResults({
                 <Separator />
                 <div className="space-y-2">
                   <div>
-                    <p className="mb-2 text-sm font-semibold text-muted-foreground">
+                    <p className="mb-2 font-semibold text-muted-foreground text-sm">
                       Your Answer:
                     </p>
                     <div
@@ -155,7 +155,7 @@ export function QuizResults({
                   </div>
                   {!result.isCorrect && (
                     <div>
-                      <p className="mb-2 text-sm font-semibold text-muted-foreground">
+                      <p className="mb-2 font-semibold text-muted-foreground text-sm">
                         Correct Answer:
                       </p>
                       <div className="rounded-md border-2 border-green-500 bg-green-50 p-3 dark:bg-green-950/30">
@@ -176,7 +176,7 @@ export function QuizResults({
       {/* Retake Button */}
       <div className="flex items-center justify-end border-t pt-4">
         <button
-          className="text-primary hover:underline text-sm font-medium"
+          className="font-medium text-primary text-sm hover:underline"
           onClick={onRetake}
           type="button"
         >
@@ -186,4 +186,3 @@ export function QuizResults({
     </div>
   );
 }
-

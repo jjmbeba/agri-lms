@@ -29,6 +29,9 @@ type QuizFormProps = {
 
 const MIN_OPTIONS = 2;
 const MAX_OPTIONS = 6;
+const TIMER_MIN_VALUE = 0;
+const TIMER_MAX_VALUE = 59;
+const ASCII_CODE_A = 65;
 
 const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
   const questions = value.questions ?? [];
@@ -59,7 +62,11 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
     });
   };
 
-  const updateQuestion = (index: number, field: keyof QuizQuestion, fieldValue: unknown) => {
+  const updateQuestion = (
+    index: number,
+    field: keyof QuizQuestion,
+    fieldValue: unknown
+  ) => {
     const newQuestions = [...questions];
     newQuestions[index] = {
       ...newQuestions[index],
@@ -128,25 +135,28 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
   const handleTimerToggle = (checked: boolean) => {
     setHasTimer(checked);
-    if (!checked) {
-      onChange({
-        ...value,
-        timerMinutes: undefined,
-        timerSeconds: undefined,
-      });
-    } else {
+    if (checked) {
       onChange({
         ...value,
         timerMinutes: value.timerMinutes ?? 0,
         timerSeconds: value.timerSeconds ?? 0,
+      });
+    } else {
+      onChange({
+        ...value,
+        timerMinutes: undefined,
+        timerSeconds: undefined,
       });
     }
   };
 
   const updateTimerMinutes = (minutes: number) => {
     const minutesValue = Number.isNaN(minutes)
-      ? 0
-      : Math.max(0, Math.min(59, Math.floor(minutes)));
+      ? TIMER_MIN_VALUE
+      : Math.max(
+          TIMER_MIN_VALUE,
+          Math.min(TIMER_MAX_VALUE, Math.floor(minutes))
+        );
     onChange({
       ...value,
       timerMinutes: minutesValue,
@@ -155,8 +165,11 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
   const updateTimerSeconds = (seconds: number) => {
     const secondsValue = Number.isNaN(seconds)
-      ? 0
-      : Math.max(0, Math.min(59, Math.floor(seconds)));
+      ? TIMER_MIN_VALUE
+      : Math.max(
+          TIMER_MIN_VALUE,
+          Math.min(TIMER_MAX_VALUE, Math.floor(seconds))
+        );
     onChange({
       ...value,
       timerSeconds: secondsValue,
@@ -193,12 +206,12 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
         <div className="space-y-4 pr-4">
           {questions.map((question, questionIndex) => (
             <div
-              key={questionIndex}
               className="rounded-lg border bg-card p-4"
+              key={`${question.question}-${questionIndex}`}
             >
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex-1">
-                  <Label className="mb-2 block text-sm font-medium">
+                  <Label className="mb-2 block font-medium text-sm">
                     Question {questionIndex + 1}
                   </Label>
                   <Textarea
@@ -241,7 +254,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Options</Label>
+                  <Label className="font-medium text-sm">Options</Label>
                   {question.options.length < MAX_OPTIONS && (
                     <Button
                       onClick={() => addOption(questionIndex)}
@@ -257,8 +270,8 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
                 {question.options.map((option, optionIndex) => (
                   <div
-                    key={optionIndex}
                     className="flex items-start gap-2 rounded-md border p-2"
+                    key={`${option.text}-${optionIndex}`}
                   >
                     <div className="mt-1">
                       <Checkbox
@@ -277,14 +290,14 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
                           e.target.value
                         )
                       }
-                      placeholder={`Option ${String.fromCharCode(65 + optionIndex)}`}
+                      placeholder={`Option ${String.fromCharCode(
+                        ASCII_CODE_A + optionIndex
+                      )}`}
                       value={option.text}
                     />
                     {question.options.length > MIN_OPTIONS && (
                       <Button
-                        onClick={() =>
-                          removeOption(questionIndex, optionIndex)
-                        }
+                        onClick={() => removeOption(questionIndex, optionIndex)}
                         size="sm"
                         type="button"
                         variant="ghost"
@@ -314,7 +327,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
 
       <div className="space-y-4 border-t pt-4">
         <div className="space-y-2">
-          <Label>Instructions (Optional)</Label>
+          <Label>Instructions</Label>
           <Textarea
             onChange={(e) =>
               onChange({
@@ -326,6 +339,13 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
             rows={3}
             value={value.instructions ?? ""}
           />
+          {errors.length > 0 && (
+            <div className="space-y-1">
+              {errors.map((error) => (
+                <FormError key={error} message={error} />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -336,7 +356,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
               onCheckedChange={handleTimerToggle}
             />
             <Label
-              className="cursor-pointer text-sm font-medium"
+              className="cursor-pointer font-medium text-sm"
               htmlFor="enable-timer"
             >
               Enable Timer
@@ -375,8 +395,7 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
               </div>
               <div className="col-span-2">
                 <p className="text-muted-foreground text-xs">
-                  Timer:{" "}
-                  {String(value.timerMinutes ?? 0).padStart(2, "0")}:
+                  Timer: {String(value.timerMinutes ?? 0).padStart(2, "0")}:
                   {String(value.timerSeconds ?? 0).padStart(2, "0")}
                 </p>
               </div>
@@ -384,17 +403,8 @@ const QuizForm = ({ value, onChange, errors = [] }: QuizFormProps) => {
           )}
         </div>
       </div>
-
-      {errors.length > 0 && (
-        <div className="space-y-1">
-          {errors.map((error, index) => (
-            <FormError key={index} message={error} />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
 
 export default QuizForm;
-

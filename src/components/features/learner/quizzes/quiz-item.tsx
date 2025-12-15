@@ -143,9 +143,11 @@ export function QuizItem({
             className="h-8 px-2"
             onClick={() => setIsModalOpen(true)}
             size="sm"
+            type="button"
             variant="ghost"
           >
-            <Eye className="h-4 w-4" />
+            <Eye aria-hidden="true" className="h-4 w-4" />
+            <span className="sr-only">View quiz details</span>
           </Button>
         </div>
       </li>
@@ -158,4 +160,3 @@ export function QuizItem({
     </>
   );
 }
-

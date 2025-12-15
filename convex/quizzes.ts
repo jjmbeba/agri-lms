@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 
 // -----------------------------
@@ -144,8 +144,10 @@ function calculateQuizScore(
     }
   }
 
+  const PERCENT_MULTIPLIER = 100;
+
   const percentage =
-    maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+    maxScore > 0 ? Math.round((score / maxScore) * PERCENT_MULTIPLIER) : 0;
 
   return { score, maxScore, percentage };
 }
@@ -261,4 +263,3 @@ export const submitQuiz = mutation({
     };
   },
 });
-

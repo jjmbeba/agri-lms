@@ -1,9 +1,9 @@
 "use client";
 
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { AlertTriangle, Clock, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,9 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { displayToastError } from "@/lib/utils";
+import type { QuizAnswer } from "@/types/quiz";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
-import type { QuizAnswer } from "../../../../../types/quiz";
 
 type QuizTakingProps = {
   quizId: Id<"quiz">;
@@ -48,20 +48,11 @@ export function QuizTaking({
   timeRemaining,
   startTime,
   onAnswersChange,
-  onTimeRemainingChange,
   onSubmissionComplete,
 }: QuizTakingProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasTimer = Boolean(timerMinutes || timerSeconds);
-
-  // Auto-submit when timer reaches 0
-  useEffect(() => {
-    if (timeRemaining === 0 && !isSubmitting) {
-      handleSubmit(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRemaining, isSubmitting]);
 
   const { mutate: submitQuiz } = useMutation({
     mutationFn: useConvexMutation(api.quizzes.submitQuiz),
@@ -82,61 +73,84 @@ export function QuizTaking({
     onAnswersChange(newAnswers);
   };
 
-  const handleSubmit = (isAutoSubmit = false) => {
-    if (isSubmitting) {
-      return;
-    }
+  const MILLISECONDS_PER_SECOND = 1000;
+  const SECONDS_PER_MINUTE = 60;
+  const LOW_TIME_THRESHOLD_SECONDS = 60;
+  const PERCENT_MULTIPLIER = 100;
 
-    // Only validate for manual submissions
-    if (!isAutoSubmit && answers.size !== questions.length) {
-      toast.error("Please answer all questions before submitting");
-      return;
-    }
-
-    if (isAutoSubmit) {
-      toast.warning("Time's up! Quiz will be submitted automatically.");
-    }
-
-    setIsSubmitting(true);
-
-    // Convert answers map to array format
-    const answersArray: QuizAnswer[] = [];
-    for (let i = 0; i < questions.length; i++) {
-      const selectedIndex = answers.get(i);
-      if (selectedIndex === undefined) {
-        // If auto-submit and question not answered, use -1 or first option
-        answersArray.push({
-          questionIndex: i,
-          selectedOptionIndex: 0, // Default to first option if not answered
-        });
-      } else {
-        answersArray.push({
-          questionIndex: i,
-          selectedOptionIndex: selectedIndex,
-        });
+  const handleSubmit = useCallback(
+    (isAutoSubmit = false) => {
+      if (isSubmitting) {
+        return;
       }
+
+      // Only validate for manual submissions
+      if (!isAutoSubmit && answers.size !== questions.length) {
+        toast.error("Please answer all questions before submitting");
+        return;
+      }
+
+      if (isAutoSubmit) {
+        toast.warning("Time's up! Quiz will be submitted automatically.");
+      }
+
+      setIsSubmitting(true);
+
+      // Convert answers map to array format
+      const answersArray: QuizAnswer[] = [];
+      for (let i = 0; i < questions.length; i++) {
+        const selectedIndex = answers.get(i);
+        if (selectedIndex === undefined) {
+          // If auto-submit and question not answered, use first option by default
+          answersArray.push({
+            questionIndex: i,
+            selectedOptionIndex: 0,
+          });
+        } else {
+          answersArray.push({
+            questionIndex: i,
+            selectedOptionIndex: selectedIndex,
+          });
+        }
+      }
+
+      // Calculate time spent (accounting for paused time if needed)
+      const timeSpent =
+        startTime !== null
+          ? Math.floor((Date.now() - startTime) / MILLISECONDS_PER_SECOND)
+          : undefined;
+
+      submitQuiz({
+        quizId,
+        answers: answersArray,
+        timeSpentSeconds: timeSpent,
+      });
+    },
+    [answers, isSubmitting, questions, quizId, startTime, submitQuiz]
+  );
+
+  // Auto-submit when timer reaches 0
+  useEffect(() => {
+    if (timeRemaining === 0 && !isSubmitting) {
+      handleSubmit(true);
     }
-
-    // Calculate time spent (accounting for paused time if needed)
-    const timeSpent =
-      startTime !== null ? Math.floor((Date.now() - startTime) / 1000) : undefined;
-
-    submitQuiz({
-      quizId,
-      answers: answersArray,
-      timeSpentSeconds: timeSpent,
-    });
-  };
+  }, [timeRemaining, isSubmitting, handleSubmit]);
 
   const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const mins = Math.floor(seconds / SECONDS_PER_MINUTE);
+    const secs = seconds % SECONDS_PER_MINUTE;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   const allQuestionsAnswered = answers.size === questions.length;
-  const progress = questions.length > 0 ? (answers.size / questions.length) * 100 : 0;
-  const isTimeLow = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0;
+  const progress =
+    questions.length > 0
+      ? (answers.size / questions.length) * PERCENT_MULTIPLIER
+      : 0;
+  const isTimeLow =
+    timeRemaining !== null &&
+    timeRemaining <= LOW_TIME_THRESHOLD_SECONDS &&
+    timeRemaining > 0;
 
   return (
     <div className="space-y-6">
@@ -175,7 +189,7 @@ export function QuizTaking({
               }`}
             />
             <span
-              className={`font-mono text-lg font-semibold ${
+              className={`font-mono font-semibold text-lg ${
                 isTimeLow ? "text-destructive" : ""
               }`}
             >
@@ -190,7 +204,8 @@ export function QuizTaking({
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Less than 1 minute remaining! Quiz will auto-submit when time runs out.
+            Less than 1 minute remaining! Quiz will auto-submit when time runs
+            out.
           </AlertDescription>
         </Alert>
       )}
@@ -203,7 +218,7 @@ export function QuizTaking({
             const optionLabels = ["A", "B", "C", "D", "E", "F"];
 
             return (
-              <Card key={questionIndex}>
+              <Card key={`${question.question}-${questionIndex}`}>
                 <CardHeader>
                   <CardTitle className="text-base">
                     Question {questionIndex + 1} ({question.points} point
@@ -213,19 +228,22 @@ export function QuizTaking({
                 <CardContent>
                   <p className="mb-4 font-medium">{question.question}</p>
                   <RadioGroup
+                    onValueChange={(value) =>
+                      handleAnswerChange(
+                        questionIndex,
+                        Number.parseInt(value, 10)
+                      )
+                    }
                     value={
                       selectedAnswer !== undefined
                         ? String(selectedAnswer)
                         : undefined
                     }
-                    onValueChange={(value) =>
-                      handleAnswerChange(questionIndex, Number.parseInt(value, 10))
-                    }
                   >
                     {question.options.map((option, optionIndex) => (
                       <div
-                        key={optionIndex}
                         className="flex items-center space-x-2 rounded-md border p-3 transition-colors hover:bg-muted/50"
+                        key={`${option.text}-${optionIndex}`}
                       >
                         <RadioGroupItem
                           id={`q${questionIndex}-opt${optionIndex}`}
@@ -253,9 +271,12 @@ export function QuizTaking({
       {/* Submit Button */}
       <div className="flex items-center justify-end border-t pt-4">
         <Button
-          disabled={!allQuestionsAnswered || isSubmitting || timeRemaining === 0}
+          disabled={
+            !allQuestionsAnswered || isSubmitting || timeRemaining === 0
+          }
           onClick={() => handleSubmit(false)}
           size="lg"
+          type="button"
         >
           {isSubmitting ? (
             <>
@@ -270,4 +291,3 @@ export function QuizTaking({
     </div>
   );
 }
-

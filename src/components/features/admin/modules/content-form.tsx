@@ -180,9 +180,12 @@ const FileContentInput: React.FC<ContentFieldProps> = ({
 };
 
 // Type-safe content input renderer
+// form and index are used for types that need access to the full ContentItem (e.g. quiz)
 const renderContentInput = (
   type: ContentType,
-  field: ContentFieldProps
+  field: ContentFieldProps,
+  form: unknown,
+  index: number
 ): React.JSX.Element => {
   // biome-ignore lint/nursery/noUnnecessaryConditions: Does not make sense. Switch is not exhaustive.
   switch (type) {
@@ -225,24 +228,82 @@ const renderContentInput = (
         />
       );
 
-    case "quiz":
-      // Quiz content field is set to instructions for backend compatibility
-      // The actual quiz data is managed via QuizForm component
+    case "quiz": {
+      // Inline quiz builder using QuizForm
+      // We need access to the full ContentItem via the form instance
+      type FormFieldComponent = (props: {
+        name: string;
+        children: (subField: unknown) => React.ReactNode;
+      }) => React.JSX.Element;
+
+      const typedForm = form as {
+        Field: FormFieldComponent;
+        getFieldValue: (path: string) => unknown;
+        setFieldValue: (path: string, value: unknown) => void;
+      };
+
+      const TypedField = typedForm.Field;
+
       return (
-        <div className="space-y-2">
-          <Textarea
-            disabled
-            onChange={(e) => field.onChange(e.target.value)}
-            placeholder="Quiz data is managed in the quiz form below"
-            rows={2}
-            value={field.value}
-          />
+        <div className="space-y-4">
+          <TypedField name={`content[${index}].instructions`}>
+            {(subField) => {
+              const quizField = subField as {
+                handleChange: (value: string) => void;
+                state: {
+                  value: string;
+                  meta: { errors: { message?: string }[] };
+                };
+              };
+
+              return (
+                <QuizForm
+                  errors={quizField.state.meta.errors.map(
+                    (error: { message?: string }) => error.message ?? ""
+                  )}
+                  onChange={(quizData) => {
+                    quizField.handleChange(quizData.instructions ?? "");
+                    // Also update other quiz fields and content field
+                    const currentItem = typedForm.getFieldValue(
+                      `content[${index}]`
+                    ) as ContentItem;
+                    // Set content field to instructions for backend compatibility
+                    const contentValue = quizData.instructions ?? "";
+                    typedForm.setFieldValue(`content[${index}]`, {
+                      ...currentItem,
+                      content: contentValue,
+                      questions: quizData.questions,
+                      timerMinutes: quizData.timerMinutes,
+                      timerSeconds: quizData.timerSeconds,
+                      instructions: quizData.instructions,
+                    });
+                  }}
+                  value={{
+                    questions:
+                      (typedForm.getFieldValue(
+                        `content[${index}].questions`
+                      ) as ContentItem["questions"]) ?? [],
+                    timerMinutes: typedForm.getFieldValue(
+                      `content[${index}].timerMinutes`
+                    ) as number | undefined,
+                    timerSeconds: typedForm.getFieldValue(
+                      `content[${index}].timerSeconds`
+                    ) as number | undefined,
+                    instructions: typedForm.getFieldValue(
+                      `content[${index}].instructions`
+                    ) as string | undefined,
+                  }}
+                />
+              );
+            }}
+          </TypedField>
           <p className="text-muted-foreground text-xs">
-            Quiz questions and settings are configured below. The content field
+            Quiz questions and settings are configured here. The content field
             is automatically set to quiz instructions.
           </p>
         </div>
       );
+    }
 
     case "assignment":
       return (
@@ -624,14 +685,19 @@ const ContentForm: React.FC<ContentFormProps> = ({
                               </form.Field>
                               <form.Field name={`content[${i}].type`}>
                                 {(typeField) =>
-                                  renderContentInput(typeField.state.value, {
-                                    value: subField.state.value,
-                                    onChange: subField.handleChange,
-                                    onBlur: subField.handleBlur,
-                                    errors: subField.state.meta.errors.map(
-                                      (e) => e?.message ?? ""
-                                    ),
-                                  })
+                                  renderContentInput(
+                                    typeField.state.value as ContentType,
+                                    {
+                                      value: subField.state.value,
+                                      onChange: subField.handleChange,
+                                      onBlur: subField.handleBlur,
+                                      errors: subField.state.meta.errors.map(
+                                        (e) => e?.message ?? ""
+                                      ),
+                                    },
+                                    form,
+                                    i
+                                  )
                                 }
                               </form.Field>
                             </div>
@@ -731,51 +797,6 @@ const ContentForm: React.FC<ContentFormProps> = ({
                                     )
                                   )}
                                 </div>
-                              )}
-                            </form.Field>
-                          </>
-                        )}
-
-                        {/* Quiz-specific fields - only show for quiz type */}
-                        {item.type === "quiz" && (
-                          <>
-                            <form.Field name={`content[${i}].questions`}>
-                              {(subField) => (
-                                <QuizForm
-                                  errors={subField.state.meta.errors.map(
-                                    (e) => e?.message ?? ""
-                                  )}
-                                  onChange={(quizData) => {
-                                    subField.handleChange(quizData.questions);
-                                    // Also update other quiz fields and content field
-                                    const currentItem = form.getFieldValue(
-                                      `content[${i}]`
-                                    ) as ContentItem;
-                                    // Set content field to instructions for backend compatibility
-                                    const contentValue =
-                                      quizData.instructions ?? "";
-                                    form.setFieldValue(`content[${i}]`, {
-                                      ...currentItem,
-                                      content: contentValue,
-                                      questions: quizData.questions,
-                                      timerMinutes: quizData.timerMinutes,
-                                      timerSeconds: quizData.timerSeconds,
-                                      instructions: quizData.instructions,
-                                    });
-                                  }}
-                                  value={{
-                                    questions: subField.state.value,
-                                    timerMinutes: form.getFieldValue(
-                                      `content[${i}].timerMinutes`
-                                    ) as number | undefined,
-                                    timerSeconds: form.getFieldValue(
-                                      `content[${i}].timerSeconds`
-                                    ) as number | undefined,
-                                    instructions: form.getFieldValue(
-                                      `content[${i}].instructions`
-                                    ) as string | undefined,
-                                  }}
-                                />
                               )}
                             </form.Field>
                           </>

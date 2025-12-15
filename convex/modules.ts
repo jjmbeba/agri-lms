@@ -225,6 +225,18 @@ async function publishModuleContent(
         });
       }
     } else if (item.type === "quiz") {
+      // Get the corresponding draftQuiz first to avoid orphaned moduleContent
+      const draftQuiz = await ctx.db
+        .query("draftQuiz")
+        .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
+        .first();
+
+      if (!draftQuiz) {
+        throw new Error(
+          `Draft quiz not found for draft module content ${item._id}`
+        );
+      }
+
       const moduleContentId = await ctx.db.insert("moduleContent", {
         moduleId: publishedModuleId,
         type: item.type,
@@ -235,22 +247,14 @@ async function publishModuleContent(
         position: i + 1,
       });
 
-      // Get the corresponding draftQuiz
-      const draftQuiz = await ctx.db
-        .query("draftQuiz")
-        .filter((q) => q.eq(q.field("draftModuleContentId"), item._id))
-        .first();
-
-      if (draftQuiz) {
-        await ctx.db.insert("quiz", {
-          moduleContentId,
-          questions: draftQuiz.questions,
-          timerMinutes: draftQuiz.timerMinutes,
-          timerSeconds: draftQuiz.timerSeconds,
-          maxScore: draftQuiz.maxScore,
-          instructions: draftQuiz.instructions,
-        });
-      }
+      await ctx.db.insert("quiz", {
+        moduleContentId,
+        questions: draftQuiz.questions,
+        timerMinutes: draftQuiz.timerMinutes,
+        timerSeconds: draftQuiz.timerSeconds,
+        maxScore: draftQuiz.maxScore,
+        instructions: draftQuiz.instructions,
+      });
     } else {
       await ctx.db.insert("moduleContent", {
         moduleId: publishedModuleId,
@@ -334,6 +338,18 @@ async function reseedModuleContent(
         });
       }
     } else if (c.type === "quiz") {
+      // Get the corresponding published quiz first to avoid orphaned draftModuleContent
+      const publishedQuiz = await ctx.db
+        .query("quiz")
+        .filter((q) => q.eq(q.field("moduleContentId"), c._id))
+        .first();
+
+      if (!publishedQuiz) {
+        throw new Error(
+          `Published quiz not found for module content ${c._id}`
+        );
+      }
+
       const draftModuleContentId = await ctx.db.insert("draftModuleContent", {
         draftModuleId,
         type: c.type,
@@ -344,22 +360,14 @@ async function reseedModuleContent(
         position: c.position,
       });
 
-      // Get the corresponding published quiz
-      const publishedQuiz = await ctx.db
-        .query("quiz")
-        .filter((q) => q.eq(q.field("moduleContentId"), c._id))
-        .first();
-
-      if (publishedQuiz) {
-        await ctx.db.insert("draftQuiz", {
-          draftModuleContentId,
-          questions: publishedQuiz.questions,
-          timerMinutes: publishedQuiz.timerMinutes,
-          timerSeconds: publishedQuiz.timerSeconds,
-          maxScore: publishedQuiz.maxScore,
-          instructions: publishedQuiz.instructions,
-        });
-      }
+      await ctx.db.insert("draftQuiz", {
+        draftModuleContentId,
+        questions: publishedQuiz.questions,
+        timerMinutes: publishedQuiz.timerMinutes,
+        timerSeconds: publishedQuiz.timerSeconds,
+        maxScore: publishedQuiz.maxScore,
+        instructions: publishedQuiz.instructions,
+      });
     } else {
       await ctx.db.insert("draftModuleContent", {
         draftModuleId,
