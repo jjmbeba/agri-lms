@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -369,23 +370,138 @@ export const editCourse = mutation({
 });
 
 export const getPublishedCourses = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    paginationOpts: paginationOptsValidator,
+    filters: v.optional(
+      v.object({
+        title: v.optional(v.string()),
+        titleOperator: v.optional(
+          v.union(
+            v.literal("contains"),
+            v.literal("not_contains"),
+            v.literal("starts_with"),
+            v.literal("ends_with"),
+            v.literal("is")
+          )
+        ),
+        departmentIds: v.optional(v.array(v.id("department"))),
+        status: v.optional(
+          v.union(v.literal("published"), v.literal("coming-soon"))
+        ),
+        priceMin: v.optional(v.number()),
+        priceMax: v.optional(v.number()),
+        tags: v.optional(v.array(v.string())),
+        isEnrolled: v.optional(v.boolean()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
-      return [];
+      return {
+        page: [],
+        continueCursor: "",
+        isDone: true,
+      };
     }
 
-    const courses = await ctx.db
+    // Build query with query-level filters (status, department, price)
+    let query = ctx.db
       .query("course")
       .filter((q) =>
         q.or(
           q.eq(q.field("status"), "published"),
           q.eq(q.field("status"), "coming-soon")
         )
-      )
-      .collect();
+      );
+
+    const filters = args.filters;
+
+    // Apply query-level filters before pagination
+    if (filters) {
+      // Filter by status (can be done at query level)
+      if (filters.status) {
+        query = query.filter((q) => q.eq(q.field("status"), filters.status));
+      }
+
+      // Filter by department IDs (single department at query level)
+      // Multiple departments will be filtered in memory after pagination
+      if (filters.departmentIds && filters.departmentIds.length === 1) {
+        query = query.filter((q) =>
+          q.eq(q.field("departmentId"), filters.departmentIds![0])
+        );
+      }
+
+      // Filter by price range (can be done at query level)
+      if (filters.priceMin !== undefined) {
+        query = query.filter((q) =>
+          q.gte(q.field("priceShillings"), filters.priceMin!)
+        );
+      }
+      if (filters.priceMax !== undefined) {
+        query = query.filter((q) =>
+          q.lte(q.field("priceShillings"), filters.priceMax!)
+        );
+      }
+    }
+
+    // Paginate the query
+    const paginationResult = await query.paginate(args.paginationOpts);
+    let courses = paginationResult.page;
+
+    // Apply in-memory filters after pagination (title, tags, multiple departments)
+    if (filters) {
+      // Filter by title/name (must be done in memory due to string operations)
+      if (filters.title && filters.title.trim().length > 0) {
+        const titleLower = filters.title.toLowerCase().trim();
+        const operator = filters.titleOperator || "contains";
+
+        switch (operator) {
+          case "contains":
+            courses = courses.filter((c) =>
+              c.title.toLowerCase().includes(titleLower)
+            );
+            break;
+          case "not_contains":
+            courses = courses.filter(
+              (c) => !c.title.toLowerCase().includes(titleLower)
+            );
+            break;
+          case "starts_with":
+            courses = courses.filter((c) =>
+              c.title.toLowerCase().startsWith(titleLower)
+            );
+            break;
+          case "ends_with":
+            courses = courses.filter((c) =>
+              c.title.toLowerCase().endsWith(titleLower)
+            );
+            break;
+          case "is":
+            courses = courses.filter(
+              (c) => c.title.toLowerCase() === titleLower
+            );
+            break;
+          default:
+            break;
+        }
+      }
+
+      // Filter by multiple department IDs (in memory for multiple selections)
+      if (filters.departmentIds && filters.departmentIds.length > 1) {
+        const departmentIdsSet = new Set(filters.departmentIds);
+        courses = courses.filter((c) => departmentIdsSet.has(c.departmentId));
+      }
+
+      // Filter by tags (course tags must include any of the filter tags)
+      if (filters.tags && filters.tags.length > 0) {
+        courses = courses.filter(
+          (c) => filters?.tags?.some((tag) => c.tags.includes(tag)) ?? false
+        );
+      }
+    }
+
     const departments = await ctx.db.query("department").collect();
 
     const departmentById = new Map(departments.map((d) => [d._id, d]));
@@ -406,7 +522,16 @@ export const getPublishedCourses = query({
       moduleAccessByCourse.set(row.courseId, existing);
     }
 
-    return courses.map((c) => ({
+    // Filter by enrollment status (must be done after isEnrolled is calculated)
+    if (filters?.isEnrolled !== undefined) {
+      courses = courses.filter(
+        (c) =>
+          userEnrollments.some((e) => e.courseId === c._id) ===
+          filters.isEnrolled
+      );
+    }
+
+    const results = courses.map((c) => ({
       course: c,
       department: departmentById.get(c.departmentId) ?? null,
       isEnrolled: userEnrollments.some((e) => e.courseId === c._id),
@@ -415,6 +540,62 @@ export const getPublishedCourses = query({
         moduleIds: moduleAccessByCourse.get(c._id) ?? [],
       },
     }));
+
+    // Return pagination result with transformed page
+    return {
+      page: results,
+      continueCursor: paginationResult.continueCursor ?? "",
+      isDone: paginationResult.isDone,
+    };
+  },
+});
+
+export const getCourseTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db
+      .query("course")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "published"),
+          q.eq(q.field("status"), "coming-soon")
+        )
+      )
+      .collect();
+
+    const allTags = new Set<string>();
+    for (const course of courses) {
+      for (const tag of course.tags) {
+        allTags.add(tag);
+      }
+    }
+
+    return Array.from(allTags).sort();
+  },
+});
+
+export const getCoursePriceRange = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db
+      .query("course")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "published"),
+          q.eq(q.field("status"), "coming-soon")
+        )
+      )
+      .collect();
+
+    if (courses.length === 0) {
+      return { min: 0, max: 0 };
+    }
+
+    const prices = courses.map((c) => c.priceShillings);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
   },
 });
 

@@ -92,7 +92,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link href="/">
-                <Logo />
+                <Logo disableLink />
                 <span className="font-semibold text-base">AATI LMS</span>
               </Link>
             </SidebarMenuButton>
