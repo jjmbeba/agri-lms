@@ -505,6 +505,136 @@ export const getModuleProgress = query({
   },
 });
 
+export const getRecentActivity = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const userId = identity.subject;
+    const activities: Array<{
+      id: string;
+      type: "course_completed" | "lesson_completed" | "quiz_passed";
+      title: string;
+      description: string;
+      timestamp: string;
+      courseTitle?: string;
+      score?: number;
+    }> = [];
+
+    // Get completed courses
+    const completedCourses = await ctx.db
+      .query("courseProgress")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("status"), "completed")
+        )
+      )
+      .collect();
+
+    for (const progress of completedCourses) {
+      if (!progress.completedAt) continue;
+
+      const course = await ctx.db.get(progress.courseId);
+      if (!course) continue;
+
+      activities.push({
+        id: `course-${progress._id}`,
+        type: "course_completed",
+        title: `Completed ${course.title}`,
+        description: `Congratulations! You've successfully completed the ${course.title} course.`,
+        timestamp: progress.completedAt,
+        courseTitle: course.title,
+      });
+    }
+
+    // Get completed modules
+    const completedModules = await ctx.db
+      .query("moduleProgress")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("status"), "completed")
+        )
+      )
+      .collect();
+
+    for (const progress of completedModules) {
+      if (!progress.completedAt) continue;
+
+      const module = await ctx.db.get(progress.moduleId);
+      if (!module) continue;
+
+      const courseVersion = await ctx.db.get(module.courseVersionId);
+      if (!courseVersion) continue;
+
+      const course = await ctx.db.get(courseVersion.courseId);
+      if (!course) continue;
+
+      activities.push({
+        id: `module-${progress._id}`,
+        type: "lesson_completed",
+        title: `Completed ${module.title}`,
+        description: `You've completed the lesson: ${module.title}.`,
+        timestamp: progress.completedAt,
+        courseTitle: course.title,
+      });
+    }
+
+    // Get passed quiz submissions (>= 70%)
+    const quizSubmissions = await ctx.db
+      .query("quizSubmission")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.eq(q.field("status"), "completed")
+        )
+      )
+      .collect();
+
+    for (const submission of quizSubmissions) {
+      if (submission.percentage < 70) continue;
+
+      const quiz = await ctx.db.get(submission.quizId);
+      if (!quiz) continue;
+
+      const moduleContent = await ctx.db.get(quiz.moduleContentId);
+      if (!moduleContent) continue;
+
+      const module = await ctx.db.get(moduleContent.moduleId);
+      if (!module) continue;
+
+      const courseVersion = await ctx.db.get(module.courseVersionId);
+      if (!courseVersion) continue;
+
+      const course = await ctx.db.get(courseVersion.courseId);
+      if (!course) continue;
+
+      activities.push({
+        id: `quiz-${submission._id}`,
+        type: "quiz_passed",
+        title: `Quiz: ${moduleContent.title}`,
+        description: `Great job! You scored ${Math.round(submission.percentage)}% on the ${moduleContent.title} quiz.`,
+        timestamp: submission.submittedAt,
+        courseTitle: course.title,
+        score: Math.round(submission.percentage),
+      });
+    }
+
+    // Sort by timestamp (most recent first) and limit to 10
+    activities.sort((a, b) => {
+      const dateA = new Date(a.timestamp).getTime();
+      const dateB = new Date(b.timestamp).getTime();
+      return dateB - dateA;
+    });
+
+    return activities.slice(0, 10);
+  },
+});
+
 export const updateModuleProgress = mutation({
   args: {
     moduleId: v.id("module"),

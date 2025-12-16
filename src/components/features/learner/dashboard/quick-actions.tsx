@@ -22,6 +22,7 @@ type QuickAction = {
   icon: React.ComponentType<{ className?: string }>;
   href: string;
   color: string;
+  disabled?: boolean;
 };
 
 type QuickActionsProps = {
@@ -44,6 +45,7 @@ const defaultActions: QuickAction[] = [
     icon: IconCertificate,
     href: "/certificates",
     color: "bg-purple-100 text-purple-600",
+    disabled: true,
   },
   {
     id: "achievements",
@@ -52,6 +54,7 @@ const defaultActions: QuickAction[] = [
     icon: IconTrophy,
     href: "/achievements",
     color: "bg-yellow-100 text-yellow-600",
+    disabled: true,
   }
 ];
 
@@ -72,8 +75,11 @@ export function QuickActions({ actions = defaultActions }: QuickActionsProps) {
               className="h-auto flex-col items-start gap-2 p-4 text-left"
               key={action.id}
               variant="outline"
+              disabled={action.disabled}
             >
-              <Link href={action.href as unknown as UrlObject}>
+              <Link href={action.href as unknown as UrlObject} 
+              aria-disabled={action.disabled}
+              className="disabled:opacity-50 disabled:cursor-not-allowed">
                 <div className="flex items-center gap-3">
                   <div className={`rounded-full p-2 ${action.color}`}>
                     <action.icon className="h-4 w-4" />
