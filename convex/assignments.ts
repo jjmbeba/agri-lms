@@ -382,9 +382,37 @@ export const getUpcomingDeadlines = query({
     // Filter to only those with due dates
     const assignments = allAssignments.filter((a) => a.dueDate !== undefined);
 
+    if (assignments.length === 0) {
+      return [];
+    }
+
+    // Get all assignment IDs
+    const assignmentIds = assignments.map((a) => a._id);
+
+    // Get all submissions for these assignments by the current user
+    const submissions = await ctx.db
+      .query("assignmentSubmission")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), identity.subject),
+          q.or(...assignmentIds.map((id) => q.eq(q.field("assignmentId"), id)))
+        )
+      )
+      .collect();
+
+    // Create a Set of submitted assignment IDs for O(1) lookup
+    const submittedAssignmentIds = new Set(
+      submissions.map((s) => s.assignmentId)
+    );
+
+    // Filter out assignments that have been submitted
+    const unsubmittedAssignments = assignments.filter(
+      (a) => !submittedAssignmentIds.has(a._id)
+    );
+
     // Build the result with course and module information
     const deadlines = await Promise.all(
-      assignments.map(async (assignment) => {
+      unsubmittedAssignments.map(async (assignment) => {
         const moduleContent = await ctx.db.get(assignment.moduleContentId);
         if (!moduleContent) return null;
 

@@ -743,9 +743,9 @@ export const updateModuleProgress = mutation({
 
 async function updateCourseProgress(
   ctx: MutationCtx,
-  courseId: string,
+  courseId: Id<"course">,
   userId: string,
-  enrollmentId: string
+  enrollmentId: Id<"enrollment">
 ) {
   // Get all modules for the latest course version
   const versions = await ctx.db
@@ -817,5 +817,16 @@ async function updateCourseProgress(
     }
 
     await ctx.db.patch(courseProgress._id, patch);
+  } else {
+    // Create courseProgress if it doesn't exist
+    await ctx.db.insert("courseProgress", {
+      courseId,
+      userId,
+      enrollmentId,
+      status: courseStatus,
+      progressPercentage,
+      completedAt:
+        courseStatus === "completed" ? new Date().toISOString() : undefined,
+    });
   }
 }

@@ -1,11 +1,3 @@
-import type { UrlObject } from "node:url";
-import {
-  IconBook,
-  IconCertificate,
-  IconSearch,
-  IconTrophy,
-} from "@tabler/icons-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  IconBook
+} from "@tabler/icons-react";
+import Link from "next/link";
+import type { UrlObject } from "node:url";
 
 type QuickAction = {
   id: string;
@@ -37,24 +34,6 @@ const defaultActions: QuickAction[] = [
     icon: IconBook,
     href: "/courses",
     color: "bg-blue-100 text-blue-600",
-  },
-  {
-    id: "my-certificates",
-    title: "My Certificates",
-    description: "View and download your earned certificates",
-    icon: IconCertificate,
-    href: "/certificates",
-    color: "bg-purple-100 text-purple-600",
-    disabled: true,
-  },
-  {
-    id: "achievements",
-    title: "Achievements",
-    description: "View your learning milestones and badges",
-    icon: IconTrophy,
-    href: "/achievements",
-    color: "bg-yellow-100 text-yellow-600",
-    disabled: true,
   }
 ];
 
@@ -62,7 +41,7 @@ export function QuickActions({ actions = defaultActions }: QuickActionsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Quick Actions (1 out of 4 implemented)</CardTitle>
+        <CardTitle>Quick Actions</CardTitle>
         <CardDescription>
           Jump into your learning journey with these quick actions
         </CardDescription>
@@ -86,7 +65,7 @@ export function QuickActions({ actions = defaultActions }: QuickActionsProps) {
                   </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{action.title}</h4>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-muted-foreground text-xs max-w-48 whitespace-normal">
                       {action.description}
                     </p>
                   </div>
