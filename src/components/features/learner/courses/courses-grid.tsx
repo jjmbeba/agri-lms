@@ -1,16 +1,33 @@
 "use client";
 
-import { type Preloaded, usePreloadedQuery } from "convex/react";
-import type { api } from "../../../../../convex/_generated/api";
+import { Loader2 } from "lucide-react";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { CourseCard } from "./course-card";
 import { EmptyState } from "./empty-state";
 
-type CoursesGridProps = {
-  preloadedCourses: Preloaded<typeof api.courses.getPublishedCourses>;
+type CourseData = {
+  course: Doc<"course">;
+  department: Doc<"department"> | null;
+  isEnrolled: boolean;
+  moduleAccess: {
+    count: number;
+    moduleIds: Id<"module">[];
+  };
 };
 
-export const CoursesGrid = ({ preloadedCourses }: CoursesGridProps) => {
-  const courses = usePreloadedQuery(preloadedCourses);
+type CoursesGridProps = {
+  courses: CourseData[];
+  isLoading?: boolean;
+};
+
+export const CoursesGrid = ({ courses, isLoading }: CoursesGridProps) => {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (courses.length === 0) {
     return <EmptyState />;

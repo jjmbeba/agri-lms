@@ -12,7 +12,7 @@ export const admissionFormSchema = z.object({
     idNo: z.string().min(1, {
       message: "ID Number is required",
     }),
-    email: z.string().email({
+    email: z.email({
       message: "Please enter a valid email address",
     }),
     phone: z.string().min(1, {

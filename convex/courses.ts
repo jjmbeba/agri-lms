@@ -369,15 +369,36 @@ export const editCourse = mutation({
 });
 
 export const getPublishedCourses = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+      filters: v.optional(
+        v.object({
+          title: v.optional(v.string()),
+          titleOperator: v.optional(
+            v.union(
+              v.literal("contains"),
+              v.literal("not_contains"),
+              v.literal("starts_with"),
+              v.literal("ends_with"),
+              v.literal("is")
+            )
+          ),
+          departmentIds: v.optional(v.array(v.id("department"))),
+          status: v.optional(v.union(v.literal("published"), v.literal("coming-soon"))),
+          priceMin: v.optional(v.number()),
+          priceMax: v.optional(v.number()),
+          tags: v.optional(v.array(v.string())),
+          isEnrolled: v.optional(v.boolean()),
+        })
+      ),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
       return [];
     }
 
-    const courses = await ctx.db
+    let courses = await ctx.db
       .query("course")
       .filter((q) =>
         q.or(
@@ -386,6 +407,73 @@ export const getPublishedCourses = query({
         )
       )
       .collect();
+
+    // Apply filters
+    const filters = args.filters;
+    if (filters) {
+      // Filter by title/name
+      if (filters.title && filters.title.trim().length > 0) {
+        const titleLower = filters.title.toLowerCase().trim();
+        const operator = filters.titleOperator || "contains";
+        
+        switch (operator) {
+          case "contains":
+            courses = courses.filter((c) =>
+              c.title.toLowerCase().includes(titleLower)
+            );
+            break;
+          case "not_contains":
+            courses = courses.filter(
+              (c) => !c.title.toLowerCase().includes(titleLower)
+            );
+            break;
+          case "starts_with":
+            courses = courses.filter((c) =>
+              c.title.toLowerCase().startsWith(titleLower)
+            );
+            break;
+          case "ends_with":
+            courses = courses.filter((c) =>
+              c.title.toLowerCase().endsWith(titleLower)
+            );
+            break;
+          case "is":
+            courses = courses.filter(
+              (c) => c.title.toLowerCase() === titleLower
+            );
+            break;
+        }
+      }
+
+      // Filter by department IDs
+      if (filters.departmentIds && filters.departmentIds.length > 0) {
+        const departmentIdsSet = new Set(filters.departmentIds);
+        courses = courses.filter((c) =>
+          departmentIdsSet.has(c.departmentId)
+        );
+      }
+
+      // Filter by status
+      if (filters.status) {
+        courses = courses.filter((c) => c.status === filters.status);
+      }
+
+      // Filter by price range
+      if (filters.priceMin !== undefined) {
+        courses = courses.filter((c) => c.priceShillings >= filters.priceMin!);
+      }
+      if (filters.priceMax !== undefined) {
+        courses = courses.filter((c) => c.priceShillings <= filters.priceMax!);
+      }
+
+      // Filter by tags (course tags must include any of the filter tags)
+      if (filters.tags && filters.tags.length > 0) {
+        courses = courses.filter((c) =>
+          filters.tags!.some((tag) => c.tags.includes(tag))
+        );
+      }
+    }
+
     const departments = await ctx.db.query("department").collect();
 
     const departmentById = new Map(departments.map((d) => [d._id, d]));
@@ -406,7 +494,7 @@ export const getPublishedCourses = query({
       moduleAccessByCourse.set(row.courseId, existing);
     }
 
-    return courses.map((c) => ({
+    let results = courses.map((c) => ({
       course: c,
       department: departmentById.get(c.departmentId) ?? null,
       isEnrolled: userEnrollments.some((e) => e.courseId === c._id),
@@ -415,6 +503,62 @@ export const getPublishedCourses = query({
         moduleIds: moduleAccessByCourse.get(c._id) ?? [],
       },
     }));
+
+    // Filter by enrollment status (must be done after isEnrolled is calculated)
+    if (filters?.isEnrolled !== undefined) {
+      results = results.filter((r) => r.isEnrolled === filters.isEnrolled);
+    }
+
+    return results;
+  },
+});
+
+export const getCourseTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db
+      .query("course")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "published"),
+          q.eq(q.field("status"), "coming-soon")
+        )
+      )
+      .collect();
+
+    const allTags = new Set<string>();
+    for (const course of courses) {
+      for (const tag of course.tags) {
+        allTags.add(tag);
+      }
+    }
+
+    return Array.from(allTags).sort();
+  },
+});
+
+export const getCoursePriceRange = query({
+  args: {},
+  handler: async (ctx) => {
+    const courses = await ctx.db
+      .query("course")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("status"), "published"),
+          q.eq(q.field("status"), "coming-soon")
+        )
+      )
+      .collect();
+
+    if (courses.length === 0) {
+      return { min: 0, max: 0 };
+    }
+
+    const prices = courses.map((c) => c.priceShillings);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
   },
 });
 
