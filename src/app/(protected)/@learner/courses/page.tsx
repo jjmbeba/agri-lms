@@ -2,18 +2,161 @@
 
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Filters, type Filter } from "@/components/ui/filters";
-import { CoursesGrid } from "../../../../components/features/learner/courses/courses-grid";
-import { CoursesHeader } from "../../../../components/features/learner/courses/courses-header";
-import {
-  getCourseFilterFields,
-} from "../../../../components/features/learner/courses/course-filter-fields";
+import { usePaginatedQuery } from "convex/react";
+import { useEffect, useMemo, useState } from "react";
+import { type Filter, Filters } from "@/components/ui/filters";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
+import { getCourseFilterFields } from "../../../../components/features/learner/courses/course-filter-fields";
+import { CoursesGrid } from "../../../../components/features/learner/courses/courses-grid";
+import { CoursesHeader } from "../../../../components/features/learner/courses/courses-header";
+
+const ITEMS_PER_PAGE = 12;
+
+type TitleOperator =
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "is";
+
+const parseNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const str = String(value).trim();
+  if (str === "") {
+    return null;
+  }
+  const num = Number(str);
+  return Number.isNaN(num) ? null : num;
+};
+
+const mapTitleOperator = (operator?: string): TitleOperator => {
+  const allowed: TitleOperator[] = [
+    "contains",
+    "not_contains",
+    "starts_with",
+    "ends_with",
+    "is",
+  ];
+  if (operator && allowed.includes(operator as TitleOperator)) {
+    return operator as TitleOperator;
+  }
+  return "contains";
+};
+
+const applyTitleFilter = (filter: Filter, result: QueryFilters) => {
+  const titleValue = String(filter.values[0]).trim();
+  if (!titleValue) {
+    return;
+  }
+  result.title = titleValue;
+  result.titleOperator = mapTitleOperator(filter.operator);
+};
+
+const applyDepartmentFilter = (filter: Filter, result: QueryFilters) => {
+  const isAllowedOperator =
+    !filter.operator ||
+    filter.operator === "is_any_of" ||
+    filter.operator === "includes_all";
+
+  if (!isAllowedOperator) {
+    return;
+  }
+
+  const departmentIds = filter.values
+    .map((value) => (typeof value === "string" ? value : String(value)))
+    .filter((id): id is Id<"department"> => Boolean(id));
+
+  if (departmentIds.length) {
+    result.departmentIds = departmentIds;
+  }
+};
+
+const applyStatusFilter = (filter: Filter, result: QueryFilters) => {
+  result.status = filter.values[0] as "published" | "coming-soon";
+};
+
+const applyPriceFilter = (filter: Filter, result: QueryFilters) => {
+  const [first, second] = filter.values;
+  const min = parseNumber(first);
+  const max = parseNumber(second);
+
+  const supportsRange =
+    filter.operator === "between" ||
+    filter.operator === "overlaps" ||
+    filter.operator === "contains";
+
+  if (!supportsRange) {
+    return;
+  }
+
+  if (min !== null) {
+    result.priceMin = min;
+  }
+  if (max !== null) {
+    result.priceMax = max;
+  }
+};
+
+const applyTagsFilter = (filter: Filter, result: QueryFilters) => {
+  result.tags = filter.values as string[];
+};
+
+const applyEnrollmentFilter = (filter: Filter, result: QueryFilters) => {
+  result.isEnrolled = filter.values[0] as boolean;
+};
+
+const buildQueryFilters = (filters: Filter[]): QueryFilters | undefined => {
+  const result: QueryFilters = {};
+
+  for (const filter of filters) {
+    if (!filter.values.length) {
+      continue;
+    }
+
+    switch (filter.field) {
+      case "title":
+        applyTitleFilter(filter, result);
+        break;
+      case "department":
+        applyDepartmentFilter(filter, result);
+        break;
+      case "status":
+        applyStatusFilter(filter, result);
+        break;
+      case "price":
+        applyPriceFilter(filter, result);
+        break;
+      case "tags":
+        applyTagsFilter(filter, result);
+        break;
+      case "isEnrolled":
+        applyEnrollmentFilter(filter, result);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
+type QueryFilters = {
+  title?: string;
+  titleOperator?: TitleOperator;
+  departmentIds?: Id<"department">[];
+  status?: "published" | "coming-soon";
+  priceMin?: number;
+  priceMax?: number;
+  tags?: string[];
+  isEnrolled?: boolean;
+};
 
 const Page = () => {
   const [filters, setFilters] = useState<Filter[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch filter options
   const { data: departments = [] } = useQuery(
@@ -27,113 +170,43 @@ const Page = () => {
   );
 
   // Convert Filters component filters to query format
-  const queryFilters = useMemo(() => {
-    const result: {
-      title?: string;
-      titleOperator?: "contains" | "not_contains" | "starts_with" | "ends_with" | "is";
-      departmentIds?: Id<"department">[];
-      status?: "published" | "coming-soon";
-      priceMin?: number;
-      priceMax?: number;
-      tags?: string[];
-      isEnrolled?: boolean;
-    } = {};
+  const queryFilters = useMemo(() => buildQueryFilters(filters), [filters]);
 
-    for (const filter of filters) {
-      if (filter.field === "title" && filter.values.length > 0) {
-        const titleValue = String(filter.values[0]).trim();
-        if (titleValue.length > 0) {
-          result.title = titleValue;
-          // Map text operators to title operators
-          const operator = filter.operator || "contains";
-          if (
-            operator === "contains" ||
-            operator === "not_contains" ||
-            operator === "starts_with" ||
-            operator === "ends_with" ||
-            operator === "is"
-          ) {
-            result.titleOperator = operator;
-          } else {
-            // Default to contains for unknown operators
-            result.titleOperator = "contains";
-          }
-        }
-      } else if (filter.field === "department" && filter.values.length > 0) {
-        // Process department filter - default operator for multiselect is "is_any_of"
-        // Handle is_any_of, includes_all, or if operator is not set (default behavior)
-        if (
-          !filter.operator ||
-          filter.operator === "is_any_of" ||
-          filter.operator === "includes_all"
-        ) {
-          // Convert values to Id<"department">[] - values come as strings from the UI
-          const departmentIds = filter.values
-            .map((v) => {
-              // Handle both string and Id types
-              const value = typeof v === "string" ? v : String(v);
-              return value as Id<"department">;
-            })
-            .filter((id): id is Id<"department"> => Boolean(id));
-          
-          if (departmentIds.length > 0) {
-            result.departmentIds = departmentIds;
-          }
-        }
-        // Note: is_not_any_of and excludes_all would need inverse logic
-      } else if (filter.field === "status" && filter.values.length > 0) {
-        result.status = filter.values[0] as "published" | "coming-soon";
-      } else if (filter.field === "price") {
-        // Helper to safely parse number from string
-        const parseNumber = (value: unknown): number | null => {
-          if (value === null || value === undefined) return null;
-          const str = String(value).trim();
-          if (str === "") return null;
-          const num = Number(str);
-          return Number.isNaN(num) ? null : num;
-        };
-
-        // numberrange type supports: between, overlaps, contains, empty, not_empty
-        if (filter.operator === "between" && filter.values.length >= 2) {
-          const min = parseNumber(filter.values[0]);
-          const max = parseNumber(filter.values[1]);
-          if (min !== null) result.priceMin = min;
-          if (max !== null) result.priceMax = max;
-        } else if (filter.operator === "overlaps" && filter.values.length >= 2) {
-          // For overlaps: course price range overlaps with filter range
-          // This means: course.min <= filter.max && course.max >= filter.min
-          // We'll treat it similar to between for now
-          const min = parseNumber(filter.values[0]);
-          const max = parseNumber(filter.values[1]);
-          if (min !== null) result.priceMin = min;
-          if (max !== null) result.priceMax = max;
-        } else if (filter.operator === "contains" && filter.values.length >= 2) {
-          // For contains: filter range is contained within course price range
-          // This means: course.min <= filter.min && course.max >= filter.max
-          // We'll treat it similar to between for now
-          const min = parseNumber(filter.values[0]);
-          const max = parseNumber(filter.values[1]);
-          if (min !== null) result.priceMin = min;
-          if (max !== null) result.priceMax = max;
-        }
-        // empty and not_empty operators don't need price values
-      } else if (filter.field === "tags" && filter.values.length > 0) {
-        result.tags = filter.values as string[];
-      } else if (filter.field === "isEnrolled" && filter.values.length > 0) {
-        result.isEnrolled = filter.values[0] as boolean;
-      }
-    }
-
-    // Only return filters object if there are any filters
-    return Object.keys(result).length > 0 ? result : undefined;
-  }, [filters]);
-
-  // Fetch filtered courses
-  const { data: courses = [], isLoading } = useQuery(
-    convexQuery(api.courses.getPublishedCourses, {
+  // Fetch filtered courses with pagination
+  const {
+    results: courses,
+    status,
+    loadMore,
+    isLoading,
+  } = usePaginatedQuery(
+    api.courses.getPublishedCourses,
+    {
       filters: queryFilters,
-    })
+    },
+    { initialNumItems: ITEMS_PER_PAGE }
   );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, []);
+
+  // Load more items when navigating to a new page
+  useEffect(() => {
+    const itemsNeeded = currentPage * ITEMS_PER_PAGE;
+    if (
+      courses.length < itemsNeeded &&
+      status === "CanLoadMore" &&
+      !isLoading
+    ) {
+      const itemsToLoad = itemsNeeded - courses.length;
+      loadMore(itemsToLoad);
+    }
+  }, [currentPage, courses.length, status, loadMore, isLoading]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Get filter fields configuration
   const filterFields = useMemo(
@@ -150,13 +223,20 @@ const Page = () => {
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
       <CoursesHeader />
       <Filters
-        filters={filters}
         fields={filterFields}
+        filters={filters}
         onChange={setFilters}
-        variant="outline"
         size="md"
+        variant="outline"
       />
-      <CoursesGrid courses={courses} isLoading={isLoading} />
+      <CoursesGrid
+        courses={courses}
+        currentPage={currentPage}
+        hasNextPage={status === "CanLoadMore"}
+        isLoading={isLoading}
+        itemsPerPage={ITEMS_PER_PAGE}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };
