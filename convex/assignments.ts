@@ -323,7 +323,7 @@ export const getUpcomingDeadlines = query({
     const courseVersions = await ctx.db
       .query("courseVersion")
       .filter((q) =>
-        q.or(...validCourses.map((c) => q.eq(q.field("courseId"), c!._id)))
+        q.or(...validCourses.map((c) => q.eq(q.field("courseId"), c._id)))
       )
       .collect();
 
