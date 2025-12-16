@@ -1,26 +1,26 @@
 import { EnrolledCourses } from "./enrolled-courses";
-import { LearnerDashboardStats } from "./learner-dashboard-stats";
-import { ProgressOverview } from "./progress-overview";
+// import { LearnerDashboardStats } from "./learner-dashboard-stats";
+// import { ProgressOverview } from "./progress-overview";
 import { QuickActions } from "./quick-actions";
 import { RecentActivity } from "./recent-activity";
 import { UpcomingDeadlines } from "./upcoming-deadlines";
 import WelcomeSection from "./welcome-section";
 
 // Mock data - in a real app, this would come from the database
-const mockStats = {
-  totalStudyTime: "24h 30m",
-  achievements: 12,
-  averageScore: 87,
-};
+// const mockStats = {
+//   totalStudyTime: "24h 30m",
+//   achievements: 12,
+//   averageScore: 87,
+// };
 
-const mockProgress = {
-  weeklyGoal: 10,
-  weeklyProgress: 7,
-  monthlyGoal: 40,
-  monthlyProgress: 28,
-  streak: 12,
-  lastActivity: "2 hours ago",
-};
+// const mockProgress = {
+//   weeklyGoal: 10,
+//   weeklyProgress: 7,
+//   monthlyGoal: 40,
+//   monthlyProgress: 28,
+//   streak: 12,
+//   lastActivity: "2 hours ago",
+// };
 
 const mockActivities = [
   {
@@ -61,35 +61,35 @@ const mockActivities = [
   },
 ];
 
-const mockDeadlines = [
-  {
-    id: "1",
-    title: "Soil Analysis Report",
-    courseTitle: "Soil Health Assessment",
-    dueDate: "2024-01-25",
-    type: "assignment" as const,
-    priority: "high" as const,
-    isOverdue: false,
-  },
-  {
-    id: "2",
-    title: "Sustainable Farming Quiz",
-    courseTitle: "Sustainable Farming Practices",
-    dueDate: "2024-01-28",
-    type: "quiz" as const,
-    priority: "medium" as const,
-    isOverdue: false,
-  },
-  {
-    id: "3",
-    title: "Final Project Submission",
-    courseTitle: "Advanced Agriculture Techniques",
-    dueDate: "2024-01-20",
-    type: "project" as const,
-    priority: "high" as const,
-    isOverdue: true,
-  },
-];
+// const mockDeadlines = [
+//   {
+//     id: "1",
+//     title: "Soil Analysis Report",
+//     courseTitle: "Soil Health Assessment",
+//     dueDate: "2024-01-25",
+//     type: "assignment" as const,
+//     priority: "high" as const,
+//     isOverdue: false,
+//   },
+//   {
+//     id: "2",
+//     title: "Sustainable Farming Quiz",
+//     courseTitle: "Sustainable Farming Practices",
+//     dueDate: "2024-01-28",
+//     type: "quiz" as const,
+//     priority: "medium" as const,
+//     isOverdue: false,
+//   },
+//   {
+//     id: "3",
+//     title: "Final Project Submission",
+//     courseTitle: "Advanced Agriculture Techniques",
+//     dueDate: "2024-01-20",
+//     type: "project" as const,
+//     priority: "high" as const,
+//     isOverdue: true,
+//   },
+// ];
 
 export function LearnerDashboard() {
   return (
@@ -98,20 +98,20 @@ export function LearnerDashboard() {
       <WelcomeSection />
 
       {/* Stats Cards */}
-      <LearnerDashboardStats {...mockStats} />
+      {/* <LearnerDashboardStats {...mockStats} /> */}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-3 lg:px-6">
         {/* Left Column */}
         <div className="grid gap-6 lg:col-span-2">
           <EnrolledCourses />
-          <ProgressOverview {...mockProgress} />
+          {/* <ProgressOverview {...mockProgress} /> */}
         </div>
 
         {/* Right Column */}
         <div className="grid gap-6 lg:col-span-1">
           <RecentActivity activities={mockActivities} />
-          <UpcomingDeadlines deadlines={mockDeadlines} />
+          <UpcomingDeadlines />
         </div>
       </div>
 

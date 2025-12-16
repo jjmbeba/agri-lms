@@ -291,6 +291,150 @@ export const getAssignmentWithSubmissions = query({
   },
 });
 
+export const getUpcomingDeadlines = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    // Get all enrollments for the user
+    const enrollments = await ctx.db
+      .query("enrollment")
+      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .collect();
+
+    if (enrollments.length === 0) {
+      return [];
+    }
+
+    const courseIds = enrollments.map((e) => e.courseId);
+    const courses = await Promise.all(
+      courseIds.map((id) => ctx.db.get(id))
+    );
+    const validCourses = courses.filter((c) => c !== null);
+
+    // Get all course versions for enrolled courses
+    const courseVersions = await ctx.db
+      .query("courseVersion")
+      .filter((q) =>
+        q.or(...validCourses.map((c) => q.eq(q.field("courseId"), c!._id)))
+      )
+      .collect();
+
+    if (courseVersions.length === 0) {
+      return [];
+    }
+
+    // Get the latest version for each course
+    const latestVersionsByCourse = new Map<Id<"course">, Doc<"courseVersion">>();
+    for (const version of courseVersions) {
+      const existing = latestVersionsByCourse.get(version.courseId);
+      if (!existing || version.versionNumber > existing.versionNumber) {
+        latestVersionsByCourse.set(version.courseId, version);
+      }
+    }
+
+    const latestVersionIds = Array.from(latestVersionsByCourse.values()).map(
+      (v) => v._id
+    );
+
+    // Get all modules for the latest versions
+    const modules = await ctx.db
+      .query("module")
+      .filter((q) =>
+        q.or(...latestVersionIds.map((id) => q.eq(q.field("courseVersionId"), id)))
+      )
+      .collect();
+
+    if (modules.length === 0) {
+      return [];
+    }
+
+    const moduleIds = modules.map((m) => m._id);
+
+    // Get all assignment-type module content
+    const assignmentContents = await ctx.db
+      .query("moduleContent")
+      .filter((q) =>
+        q.and(
+          q.or(...moduleIds.map((id) => q.eq(q.field("moduleId"), id))),
+          q.eq(q.field("type"), "assignment")
+        )
+      )
+      .collect();
+
+    if (assignmentContents.length === 0) {
+      return [];
+    }
+
+    const contentIds = assignmentContents.map((c) => c._id);
+
+    // Get all assignments
+    const allAssignments = await ctx.db
+      .query("assignment")
+      .filter((q) =>
+        q.or(...contentIds.map((id) => q.eq(q.field("moduleContentId"), id)))
+      )
+      .collect();
+
+    // Filter to only those with due dates
+    const assignments = allAssignments.filter((a) => a.dueDate !== undefined);
+
+    // Build the result with course and module information
+    const deadlines = await Promise.all(
+      assignments.map(async (assignment) => {
+        const moduleContent = await ctx.db.get(assignment.moduleContentId);
+        if (!moduleContent) return null;
+
+        const module = await ctx.db.get(moduleContent.moduleId);
+        if (!module) return null;
+
+        const courseVersion = await ctx.db.get(module.courseVersionId);
+        if (!courseVersion) return null;
+
+        const course = await ctx.db.get(courseVersion.courseId);
+        if (!course) return null;
+
+        const dueDate = assignment.dueDate;
+        if (!dueDate) return null;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+        const isOverdue = due < today;
+
+        return {
+          id: String(assignment._id),
+          title: moduleContent.title,
+          courseTitle: course.title,
+          courseSlug: course.slug,
+          dueDate,
+          type: "assignment" as const,
+          priority: isOverdue ? ("high" as const) : ("medium" as const),
+          isOverdue,
+        };
+      })
+    );
+
+    // Filter out nulls and sort by due date
+    const validDeadlines = deadlines.filter(
+      (d): d is NonNullable<typeof deadlines[0]> => d !== null
+    );
+
+    // Sort by due date (overdue first, then upcoming)
+    validDeadlines.sort((a, b) => {
+      const dateA = new Date(a.dueDate).getTime();
+      const dateB = new Date(b.dueDate).getTime();
+      return dateA - dateB;
+    });
+
+    return validDeadlines;
+  },
+});
+
 // -----------------------------
 // Mutations
 // -----------------------------

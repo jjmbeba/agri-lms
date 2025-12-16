@@ -52,15 +52,7 @@ const defaultActions: QuickAction[] = [
     icon: IconTrophy,
     href: "/achievements",
     color: "bg-yellow-100 text-yellow-600",
-  },
-  {
-    id: "search-content",
-    title: "Search Content",
-    description: "Find specific topics across all courses",
-    icon: IconSearch,
-    href: "/search",
-    color: "bg-gray-100 text-gray-600",
-  },
+  }
 ];
 
 export function QuickActions({ actions = defaultActions }: QuickActionsProps) {

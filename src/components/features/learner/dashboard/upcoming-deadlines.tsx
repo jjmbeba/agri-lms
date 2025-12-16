@@ -1,7 +1,9 @@
 /** biome-ignore-all lint/style/noMagicNumbers: Easier to read */
 "use client";
 
+import { convexQuery } from "@convex-dev/react-query";
 import { IconCalendar, IconClock, IconFlag } from "@tabler/icons-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,11 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { api } from "../../../../../convex/_generated/api";
 
 type Deadline = {
   id: string;
   title: string;
   courseTitle: string;
+  courseSlug: string;
   dueDate: string;
   type: "assignment" | "quiz" | "exam" | "project";
   priority: "high" | "medium" | "low";
@@ -23,10 +27,15 @@ type Deadline = {
 };
 
 type UpcomingDeadlinesProps = {
-  deadlines: Deadline[];
+  deadlines?: Deadline[];
 };
 
-export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
+export function UpcomingDeadlines({ deadlines: propDeadlines }: UpcomingDeadlinesProps) {
+  const { data: queryDeadlines } = useSuspenseQuery(
+    convexQuery(api.assignments.getUpcomingDeadlines, {})
+  );
+
+  const deadlines = propDeadlines ?? queryDeadlines ?? [];
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "assignment":
@@ -61,11 +70,38 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
     return `Due in ${diffDays} days`;
   };
 
+  const getDeadlineColorClasses = (dueDate: string, isOverdue: boolean) => {
+    if (isOverdue) {
+      return "border-destructive bg-destructive/10";
+    }
+
+    const ONE_DAY_IN_MILLISECONDS = 1000 * 60 * 60 * 24;
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / ONE_DAY_IN_MILLISECONDS);
+
+    // Due today or tomorrow - urgent (orange/amber)
+    if (diffDays <= 1) {
+      return "border-amber-500 bg-amber-50 dark:bg-amber-950/20";
+    }
+    // Due within 3 days - warning (yellow)
+    if (diffDays <= 3) {
+      return "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20";
+    }
+    // Due within 7 days - moderate (blue)
+    if (diffDays <= 7) {
+      return "border-blue-500 bg-blue-50 dark:bg-blue-950/20";
+    }
+    // Due later - normal (green)
+    return "border-green-500 bg-green-50 dark:bg-green-950/20";
+  };
+
   if (deadlines.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Deadlines (dummy data)</CardTitle>
+          <CardTitle>Upcoming Deadlines</CardTitle>
           <CardDescription>No upcoming deadlines</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-8">
@@ -81,7 +117,7 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upcoming Deadlines (dummy data)</CardTitle>
+        <CardTitle>Upcoming Deadlines</CardTitle>
         <CardDescription>
           Stay on track with your assignments and assessments
         </CardDescription>
@@ -90,9 +126,10 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
         <div className="space-y-4">
           {deadlines.map((deadline) => (
             <div
-              className={`rounded-lg border p-4 ${
-                deadline.isOverdue ? "border-destructive bg-destructive/10" : ""
-              }`}
+              className={`rounded-lg border p-4 ${getDeadlineColorClasses(
+                deadline.dueDate,
+                deadline.isOverdue
+              )}`}
               key={deadline.id}
             >
               <div className="flex items-start justify-between">
@@ -121,7 +158,7 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
                   </div>
                 </div>
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/courses/${deadline.id}`}>View</Link>
+                  <Link href={`/courses/${deadline.courseSlug}`}>View</Link>
                 </Button>
               </div>
             </div>
