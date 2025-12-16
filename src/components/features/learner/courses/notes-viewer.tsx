@@ -10,7 +10,12 @@ import { Typography } from "@tiptap/extension-typography";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
-import { normalizeContentForTiptap } from "@/lib/content-utils";
+import {
+  getFileTypeFromUrl,
+  isUrl,
+  normalizeContentForTiptap,
+} from "@/lib/content-utils";
+import { FileViewer } from "./file-viewer";
 
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
@@ -26,7 +31,9 @@ type NotesViewerProps = {
 };
 
 export function NotesViewer({ content, className = "" }: NotesViewerProps) {
-  const normalizedContent = normalizeContentForTiptap(content);
+    const isUrlContent = content && isUrl(content);
+    const fileType = isUrlContent ? getFileTypeFromUrl(content) : null;
+    const normalizedContent = isUrlContent ? "" : normalizeContentForTiptap(content);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -52,6 +59,11 @@ export function NotesViewer({ content, className = "" }: NotesViewerProps) {
     ],
     content: normalizedContent,
   });
+
+  // Render FileViewer for URL content
+  if (isUrlContent && fileType) {
+    return <FileViewer className={className} fileType={fileType} url={content} />;
+  }
 
   if (!editor) {
     return (

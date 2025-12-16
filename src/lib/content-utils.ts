@@ -190,3 +190,71 @@ export const stripHTML = (html: string): string => {
   // Server-side: simple regex-based stripping
   return html.replace(HTML_STRIP_PATTERN, "").trim();
 };
+
+/**
+ * Detects if a string is a URL (starts with http:// or https://)
+ * @param str - String to check
+ * @returns true if the string is a URL
+ */
+export const isUrl = (str: string): boolean => {
+  if (!str || typeof str !== "string") {
+    return false;
+  }
+  const trimmed = str.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://");
+};
+
+/**
+ * Extracts file extension from a URL
+ * @param url - URL string
+ * @returns File extension in lowercase (e.g., "pdf", "docx") or null if not found
+ */
+const getFileExtensionFromUrl = (url: string): string | null => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    const lastDot = pathname.lastIndexOf(".");
+    if (lastDot === -1 || lastDot === pathname.length - 1) {
+      return null;
+    }
+    const extension = pathname.slice(lastDot + 1).toLowerCase();
+    return extension || null;
+  } catch {
+    // If URL parsing fails, try simple regex extraction
+    const match = url.match(/\.([a-z0-9]+)(?:\?|$)/i);
+    return match ? match[1].toLowerCase() : null;
+  }
+};
+
+/**
+ * Determines file type from a URL
+ * @param url - File URL
+ * @returns File type: "pdf" | "docx" | "xlsx" | "pptx" | "doc" | "unknown" | null
+ */
+export const getFileTypeFromUrl = (
+  url: string
+): "pdf" | "docx" | "xlsx" | "pptx" | "doc" | "unknown" | null => {
+  if (!url || !isUrl(url)) {
+    return null;
+  }
+
+  const extension = getFileExtensionFromUrl(url);
+  if (!extension) {
+    return "unknown";
+  }
+
+  switch (extension) {
+    case "pdf":
+      return "pdf";
+    case "docx":
+      return "docx";
+    case "xlsx":
+      return "xlsx";
+    case "pptx":
+      return "pptx";
+    case "doc":
+      return "doc";
+    default:
+      return "unknown";
+  }
+};

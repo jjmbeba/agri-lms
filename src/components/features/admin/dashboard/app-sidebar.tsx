@@ -103,8 +103,6 @@ export function AppSidebar({
         <NavMain
           items={userRole === "admin" ? data.adminNavMain : data.learnerNavMain}
         />
-        {/* <NavDocuments items={data.documents} /> */}
-        {/* <NavSecondary className="mt-auto" items={data.navSecondary} /> */}
       </SidebarContent>
     </Sidebar>
   );

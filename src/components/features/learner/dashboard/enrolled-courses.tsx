@@ -2,7 +2,7 @@
 
 import { convexQuery } from "@convex-dev/react-query";
 import { IconBook, IconClock, IconStar, IconVideo } from "@tabler/icons-react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,26 @@ export function EnrolledCourses() {
   const { data: courses } = useSuspenseQuery(
     convexQuery(api.enrollments.getUserEnrolledCourses, {})
   );
+
+  // Fetch ratings for all courses in parallel
+  const validCourses = courses.filter((record) => record.course?._id);
+  const ratingQueries = useQueries({
+    queries: validCourses.map((record) =>
+      convexQuery(api.reviews.getCourseReviewSummary, {
+        courseId: record.course!._id,
+      })
+    ),
+  });
+
+  // Create a map of courseId -> rating for quick lookup
+  const ratingsMap = new Map<string, number | null>();
+  validCourses.forEach((record, index) => {
+    const courseId = record.course?._id;
+    if (courseId) {
+      const ratingData = ratingQueries[index]?.data;
+      ratingsMap.set(courseId, ratingData?.averageRating ?? null);
+    }
+  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -86,10 +106,19 @@ export function EnrolledCourses() {
                         {course?.description}
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <IconStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium text-sm">4.5</span>
-                    </div>
+                    {course?._id && (
+                      <div className="flex items-center gap-1">
+                        <IconStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium text-sm">
+                          {(() => {
+                            const rating = ratingsMap.get(course._id);
+                            return rating !== null && rating !== undefined
+                              ? rating.toFixed(1)
+                              : "N/A";
+                          })()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -103,27 +132,12 @@ export function EnrolledCourses() {
                     className="h-2"
                     value={progress?.progressPercentage}
                   />
-
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <IconClock className="h-4 w-4 text-muted-foreground" />
-                      <span>{10} hours</span>
-                    </div>
-                    <Badge
-                      className={getDifficultyColor("Intermediate")}
-                      variant="secondary"
-                    >
-                      {/* {course.difficulty} */}
-                      Intermediate
-                    </Badge>
-                  </div>
-
                   {/* <div className="flex items-center justify-between text-muted-foreground text-sm">
                   <span>by {course.instructor}</span>
                 </div> */}
 
                   <Button asChild className="w-full">
-                    <Link href={`/courses/${course?._id}`}>
+                    <Link href={`/courses/${course?.slug}`}>
                       <IconVideo className="mr-2 h-4 w-4" />
                       {progress?.progressPercentage &&
                       progress?.progressPercentage > 0

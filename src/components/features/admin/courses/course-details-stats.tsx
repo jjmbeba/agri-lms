@@ -24,30 +24,31 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
     courseId: course.course._id,
   });
 
-  // Mock data - in real app, these would come from the database
-  const stats = {
-    enrolledStudents: 245,
-    modules: 8,
-    totalLessons: 12,
-    totalDuration: "8 hours",
-    lastActivity: "2 hours ago",
-  };
+  const enrollmentData = useQuery(api.enrollments.getCourseEnrollmentCount, {
+    courseId: course.course._id,
+  });
 
   const averageRating = reviewSummary?.averageRating ?? 0;
   const totalReviews = reviewSummary?.totalReviews ?? 0;
+  const enrolledStudents = enrollmentData?.count ?? 0;
+  const percentageChange = enrollmentData?.percentageChange;
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="font-medium text-sm">
-            Enrolled Students (dummy data)
+            Enrolled Students
           </CardTitle>
           <IconUsers className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="font-bold text-2xl">{stats.enrolledStudents}</div>
-          <p className="text-muted-foreground text-xs">+12% from last month</p>
+          <div className="font-bold text-2xl">{enrolledStudents}</div>
+          <p className="text-muted-foreground text-xs">
+            {percentageChange !== null && percentageChange !== undefined
+              ? `${percentageChange > 0 ? "+" : ""}${percentageChange}% from last month`
+              : "No previous data"}
+          </p>
         </CardContent>
       </Card>
 
@@ -77,19 +78,6 @@ export function CourseDetailsStats({ course }: CourseDetailsStatsProps) {
             {totalReviews > 0
               ? `Based on ${totalReviews} review${totalReviews === 1 ? "" : "s"}`
               : "No reviews yet"}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="font-medium text-sm">Course Duration (dummy data)</CardTitle>
-          <IconClock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="font-bold text-2xl">{stats.totalDuration}</div>
-          <p className="text-muted-foreground text-xs">
-            {stats.totalLessons} lessons
           </p>
         </CardContent>
       </Card>
