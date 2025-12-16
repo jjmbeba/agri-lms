@@ -4,7 +4,7 @@ import * as z from "zod";
 export const admissionFormSchema = z.object({
   applicantPersonalDetails: z.object({
     title: z.enum(["Mr.", "Mrs.", "Miss"], {
-      errorMap: () => ({ message: "Please select a title" }),
+      message: "Please select a title",
     }),
     name: z.string().min(1, {
       message: "Name is required",
@@ -55,10 +55,10 @@ export const admissionFormSchema = z.object({
       message: "Course name is required",
     }),
     courseMode: z.enum(["Fully virtual", "Partially virtual"], {
-      errorMap: () => ({ message: "Please select a course mode" }),
+      message: "Please select a course mode",
     }),
     feeTerms: z.enum(["per module", "for full course"], {
-      errorMap: () => ({ message: "Please select fee terms" }),
+      message: "Please select fee terms",
     }),
   }),
 });
