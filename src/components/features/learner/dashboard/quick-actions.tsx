@@ -50,15 +50,25 @@ export function QuickActions({ actions = defaultActions }: QuickActionsProps) {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {actions.map((action) => (
             <Button
-              asChild
+              asChild={!action.disabled}
               className="h-auto flex-col items-start gap-2 p-4 text-left"
               key={action.id}
               variant="outline"
               disabled={action.disabled}
             >
-              <Link href={action.href as unknown as UrlObject} 
-              aria-disabled={action.disabled}
-              className="disabled:opacity-50 disabled:cursor-not-allowed">
+              {action.disabled ? (
+                 <span
+                  aria-disabled="true"
+                  className="opacity-50 cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`rounded-full p-2 ${action.color}`}>
+                      <action.icon className="h-4 w-4" />
+                    </div>
+                  </div>
+                </span>
+              ) : (
+                <Link href={action.href as unknown as UrlObject}>
                 <div className="flex items-center gap-3">
                   <div className={`rounded-full p-2 ${action.color}`}>
                     <action.icon className="h-4 w-4" />
@@ -71,6 +81,7 @@ export function QuickActions({ actions = defaultActions }: QuickActionsProps) {
                   </div>
                 </div>
               </Link>
+              )}
             </Button>
           ))}
         </div>

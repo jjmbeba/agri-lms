@@ -31,16 +31,9 @@ type NotesViewerProps = {
 };
 
 export function NotesViewer({ content, className = "" }: NotesViewerProps) {
-  // Check if content is a file URL
-  if (content && isUrl(content)) {
-    const fileType = getFileTypeFromUrl(content);
-    if (fileType) {
-      return <FileViewer className={className} fileType={fileType} url={content} />;
-    }
-  }
-
-  // Continue with existing TipTap rendering for non-URL content
-  const normalizedContent = normalizeContentForTiptap(content);
+    const isUrlContent = content && isUrl(content);
+    const fileType = isUrlContent ? getFileTypeFromUrl(content) : null;
+    const normalizedContent = isUrlContent ? "" : normalizeContentForTiptap(content);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -66,6 +59,11 @@ export function NotesViewer({ content, className = "" }: NotesViewerProps) {
     ],
     content: normalizedContent,
   });
+
+  // Render FileViewer for URL content
+  if (isUrlContent && fileType) {
+    return <FileViewer className={className} fileType={fileType} url={content} />;
+  }
 
   if (!editor) {
     return (

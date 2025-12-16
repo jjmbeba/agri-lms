@@ -315,6 +315,10 @@ export const getUpcomingDeadlines = query({
     );
     const validCourses = courses.filter((c) => c !== null);
 
+    if (validCourses.length === 0) {
+      return [];
+    }
+
     // Get all course versions for enrolled courses
     const courseVersions = await ctx.db
       .query("courseVersion")

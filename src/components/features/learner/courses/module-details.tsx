@@ -53,15 +53,12 @@ function AssignmentItemCard(
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch assignment data with submissions if assignmentId exists
-  const { data: assignmentData, isLoading, error } = useQuery(
-    item.assignmentId
-      ? {
-          ...convexQuery(api.assignments.getAssignmentWithSubmissions, {
-            assignmentId: item.assignmentId,
-          }),
-        }
-      : { enabled: false }
-  );
+    const { data: assignmentData, isLoading, error } = useQuery({
+    ...convexQuery(api.assignments.getAssignmentWithSubmissions, {
+      assignmentId: item.assignmentId!,
+    }),
+    enabled: !!item.assignmentId,
+  });
 
   const assignment = assignmentData?.assignment;
   const latestSubmission = assignmentData?.latestSubmission ?? null;
