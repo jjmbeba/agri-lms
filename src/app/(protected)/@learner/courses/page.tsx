@@ -189,7 +189,7 @@ const Page = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, []);
+  }, [queryFilters]);
 
   // Load more items when navigating to a new page
   useEffect(() => {

@@ -1,9 +1,9 @@
+import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { paginationOptsValidator } from "convex/server";
 import { restrictRoles } from "./auth";
 import { generateCourseSlug } from "./utils/slug";
 
@@ -385,7 +385,9 @@ export const getPublishedCourses = query({
           )
         ),
         departmentIds: v.optional(v.array(v.id("department"))),
-        status: v.optional(v.union(v.literal("published"), v.literal("coming-soon"))),
+        status: v.optional(
+          v.union(v.literal("published"), v.literal("coming-soon"))
+        ),
         priceMin: v.optional(v.number()),
         priceMax: v.optional(v.number()),
         tags: v.optional(v.array(v.string())),
@@ -433,10 +435,14 @@ export const getPublishedCourses = query({
 
       // Filter by price range (can be done at query level)
       if (filters.priceMin !== undefined) {
-        query = query.filter((q) => q.gte(q.field("priceShillings"), filters.priceMin!));
+        query = query.filter((q) =>
+          q.gte(q.field("priceShillings"), filters.priceMin!)
+        );
       }
       if (filters.priceMax !== undefined) {
-        query = query.filter((q) => q.lte(q.field("priceShillings"), filters.priceMax!));
+        query = query.filter((q) =>
+          q.lte(q.field("priceShillings"), filters.priceMax!)
+        );
       }
     }
 
@@ -450,7 +456,7 @@ export const getPublishedCourses = query({
       if (filters.title && filters.title.trim().length > 0) {
         const titleLower = filters.title.toLowerCase().trim();
         const operator = filters.titleOperator || "contains";
-        
+
         switch (operator) {
           case "contains":
             courses = courses.filter((c) =>
@@ -477,21 +483,21 @@ export const getPublishedCourses = query({
               (c) => c.title.toLowerCase() === titleLower
             );
             break;
+          default:
+            break;
         }
       }
 
       // Filter by multiple department IDs (in memory for multiple selections)
       if (filters.departmentIds && filters.departmentIds.length > 1) {
         const departmentIdsSet = new Set(filters.departmentIds);
-        courses = courses.filter((c) =>
-          departmentIdsSet.has(c.departmentId)
-        );
+        courses = courses.filter((c) => departmentIdsSet.has(c.departmentId));
       }
 
       // Filter by tags (course tags must include any of the filter tags)
       if (filters.tags && filters.tags.length > 0) {
-        courses = courses.filter((c) =>
-          filters.tags!.some((tag) => c.tags.includes(tag))
+        courses = courses.filter(
+          (c) => filters?.tags?.some((tag) => c.tags.includes(tag)) ?? false
         );
       }
     }
@@ -516,7 +522,16 @@ export const getPublishedCourses = query({
       moduleAccessByCourse.set(row.courseId, existing);
     }
 
-    let results = courses.map((c) => ({
+    // Filter by enrollment status (must be done after isEnrolled is calculated)
+    if (filters?.isEnrolled !== undefined) {
+      courses = courses.filter(
+        (c) =>
+          userEnrollments.some((e) => e.courseId === c._id) ===
+          filters.isEnrolled
+      );
+    }
+
+    const results = courses.map((c) => ({
       course: c,
       department: departmentById.get(c.departmentId) ?? null,
       isEnrolled: userEnrollments.some((e) => e.courseId === c._id),
@@ -525,11 +540,6 @@ export const getPublishedCourses = query({
         moduleIds: moduleAccessByCourse.get(c._id) ?? [],
       },
     }));
-
-    // Filter by enrollment status (must be done after isEnrolled is calculated)
-    if (filters?.isEnrolled !== undefined) {
-      results = results.filter((r) => r.isEnrolled === filters.isEnrolled);
-    }
 
     // Return pagination result with transformed page
     return {
