@@ -192,7 +192,36 @@ export async function POST(request: NextRequest) {
     );
 
     if (recordResult?.enrollmentId && parsedMetadata.accessScope === "course") {
+      // Link admission form to enrollment if admissionFormId is in metadata
+      const admissionFormIdRaw = metadata.admissionFormId;
+      if (
+        typeof admissionFormIdRaw === "string" &&
+        transactionStatus === "success"
+      ) {
+        try {
+          await fetchMutation(api.admissions.linkAdmissionFormToEnrollment, {
+            admissionFormId: admissionFormIdRaw as Id<"admissionForm">,
+            enrollmentId: recordResult.enrollmentId,
+          });
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Replace with a logger
+          console.error("Failed to link admission form to enrollment", error);
+        }
+      }
+
+      const studentEmailFromMetadata =
+        (metadata as { studentEmail?: string })?.studentEmail ??
+        (metadata as { email?: string })?.email;
+
       try {
+        if (!studentEmailFromMetadata) {
+          // biome-ignore lint/suspicious/noConsole: Replace with a logger
+          console.error(
+            "Missing student email in Paystack metadata; skipping admission letter and email"
+          );
+          return NextResponse.json({ success: true });
+        }
+
         await fetch(`${env.SITE_URL}/api/admission-letter`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -204,12 +233,9 @@ export async function POST(request: NextRequest) {
               (metadata as { courseSlug?: string })?.courseSlug ?? "course",
             studentName:
               (metadata as { studentName?: string })?.studentName ?? "Learner",
-            studentEmail:
-              (metadata as { studentEmail?: string })?.studentEmail ??
-              (metadata as { email?: string })?.email ??
-              parsedMetadata.userId,
+            studentEmail: studentEmailFromMetadata,
             studentId: parsedMetadata.userId,
-            admissionDate: new Date().toISOString(),
+            admissionDate: new Date().toISOString(), // server time
             refNumber: reference,
             transactionId: recordResult?.transactionId ?? reference,
           }),
@@ -220,10 +246,7 @@ export async function POST(request: NextRequest) {
         await fetchAction(api.emails.sendEnrollmentEmail, {
           studentName:
             (metadata as { studentName?: string })?.studentName ?? "Learner",
-          studentEmail:
-            (metadata as { studentEmail?: string })?.studentEmail ??
-            (metadata as { email?: string })?.email ??
-            parsedMetadata.userId,
+          studentEmail: studentEmailFromMetadata,
           scope: "course",
           courseName:
             (metadata as { courseTitle?: string })?.courseTitle ?? "Course",

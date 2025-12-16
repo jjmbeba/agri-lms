@@ -127,6 +127,7 @@ export const createCourse = mutation({
       status: args.status,
       priceShillings: args.priceShillings,
       handout: args.handout ?? "",
+      requiresAdmissionForm: true,
     });
   },
 });

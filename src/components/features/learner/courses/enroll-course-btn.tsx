@@ -1,8 +1,12 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import {
+  convexQuery,
+  useConvexAction,
+  useConvexMutation,
+} from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +18,7 @@ import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Badge } from "../../../ui/badge";
+import AdmissionFormDialog from "../admissions/admission-form-dialog";
 
 const priceFormatter = new Intl.NumberFormat("en-KE", {
   style: "currency",
@@ -41,7 +46,16 @@ const EnrollCourseBtn = ({
   const { user } = useUser();
   const router = useRouter();
   const [isPaymentPending, setIsPaymentPending] = useState(false);
+  const [isAdmissionDialogOpen, setIsAdmissionDialogOpen] = useState(false);
   const accessScope: "course" | "module" = moduleId ? "module" : "course";
+
+  // Check if course requires admission form
+  const { data: courseData } = useQuery(
+    convexQuery(api.courses.getCourse, { id: courseId })
+  );
+
+  const requiresAdmissionForm =
+    courseData?.course?.requiresAdmissionForm ?? true;
 
   const sendEnrollmentEmail = useConvexAction(api.emails.sendEnrollmentEmail);
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
@@ -178,6 +192,7 @@ const EnrollCourseBtn = ({
         reference: `pay-${user.id}-${Date.now().toString()}-${accessScope}`,
         metadata: {
           userId: user.id,
+          studentEmail: user.primaryEmailAddress.emailAddress,
           courseId,
           moduleId: moduleId ?? null,
           accessScope,
@@ -222,6 +237,14 @@ const EnrollCourseBtn = ({
   };
 
   const handleClick = () => {
+    // For courses requiring admission form, always go through the admission dialog
+    // This ensures the form is submitted before enrollment
+    if (!moduleId && requiresAdmissionForm) {
+      setIsAdmissionDialogOpen(true);
+      return;
+    }
+
+    // Otherwise proceed with normal enrollment flow (for courses that don't require admission form)
     if (priceShillings === 0) {
       handleFreeEnrollment();
       return;
@@ -229,7 +252,15 @@ const EnrollCourseBtn = ({
     handlePaidEnrollment();
   };
 
+  const handleAdmissionDialogClose = (open: boolean) => {
+    setIsAdmissionDialogOpen(open);
+    if (!open) {
+      router.refresh();
+    }
+  };
+
   return (
+    <>
     <Button
       aria-label={buttonLabel}
       className="gap-2"
@@ -247,6 +278,16 @@ const EnrollCourseBtn = ({
       </span>
       <span className="whitespace-nowrap">({priceLabel})</span>
     </Button>
+
+      {!moduleId && requiresAdmissionForm && (
+        <AdmissionFormDialog
+          courseId={courseId}
+          isOpen={isAdmissionDialogOpen}
+          onOpenChange={handleAdmissionDialogClose}
+          priceShillings={priceShillings}
+        />
+      )}
+    </>
   );
 };
 

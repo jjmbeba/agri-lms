@@ -21,6 +21,7 @@ export default defineSchema({
     description: v.string(),
     priceShillings: v.number(),
     handout: v.optional(v.string()),
+    requiresAdmissionForm: v.optional(v.boolean()),
   }).index("slug", ["slug"]),
   courseVersion: defineTable({
     courseId: v.id("course"),
@@ -251,4 +252,37 @@ export default defineSchema({
   })
     .index("user_course", ["userId", "courseId"])
     .index("course", ["courseId"]),
+  admissionForm: defineTable({
+    userId: v.string(),
+    courseId: v.id("course"),
+    applicantPersonalDetails: v.object({
+      title: v.string(),
+      name: v.string(),
+      idNo: v.string(),
+      email: v.string(),
+      phone: v.string(),
+      county: v.string(),
+      subCounty: v.string(),
+      ward: v.string(),
+    }),
+    nextOfKinDetails: v.object({
+      name: v.string(),
+      relationship: v.string(),
+      phoneNo: v.string(),
+    }),
+    declaration: v.object({
+      signature: v.string(),
+      date: v.string(),
+    }),
+    courseSelection: v.object({
+      department: v.string(),
+      courseName: v.string(),
+      courseMode: v.union(v.literal("Fully virtual"), v.literal("Partially virtual")),
+      feeTerms: v.union(v.literal("per module"), v.literal("for full course")),
+    }),
+    submittedAt: v.string(),
+    enrollmentId: v.optional(v.id("enrollment")),
+  })
+    .index("user_course", ["userId", "courseId"])
+    .index("enrollment", ["enrollmentId"]),
 });

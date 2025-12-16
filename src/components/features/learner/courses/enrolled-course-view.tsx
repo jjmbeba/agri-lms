@@ -1,7 +1,15 @@
 "use client";
 
-import { BookOpen, Clock, Download, Lock, MessageSquare, Play } from "lucide-react";
+import {
+  BookOpen,
+  Clock,
+  Download,
+  Lock,
+  MessageSquare,
+  Play,
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { AssignmentItem } from "@/components/features/learner/assignments/assignment-item";
 import { QuizItem } from "@/components/features/learner/quizzes/quiz-item";
 import {
@@ -16,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
+import AdmissionFormDialog from "../admissions/admission-form-dialog";
 import { CourseReviews } from "./course-reviews";
 import EnrollCourseBtn from "./enroll-course-btn";
 
@@ -177,6 +186,7 @@ function ModuleAccordionItem({
     moduleProgress.find((mp) => mp.moduleId === moduleData._id)?.status ===
     "completed";
   const isAccessible = hasFullAccess || Boolean(moduleData.isAccessible);
+  const [isAdmissionDialogOpen, setIsAdmissionDialogOpen] = useState(false);
 
   return (
     <AccordionItem
@@ -259,10 +269,19 @@ function ModuleAccordionItem({
             <p className="text-muted-foreground">
               Unlock this module to access its lessons and assignments.
             </p>
-            <EnrollCourseBtn
+            <button
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              onClick={() => setIsAdmissionDialogOpen(true)}
+              type="button"
+            >
+              Unlock Module
+            </button>
+            <AdmissionFormDialog
               courseId={courseId}
-              label="Unlock Module"
+              isOpen={isAdmissionDialogOpen}
               moduleId={moduleData._id}
+              moduleName={moduleData.title}
+              onOpenChange={setIsAdmissionDialogOpen}
               priceShillings={moduleData.priceShillings}
             />
           </div>
