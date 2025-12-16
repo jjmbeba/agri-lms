@@ -1424,6 +1424,55 @@ function FilterValueSelector<T = unknown>({ field, values, onChange, operator }:
     );
   }
 
+  // Handle numberrange type
+  if (field.type === 'numberrange') {
+    if (operator === 'between') {
+      const minVal = (values[0] as string) || '';
+      const maxVal = (values[1] as string) || '';
+
+      return (
+        <div className="flex items-center gap-2" data-slot="filters-item">
+          <FilterInput
+            type="number"
+            value={minVal}
+            onChange={(e) => onChange([e.target.value, maxVal] as T[])}
+            onInputChange={field.onInputChange}
+            placeholder={context.i18n.min}
+            className={cn('w-28', field.className)}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            pattern={field.pattern}
+            field={field}
+          />
+          <div
+            data-slot="filters-between"
+            className={cn(
+              filterFieldBetweenVariants({ variant: context.variant, size: context.size }),
+              'px-2'
+            )}
+          >
+            {context.i18n.to}
+          </div>
+          <FilterInput
+            type="number"
+            value={maxVal}
+            onChange={(e) => onChange([minVal, e.target.value] as T[])}
+            onInputChange={field.onInputChange}
+            placeholder={context.i18n.max}
+            className={cn('w-28', field.className)}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            pattern={field.pattern}
+            field={field}
+          />
+        </div>
+      );
+    }
+    // For other numberrange operators, fall through to default handling
+  }
+
   // Handle different field types
   if (field.type === 'text' || field.type === 'number') {
     if (field.type === 'number' && operator === 'between') {

@@ -84,24 +84,39 @@ const Page = () => {
       } else if (filter.field === "status" && filter.values.length > 0) {
         result.status = filter.values[0] as "published" | "coming-soon";
       } else if (filter.field === "price") {
+        // Helper to safely parse number from string
+        const parseNumber = (value: unknown): number | null => {
+          if (value === null || value === undefined) return null;
+          const str = String(value).trim();
+          if (str === "") return null;
+          const num = Number(str);
+          return Number.isNaN(num) ? null : num;
+        };
+
+        // numberrange type supports: between, overlaps, contains, empty, not_empty
         if (filter.operator === "between" && filter.values.length >= 2) {
-          const min = Number(filter.values[0]);
-          const max = Number(filter.values[1]);
-          if (!Number.isNaN(min)) result.priceMin = min;
-          if (!Number.isNaN(max)) result.priceMax = max;
-        } else if (filter.operator === "greater_than" && filter.values.length > 0) {
-          const min = Number(filter.values[0]);
-          if (!Number.isNaN(min)) result.priceMin = min;
-        } else if (filter.operator === "less_than" && filter.values.length > 0) {
-          const max = Number(filter.values[0]);
-          if (!Number.isNaN(max)) result.priceMax = max;
-        } else if (filter.operator === "equals" && filter.values.length > 0) {
-          const price = Number(filter.values[0]);
-          if (!Number.isNaN(price)) {
-            result.priceMin = price;
-            result.priceMax = price;
-          }
+          const min = parseNumber(filter.values[0]);
+          const max = parseNumber(filter.values[1]);
+          if (min !== null) result.priceMin = min;
+          if (max !== null) result.priceMax = max;
+        } else if (filter.operator === "overlaps" && filter.values.length >= 2) {
+          // For overlaps: course price range overlaps with filter range
+          // This means: course.min <= filter.max && course.max >= filter.min
+          // We'll treat it similar to between for now
+          const min = parseNumber(filter.values[0]);
+          const max = parseNumber(filter.values[1]);
+          if (min !== null) result.priceMin = min;
+          if (max !== null) result.priceMax = max;
+        } else if (filter.operator === "contains" && filter.values.length >= 2) {
+          // For contains: filter range is contained within course price range
+          // This means: course.min <= filter.min && course.max >= filter.max
+          // We'll treat it similar to between for now
+          const min = parseNumber(filter.values[0]);
+          const max = parseNumber(filter.values[1]);
+          if (min !== null) result.priceMin = min;
+          if (max !== null) result.priceMax = max;
         }
+        // empty and not_empty operators don't need price values
       } else if (filter.field === "tags" && filter.values.length > 0) {
         result.tags = filter.values as string[];
       } else if (filter.field === "isEnrolled" && filter.values.length > 0) {
