@@ -36,6 +36,135 @@ type PaymentStepProps = {
   modulePriceShillings?: number;
 };
 
+type ModuleSummary = {
+  id: Id<"module">;
+  title: string;
+  priceShillings: number;
+  isUnlocked: boolean;
+};
+
+type PaymentSectionProps = {
+  feeLabel: string;
+  priceLabel: string;
+  isProcessing: boolean;
+  priceShillings: number;
+  modules: ModuleSummary[];
+  pendingModuleId: Id<"module"> | null;
+  grantingFreeAccessModuleId: Id<"module"> | null;
+  handlePayment: () => void;
+  handleModuleUnlock: (module: ModuleSummary) => void;
+};
+
+const PaymentSection = ({
+  feeLabel,
+  priceLabel,
+  isProcessing,
+  priceShillings,
+  modules,
+  pendingModuleId,
+  grantingFreeAccessModuleId,
+  handlePayment,
+  handleModuleUnlock,
+}: PaymentSectionProps) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payment</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="font-medium">{feeLabel}</span>
+          <span className="font-semibold text-lg">{priceLabel}</span>
+        </div>
+
+        {priceShillings === 0 ? (
+          <Button
+            className="w-full"
+            disabled={isProcessing}
+            onClick={handlePayment}
+            type="button"
+          >
+            {isProcessing ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <CreditCard className="mr-2 size-4" />
+            )}
+            {isProcessing ? "Processing..." : "Complete Enrollment"}
+          </Button>
+        ) : (
+          <Button
+            className="w-full"
+            disabled={isProcessing}
+            onClick={handlePayment}
+            type="button"
+          >
+            {isProcessing ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <CreditCard className="mr-2 size-4" />
+            )}
+            {isProcessing ? "Processing..." : `Pay ${priceLabel} with Paystack`}
+          </Button>
+        )}
+
+        {modules.length > 0 && (
+          <div className="space-y-3 border-t pt-4">
+            <h4 className="font-semibold text-sm">Modules</h4>
+            <div className="space-y-2">
+              {modules.map((module) => {
+                const modulePriceLabel =
+                  module.priceShillings > 0
+                    ? priceFormatter.format(module.priceShillings)
+                    : "Free";
+                const isModuleProcessing =
+                  pendingModuleId === module.id ||
+                  grantingFreeAccessModuleId === module.id;
+
+                let moduleButtonLabel = "Unlock Module";
+                if (module.isUnlocked) {
+                  moduleButtonLabel = "Unlocked";
+                } else if (isModuleProcessing) {
+                  moduleButtonLabel = "Processing...";
+                }
+
+                return (
+                  <div
+                    className="flex items-center justify-between gap-3 rounded-md border p-3"
+                    key={module.id}
+                  >
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm">{module.title}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {module.isUnlocked
+                          ? "Unlocked"
+                          : `Price: ${modulePriceLabel}`}
+                      </p>
+                    </div>
+                    <Button
+                      className="whitespace-nowrap"
+                      disabled={module.isUnlocked || isModuleProcessing}
+                      onClick={() => handleModuleUnlock(module)}
+                      type="button"
+                      variant={module.isUnlocked ? "outline" : "default"}
+                    >
+                      {isModuleProcessing ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <CreditCard className="mr-2 size-4" />
+                      )}
+                      {moduleButtonLabel}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const PaymentStep = ({
   handleBackStep,
   courseId,
@@ -70,13 +199,12 @@ const PaymentStep = ({
     },
   });
 
-  const { mutate: grantFreeModuleAccess, isPending: isGrantingFreeAccess } =
-    useMutation({
-      mutationFn: useConvexMutation(api.payments.grantFreeModuleAccess),
-      onError: (error) => {
-        displayToastError(error);
-      },
-    });
+  const { mutate: grantFreeModuleAccess } = useMutation({
+    mutationFn: useConvexMutation(api.payments.grantFreeModuleAccess),
+    onError: (error) => {
+      displayToastError(error);
+    },
+  });
 
   const CENTS_PER_SHILLING = 100;
 
@@ -109,7 +237,7 @@ const PaymentStep = ({
     convexQuery(api.modules.getModulesByLatestVersionId, { courseId })
   );
 
-  const sendEnrollmentEmailAfterAdmission = async (enrollmentResult: {
+  type EnrollmentResult = {
     enrollmentId: Id<"enrollment">;
     courseTitle: string;
     courseSlug: string;
@@ -118,14 +246,20 @@ const PaymentStep = ({
     studentId: string;
     admissionDate: string;
     refNumber: string;
-  }) => {
-    const recipientEmail =
-      formData?.applicantPersonalDetails.email ?? enrollmentResult.studentEmail;
-    if (!recipientEmail) {
-      toast.error("A valid email address is required to send confirmation.");
-      return;
+  };
+
+  const getCourseContentUrl = (courseSlug: string) => {
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/courses/${courseSlug}`;
     }
 
+    return `/courses/${courseSlug}`;
+  };
+
+  const uploadAdmissionLetterAndSendEmail = async (
+    enrollmentResult: EnrollmentResult,
+    recipientEmail: string
+  ) => {
     try {
       const uploadRes = await fetch("/api/admission-letter", {
         method: "POST",
@@ -142,34 +276,46 @@ const PaymentStep = ({
         }),
       });
 
-      if (uploadRes.ok) {
-        const uploadJson = (await uploadRes.json()) as { url?: string };
-        const letterUrl = uploadJson.url;
-
-        const contentUrl =
-          typeof window !== "undefined"
-            ? `${window.location.origin}/courses/${enrollmentResult.courseSlug}`
-            : `/courses/${enrollmentResult.courseSlug}`;
-
-        await sendEnrollmentEmail({
-          studentName: enrollmentResult.studentName,
-          studentEmail: recipientEmail,
-          scope: moduleId ? "module" : "course",
-          courseName: enrollmentResult.courseTitle,
-          moduleName: moduleId ? moduleName ?? "Selected module" : undefined,
-          contentUrl,
-          admissionDate: enrollmentResult.admissionDate,
-          refNumber: enrollmentResult.refNumber,
-          studentId: enrollmentResult.studentId,
-          admissionLetterUrl: letterUrl,
-        });
+      if (!uploadRes.ok) {
+        throw new Error(
+          `Failed to upload admission letter: ${uploadRes.statusText}`
+        );
       }
+
+      const uploadJson = (await uploadRes.json()) as { url?: string };
+      const letterUrl = uploadJson.url;
+      const contentUrl = getCourseContentUrl(enrollmentResult.courseSlug);
+
+      await sendEnrollmentEmail({
+        studentName: enrollmentResult.studentName,
+        studentEmail: recipientEmail,
+        scope: moduleId ? "module" : "course",
+        courseName: enrollmentResult.courseTitle,
+        moduleName: moduleId ? (moduleName ?? "Selected module") : undefined,
+        contentUrl,
+        admissionDate: enrollmentResult.admissionDate,
+        refNumber: enrollmentResult.refNumber,
+        studentId: enrollmentResult.studentId,
+        admissionLetterUrl: letterUrl,
+      });
     } catch (error) {
-      // Log error but don't block enrollment
       displayToastError(
         error instanceof Error ? error : new Error(String(error))
       );
     }
+  };
+
+  const sendEnrollmentEmailAfterAdmission = async (
+    enrollmentResult: EnrollmentResult
+  ) => {
+    const recipientEmail =
+      formData?.applicantPersonalDetails.email ?? enrollmentResult.studentEmail;
+    if (!recipientEmail) {
+      toast.error("A valid email address is required to send confirmation.");
+      return;
+    }
+
+    await uploadAdmissionLetterAndSendEmail(enrollmentResult, recipientEmail);
   };
 
   const { mutate: enroll, isPending: isEnrolling } = useMutation({
@@ -185,16 +331,7 @@ const PaymentStep = ({
         return;
       }
 
-      const enrollmentResult = result as {
-        enrollmentId: Id<"enrollment">;
-        courseTitle: string;
-        courseSlug: string;
-        studentName: string;
-        studentEmail: string;
-        studentId: string;
-        admissionDate: string;
-        refNumber: string;
-      };
+      const enrollmentResult = result as EnrollmentResult;
 
       // Link admission form to enrollment using the submitted form ID
       const formIdToLink = submittedAdmissionFormId || admissionFormData?._id;
@@ -238,8 +375,7 @@ const PaymentStep = ({
       return;
     }
 
-    const feeTerms =
-      formData.courseSelection.feeTerms ?? "for full course";
+    const feeTerms = formData.courseSelection.feeTerms ?? "for full course";
     const effectivePriceShillings =
       feeTerms === "per module" &&
       moduleId &&
@@ -271,7 +407,22 @@ const PaymentStep = ({
           // For free items, bypass Paystack
           if (effectivePriceShillings === 0) {
             if (moduleId) {
-              grantFreeModuleAccess({ courseId, moduleId });
+              setGrantingFreeAccessModuleId(moduleId);
+              grantFreeModuleAccess(
+                { courseId, moduleId },
+                {
+                  onSuccess: () => {
+                    toast.success("Module access granted!");
+                    setGrantingFreeAccessModuleId(null);
+                    clearForm();
+                    onPaymentSuccess?.();
+                    router.refresh();
+                  },
+                  onError: () => {
+                    setGrantingFreeAccessModuleId(null);
+                  },
+                }
+              );
             } else {
               enroll({ courseId });
             }
@@ -342,12 +493,9 @@ const PaymentStep = ({
     isSubmittingForm ||
     isSubmittingAdmission ||
     isEnrolling;
-  const feeTerms =
-    formData?.courseSelection.feeTerms ?? "for full course";
+  const feeTerms = formData?.courseSelection.feeTerms ?? "for full course";
   const effectivePriceShillings =
-    feeTerms === "per module" &&
-    moduleId &&
-    modulePriceShillings !== undefined
+    feeTerms === "per module" && moduleId && modulePriceShillings !== undefined
       ? modulePriceShillings
       : priceShillings;
   const priceLabel =
@@ -362,12 +510,14 @@ const PaymentStep = ({
       id: m._id as Id<"module">,
       title: m.title,
       priceShillings: m.priceShillings ?? 0,
-      isUnlocked: m.isUnlocked === true,
+      isUnlocked: m.isAccessible === true,
     })) ?? [];
 
   const [pendingModuleId, setPendingModuleId] = useState<Id<"module"> | null>(
     null
   );
+  const [grantingFreeAccessModuleId, setGrantingFreeAccessModuleId] =
+    useState<Id<"module"> | null>(null);
 
   const handleModuleUnlock = (module: {
     id: Id<"module">;
@@ -400,11 +550,13 @@ const PaymentStep = ({
     setPendingModuleId(module.id);
 
     if (module.priceShillings === 0) {
+      setGrantingFreeAccessModuleId(module.id);
       grantFreeModuleAccess(
         { courseId, moduleId: module.id },
         {
           onSettled: () => {
             setPendingModuleId(null);
+            setGrantingFreeAccessModuleId(null);
           },
         }
       );
@@ -513,99 +665,17 @@ const PaymentStep = ({
       </Card>
 
       {/* Payment Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">{feeLabel}</span>
-            <span className="font-semibold text-lg">{priceLabel}</span>
-          </div>
-
-          {priceShillings === 0 ? (
-            <Button
-              className="w-full"
-              disabled={isProcessing}
-              onClick={handlePayment}
-              type="button"
-            >
-              {isProcessing ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (
-                <CreditCard className="mr-2 size-4" />
-              )}
-              {isProcessing ? "Processing..." : "Complete Enrollment"}
-            </Button>
-          ) : (
-            <Button
-              className="w-full"
-              disabled={isProcessing}
-              onClick={handlePayment}
-              type="button"
-            >
-              {isProcessing ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (
-                <CreditCard className="mr-2 size-4" />
-              )}
-              {isProcessing
-                ? "Processing..."
-                : `Pay ${priceLabel} with Paystack`}
-            </Button>
-          )}
-
-          {modules.length > 0 && (
-            <div className="space-y-3 border-t pt-4">
-              <h4 className="font-semibold text-sm">Modules</h4>
-              <div className="space-y-2">
-                {modules.map((module) => {
-                  const modulePriceLabel =
-                    module.priceShillings > 0
-                      ? priceFormatter.format(module.priceShillings)
-                      : "Free";
-                  const isModuleProcessing =
-                    pendingModuleId === module.id || isGrantingFreeAccess;
-
-                  return (
-                    <div
-                      className="flex items-center justify-between gap-3 rounded-md border p-3"
-                      key={module.id}
-                    >
-                      <div className="space-y-1">
-                        <p className="font-medium text-sm">{module.title}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {module.isUnlocked
-                            ? "Unlocked"
-                            : `Price: ${modulePriceLabel}`}
-                        </p>
-                      </div>
-                      <Button
-                        className="whitespace-nowrap"
-                        disabled={module.isUnlocked || isModuleProcessing}
-                        onClick={() => handleModuleUnlock(module)}
-                        type="button"
-                        variant={module.isUnlocked ? "outline" : "default"}
-                      >
-                        {isModuleProcessing ? (
-                          <Loader2 className="mr-2 size-4 animate-spin" />
-                        ) : (
-                          <CreditCard className="mr-2 size-4" />
-                        )}
-                        {module.isUnlocked
-                          ? "Unlocked"
-                          : isModuleProcessing
-                            ? "Processing..."
-                            : "Unlock Module"}
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <PaymentSection
+        feeLabel={feeLabel}
+        grantingFreeAccessModuleId={grantingFreeAccessModuleId}
+        handleModuleUnlock={handleModuleUnlock}
+        handlePayment={handlePayment}
+        isProcessing={isProcessing}
+        modules={modules}
+        pendingModuleId={pendingModuleId}
+        priceLabel={priceLabel}
+        priceShillings={priceShillings}
+      />
 
       {/* Navigation */}
       <div className="flex items-center gap-4 border-t pt-4">

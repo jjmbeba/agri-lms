@@ -126,11 +126,7 @@ const AdmissionFormDialogContent = ({
 
   const handleDialogOpenChange = (open: boolean) => {
     onOpenChange(open);
-    if (open) {
-      setCurrentStep(1);
-    } else {
-      setCurrentStep(1);
-    }
+    setCurrentStep(1);
   };
 
   const handlePaymentSuccess = () => {
@@ -190,11 +186,11 @@ const AdmissionFormDialogContent = ({
               <PaymentStep
                 courseId={courseId}
                 handleBackStep={handleBackStep}
-                onPaymentSuccess={handlePaymentSuccess}
-                priceShillings={priceShillings}
                 moduleId={moduleId}
                 moduleName={moduleName}
                 modulePriceShillings={modulePriceShillings}
+                onPaymentSuccess={handlePaymentSuccess}
+                priceShillings={priceShillings}
               />
             )}
           </div>
@@ -246,11 +242,11 @@ const AdmissionFormDialogContent = ({
             <PaymentStep
               courseId={courseId}
               handleBackStep={handleBackStep}
-              onPaymentSuccess={handlePaymentSuccess}
-              priceShillings={priceShillings}
               moduleId={moduleId}
               moduleName={moduleName}
               modulePriceShillings={modulePriceShillings}
+              onPaymentSuccess={handlePaymentSuccess}
+              priceShillings={priceShillings}
             />
           )}
         </DialogContent>
