@@ -7,6 +7,7 @@ import HeroSection from "@/components/features/home-page/hero";
 
 export const metadata: Metadata = {
   title: "Home",
+  description: "Learn anywhere. Grow everywhere.",
 };
 
 export default function Home() {

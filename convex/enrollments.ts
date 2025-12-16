@@ -141,6 +141,43 @@ export const getStudentsCount = query({
   },
 });
 
+export const getCourseEnrollmentCount = query({
+  args: { courseId: v.id("course") },
+  handler: async (ctx, args) => {
+    const enrollments = await ctx.db
+      .query("enrollment")
+      .filter((q) => q.eq(q.field("courseId"), args.courseId))
+      .collect();
+
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const currentMonthCount = enrollments.filter((e) => {
+      const enrolledDate = new Date(e.enrolledAt);
+      return enrolledDate >= currentMonthStart;
+    }).length;
+
+    const previousMonthCount = enrollments.filter((e) => {
+      const enrolledDate = new Date(e.enrolledAt);
+      return enrolledDate >= previousMonthStart && enrolledDate <= previousMonthEnd;
+    }).length;
+
+    let percentageChange: number | null = null;
+    if (previousMonthCount > 0) {
+      percentageChange = Math.round(
+        ((currentMonthCount - previousMonthCount) / previousMonthCount) * 100
+      );
+    }
+
+    return {
+      count: enrollments.length,
+      percentageChange,
+    };
+  },
+});
+
 export const getUserEnrollmentStats = query({
   args: {},
   handler: async (ctx) => {
