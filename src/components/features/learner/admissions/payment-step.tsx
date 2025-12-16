@@ -31,6 +31,9 @@ type PaymentStepProps = {
   courseId: Id<"course">;
   priceShillings: number;
   onPaymentSuccess?: () => void;
+  moduleId?: Id<"module">;
+  moduleName?: string;
+  modulePriceShillings?: number;
 };
 
 const PaymentStep = ({
@@ -38,6 +41,9 @@ const PaymentStep = ({
   courseId,
   priceShillings,
   onPaymentSuccess,
+  moduleId,
+  moduleName,
+  modulePriceShillings,
 }: PaymentStepProps) => {
   const { user } = useUser();
   const router = useRouter();
@@ -64,6 +70,14 @@ const PaymentStep = ({
     },
   });
 
+  const { mutate: grantFreeModuleAccess, isPending: isGrantingFreeAccess } =
+    useMutation({
+      mutationFn: useConvexMutation(api.payments.grantFreeModuleAccess),
+      onError: (error) => {
+        displayToastError(error);
+      },
+    });
+
   const CENTS_PER_SHILLING = 100;
 
   const initializePayment = usePaystackPayment({
@@ -85,8 +99,14 @@ const PaymentStep = ({
     }
   };
 
+  const accessScope: "course" | "module" = moduleId ? "module" : "course";
+
   const { data: admissionFormData } = useQuery(
     convexQuery(api.admissions.getAdmissionFormByCourse, { courseId })
+  );
+
+  const { data: modulesData } = useQuery(
+    convexQuery(api.modules.getModulesByLatestVersionId, { courseId })
   );
 
   const sendEnrollmentEmailAfterAdmission = async (enrollmentResult: {
@@ -134,8 +154,9 @@ const PaymentStep = ({
         await sendEnrollmentEmail({
           studentName: enrollmentResult.studentName,
           studentEmail: recipientEmail,
-          scope: "course",
+          scope: moduleId ? "module" : "course",
           courseName: enrollmentResult.courseTitle,
+          moduleName: moduleId ? moduleName ?? "Selected module" : undefined,
           contentUrl,
           admissionDate: enrollmentResult.admissionDate,
           refNumber: enrollmentResult.refNumber,
@@ -217,6 +238,15 @@ const PaymentStep = ({
       return;
     }
 
+    const feeTerms =
+      formData.courseSelection.feeTerms ?? "for full course";
+    const effectivePriceShillings =
+      feeTerms === "per module" &&
+      moduleId &&
+      modulePriceShillings !== undefined
+        ? modulePriceShillings
+        : priceShillings;
+
     // First, submit the admission form
     setIsSubmittingForm(true);
     submitAdmissionForm(
@@ -238,9 +268,13 @@ const PaymentStep = ({
           // Store the submitted admission form ID for linking to enrollment
           setSubmittedAdmissionFormId(result.admissionFormId);
 
-          // For free courses, enroll directly
-          if (priceShillings === 0) {
-            enroll({ courseId });
+          // For free items, bypass Paystack
+          if (effectivePriceShillings === 0) {
+            if (moduleId) {
+              grantFreeModuleAccess({ courseId, moduleId });
+            } else {
+              enroll({ courseId });
+            }
             return;
           }
 
@@ -258,15 +292,15 @@ const PaymentStep = ({
           initializePayment({
             config: {
               email: userEmail,
-              amount: priceShillings * CENTS_PER_SHILLING,
+              amount: effectivePriceShillings * CENTS_PER_SHILLING,
               currency: "KES",
-              reference: `pay-${user.id}-${Date.now().toString()}-course`,
+              reference: `pay-${user.id}-${Date.now().toString()}-${accessScope}`,
               metadata: {
                 userId: user.id,
                 studentEmail: formData.applicantPersonalDetails.email,
                 courseId,
-                moduleId: null,
-                accessScope: "course",
+                moduleId: moduleId ?? null,
+                accessScope,
                 admissionFormId: result.admissionFormId,
                 custom_fields: [
                   {
@@ -308,8 +342,119 @@ const PaymentStep = ({
     isSubmittingForm ||
     isSubmittingAdmission ||
     isEnrolling;
+  const feeTerms =
+    formData?.courseSelection.feeTerms ?? "for full course";
+  const effectivePriceShillings =
+    feeTerms === "per module" &&
+    moduleId &&
+    modulePriceShillings !== undefined
+      ? modulePriceShillings
+      : priceShillings;
   const priceLabel =
-    priceShillings > 0 ? priceFormatter.format(priceShillings) : "Free";
+    effectivePriceShillings > 0
+      ? priceFormatter.format(effectivePriceShillings)
+      : "Free";
+  const isPerModule = feeTerms === "per module" && moduleId;
+  const feeLabel = isPerModule ? "Module Fee:" : "Course Fee:";
+
+  const modules =
+    modulesData?.map((m) => ({
+      id: m._id as Id<"module">,
+      title: m.title,
+      priceShillings: m.priceShillings ?? 0,
+      isUnlocked: m.isUnlocked === true,
+    })) ?? [];
+
+  const [pendingModuleId, setPendingModuleId] = useState<Id<"module"> | null>(
+    null
+  );
+
+  const handleModuleUnlock = (module: {
+    id: Id<"module">;
+    title: string;
+    priceShillings: number;
+    isUnlocked: boolean;
+  }) => {
+    if (!user) {
+      toast.error("Please sign in to continue.");
+      return;
+    }
+
+    if (!user.primaryEmailAddress?.emailAddress) {
+      toast.error("A valid email address is required to process payment.");
+      return;
+    }
+
+    if (!formData) {
+      toast.error(
+        "Admission form data is missing. Please go back and complete the form."
+      );
+      return;
+    }
+
+    if (module.isUnlocked) {
+      toast.success("You already have access to this module.");
+      return;
+    }
+
+    setPendingModuleId(module.id);
+
+    if (module.priceShillings === 0) {
+      grantFreeModuleAccess(
+        { courseId, moduleId: module.id },
+        {
+          onSettled: () => {
+            setPendingModuleId(null);
+          },
+        }
+      );
+      return;
+    }
+
+    setIsPaymentPending(true);
+    const userEmail = user.primaryEmailAddress.emailAddress;
+
+    initializePayment({
+      config: {
+        email: userEmail,
+        amount: module.priceShillings * CENTS_PER_SHILLING,
+        currency: "KES",
+        reference: `pay-${user.id}-${Date.now().toString()}-module`,
+        metadata: {
+          userId: user.id,
+          studentEmail: formData.applicantPersonalDetails.email,
+          courseId,
+          moduleId: module.id,
+          accessScope: "module",
+          admissionFormId: submittedAdmissionFormId ?? admissionFormData?._id,
+          custom_fields: [
+            {
+              display_name: "Course ID",
+              variable_name: "course_id",
+              value: String(courseId),
+            },
+            {
+              display_name: "Module ID",
+              variable_name: "module_id",
+              value: String(module.id),
+            },
+          ],
+        },
+      },
+      onSuccess: () => {
+        toast.success("Payment successful. Unlocking module...");
+        setIsPaymentPending(false);
+        setPendingModuleId(null);
+        router.refresh();
+      },
+      onClose: () => {
+        setIsPaymentPending(false);
+        setPendingModuleId(null);
+        toast.error("Payment cancelled");
+      },
+    });
+    setTimeout(bringPaystackToFront, 0);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -374,7 +519,7 @@ const PaymentStep = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="font-medium">Course Fee:</span>
+            <span className="font-medium">{feeLabel}</span>
             <span className="font-semibold text-lg">{priceLabel}</span>
           </div>
 
@@ -408,6 +553,56 @@ const PaymentStep = ({
                 ? "Processing..."
                 : `Pay ${priceLabel} with Paystack`}
             </Button>
+          )}
+
+          {modules.length > 0 && (
+            <div className="space-y-3 border-t pt-4">
+              <h4 className="font-semibold text-sm">Modules</h4>
+              <div className="space-y-2">
+                {modules.map((module) => {
+                  const modulePriceLabel =
+                    module.priceShillings > 0
+                      ? priceFormatter.format(module.priceShillings)
+                      : "Free";
+                  const isModuleProcessing =
+                    pendingModuleId === module.id || isGrantingFreeAccess;
+
+                  return (
+                    <div
+                      className="flex items-center justify-between gap-3 rounded-md border p-3"
+                      key={module.id}
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium text-sm">{module.title}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {module.isUnlocked
+                            ? "Unlocked"
+                            : `Price: ${modulePriceLabel}`}
+                        </p>
+                      </div>
+                      <Button
+                        className="whitespace-nowrap"
+                        disabled={module.isUnlocked || isModuleProcessing}
+                        onClick={() => handleModuleUnlock(module)}
+                        type="button"
+                        variant={module.isUnlocked ? "outline" : "default"}
+                      >
+                        {isModuleProcessing ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <CreditCard className="mr-2 size-4" />
+                        )}
+                        {module.isUnlocked
+                          ? "Unlocked"
+                          : isModuleProcessing
+                            ? "Processing..."
+                            : "Unlock Module"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

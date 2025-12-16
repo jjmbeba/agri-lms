@@ -261,23 +261,23 @@ const EnrollCourseBtn = ({
 
   return (
     <>
-      <Button
-        aria-label={buttonLabel}
-        className="gap-2"
-        disabled={isProcessing}
-        onClick={handleClick}
-        type="button"
-      >
-        {isProcessing ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <BookOpen className="size-4" />
-        )}
-        <span className="whitespace-nowrap">
-          {isProcessing ? "Processing..." : buttonLabel}
-        </span>
-        <span className="whitespace-nowrap">({priceLabel})</span>
-      </Button>
+    <Button
+      aria-label={buttonLabel}
+      className="gap-2"
+      disabled={isProcessing}
+      onClick={handleClick}
+      type="button"
+    >
+      {isProcessing ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <BookOpen className="size-4" />
+      )}
+      <span className="whitespace-nowrap">
+        {isProcessing ? "Processing..." : buttonLabel}
+      </span>
+      <span className="whitespace-nowrap">({priceLabel})</span>
+    </Button>
 
       {!moduleId && requiresAdmissionForm && (
         <AdmissionFormDialog

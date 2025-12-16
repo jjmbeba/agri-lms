@@ -38,6 +38,9 @@ type AdmissionFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   courseId: Id<"course">;
   priceShillings: number;
+  moduleId?: Id<"module">;
+  moduleName?: string;
+  modulePriceShillings?: number;
 };
 
 const admissionSteps = [
@@ -92,6 +95,9 @@ const AdmissionFormDialogContent = ({
   onOpenChange,
   courseId,
   priceShillings,
+  moduleId,
+  moduleName,
+  modulePriceShillings,
 }: AdmissionFormDialogProps) => {
   const isMobile = useIsMobile();
   const [currentStep, setCurrentStep] = useState(1);
@@ -186,6 +192,9 @@ const AdmissionFormDialogContent = ({
                 handleBackStep={handleBackStep}
                 onPaymentSuccess={handlePaymentSuccess}
                 priceShillings={priceShillings}
+                moduleId={moduleId}
+                moduleName={moduleName}
+                modulePriceShillings={modulePriceShillings}
               />
             )}
           </div>
@@ -239,6 +248,9 @@ const AdmissionFormDialogContent = ({
               handleBackStep={handleBackStep}
               onPaymentSuccess={handlePaymentSuccess}
               priceShillings={priceShillings}
+              moduleId={moduleId}
+              moduleName={moduleName}
+              modulePriceShillings={modulePriceShillings}
             />
           )}
         </DialogContent>
