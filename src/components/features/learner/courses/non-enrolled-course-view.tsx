@@ -15,6 +15,7 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { displayToastError } from "@/lib/utils";
 import { api } from "../../../../../convex/_generated/api";
 import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
+import AdmissionFormDialog from "../admissions/admission-form-dialog";
 import EnrollCourseBtn from "./enroll-course-btn";
 
 const modulePriceFormatter = new Intl.NumberFormat("en-KE", {
@@ -181,6 +183,33 @@ export const NonEnrolledCourseView = ({
     "Lifetime access to course materials",
     "Community support and discussions",
   ];
+
+  const [isAdmissionDialogOpen, setIsAdmissionDialogOpen] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<{
+    id: Id<"module">;
+    title: string;
+    priceShillings: number;
+  } | null>(null);
+
+  const handleModuleUnlockClick = (module: {
+    _id: Id<"module">;
+    title: string;
+    priceShillings: number;
+  }) => {
+    setSelectedModule({
+      id: module._id,
+      title: module.title,
+      priceShillings: module.priceShillings,
+    });
+    setIsAdmissionDialogOpen(true);
+  };
+
+  const handleAdmissionDialogOpenChange = (open: boolean) => {
+    setIsAdmissionDialogOpen(open);
+    if (!open) {
+      setSelectedModule(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -367,12 +396,14 @@ export const NonEnrolledCourseView = ({
                               : "Free Module"}
                           </span>
                         </div>
-                        <EnrollCourseBtn
-                          courseId={courseId}
-                          label="Unlock Module"
-                          moduleId={m._id}
-                          priceShillings={m.priceShillings}
-                        />
+                        <Button
+                          aria-label={`Unlock module ${m.title}`}
+                          onClick={() => handleModuleUnlockClick(m)}
+                          type="button"
+                          variant="default"
+                        >
+                          Unlock Module
+                        </Button>
                       </div>
                     </div>
                   );
@@ -445,6 +476,17 @@ export const NonEnrolledCourseView = ({
           )}
         </CardContent>
       </Card>
+      {selectedModule && (
+        <AdmissionFormDialog
+          courseId={courseId}
+          isOpen={isAdmissionDialogOpen}
+          moduleId={selectedModule.id}
+          moduleName={selectedModule.title}
+          modulePriceShillings={selectedModule.priceShillings}
+          onOpenChange={handleAdmissionDialogOpenChange}
+          priceShillings={c.priceShillings}
+        />
+      )}
     </div>
   );
 };
