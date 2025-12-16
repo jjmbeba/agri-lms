@@ -107,7 +107,7 @@ const AdmissionFormStep = ({
         form.handleSubmit();
       }}
     >
-      <div className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto">
+      <div className="flex flex-col gap-6">
         {/* Section 1: Applicant Personal Details */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Applicant Personal Details</h3>
