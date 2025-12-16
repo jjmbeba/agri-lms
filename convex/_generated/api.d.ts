@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admissions from "../admissions.js";
 import type * as assignments from "../assignments.js";
 import type * as auth from "../auth.js";
 import type * as constants from "../constants.js";
@@ -41,6 +42,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  admissions: typeof admissions;
   assignments: typeof assignments;
   auth: typeof auth;
   constants: typeof constants;

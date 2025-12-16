@@ -21,6 +21,8 @@ import type { Id } from "./_generated/dataModel";
 import { action } from "./_generated/server";
 import { resend } from "./resendClient";
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const sendEnrollmentEmail = action({
   args: {
     studentName: v.string(),
@@ -36,6 +38,12 @@ export const sendEnrollmentEmail = action({
     admissionLetterUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (!emailRegex.test(args.studentEmail)) {
+      throw new Error(
+        `Invalid recipient email: ${args.studentEmail ?? "unknown"}`
+      );
+    }
+
     const subject =
       args.scope === "module"
         ? `Module Enrollment Confirmation - ${args.moduleName}`
