@@ -182,11 +182,6 @@ export function RecentActivity({ activities: propActivities }: RecentActivityPro
                       Score: {activity.score}%
                     </p>
                   )}
-                  {activity.streak && (
-                    <p className="text-muted-foreground text-xs">
-                      {activity.streak} day streak! 🔥
-                    </p>
-                  )}
                   <p className="text-muted-foreground text-xs">
                     {formatRelativeTime(activity.timestamp)}
                   </p>
