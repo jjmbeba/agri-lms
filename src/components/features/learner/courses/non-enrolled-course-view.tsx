@@ -8,7 +8,6 @@ import {
   BellOff,
   BookOpen,
   CheckCircle,
-  Clock,
   Download,
   Loader2,
   Play,
@@ -103,17 +102,55 @@ type NonEnrolledCourseViewProps = {
   courseId: Id<"course">;
 };
 
-export const NonEnrolledCourseView = ({
-  course,
-  modules,
-  isEnrolled,
-  courseId,
-}: NonEnrolledCourseViewProps) => {
-  const c = course.course;
-  const d = course.department;
+type CourseReviewSummary = {
+  averageRating: number;
+  totalReviews: number;
+};
+
+const useCourseMeta = (
+  props: NonEnrolledCourseViewProps
+): {
+  courseDoc: Doc<"course">;
+  department: Doc<"department"> | null;
+  handout: string;
+  hasHandout: boolean;
+  isComingSoon: boolean;
+  courseStats: {
+    averageRating: number | null;
+    totalReviews: number;
+    estimatedTimeHours: number;
+  };
+  isSubscribed: boolean | undefined;
+  isNotificationPending: boolean;
+  handleNotificationToggle: () => void;
+  getNotificationIcon: () => React.ReactElement;
+} => {
+  const c = props.course.course;
+  const d = props.course.department;
   const handout = c.handout ?? "";
   const hasHandout = handout.trim().length > 0;
   const isComingSoon = c.status === "coming-soon";
+
+  const { data: reviewSummary } = useQuery(
+    convexQuery(api.reviews.getCourseReviewSummary, {
+      courseId: props.courseId,
+    })
+  );
+
+  const typedReviewSummary = reviewSummary as CourseReviewSummary | undefined;
+
+  const hasReviews =
+    typedReviewSummary !== undefined && typedReviewSummary.totalReviews > 0;
+
+  const courseStats: {
+    averageRating: number | null;
+    totalReviews: number;
+    estimatedTimeHours: number;
+  } = {
+    averageRating: hasReviews ? typedReviewSummary.averageRating : null,
+    totalReviews: hasReviews ? typedReviewSummary.totalReviews : 0,
+    estimatedTimeHours: Math.max(1, props.course.modulesCount),
+  };
 
   const { data: isSubscribed } = useQuery(
     convexQuery(
@@ -170,11 +207,21 @@ export const NonEnrolledCourseView = ({
     return <Bell className="mr-2 size-4" />;
   };
 
-  const courseStats = {
-    averageRating: 4.8,
-    estimatedTimeHours: Math.max(1, course.modulesCount),
+  return {
+    courseDoc: c,
+    department: d,
+    handout,
+    hasHandout,
+    isComingSoon,
+    courseStats,
+    isSubscribed,
+    isNotificationPending,
+    handleNotificationToggle,
+    getNotificationIcon,
   };
+};
 
+const useCourseFeatures = () => {
   const courseFeatures = [
     "Interactive lessons with real-world examples",
     "Hands-on projects and assignments",
@@ -184,6 +231,10 @@ export const NonEnrolledCourseView = ({
     "Community support and discussions",
   ];
 
+  return { courseFeatures };
+};
+
+const useAdmissionDialogState = () => {
   const [isAdmissionDialogOpen, setIsAdmissionDialogOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<{
     id: Id<"module">;
@@ -210,6 +261,40 @@ export const NonEnrolledCourseView = ({
       setSelectedModule(null);
     }
   };
+
+  return {
+    isAdmissionDialogOpen,
+    selectedModule,
+    handleModuleUnlockClick,
+    handleAdmissionDialogOpenChange,
+  };
+};
+
+// biome-ignore lint: UI layout component with several conditional blocks
+export const NonEnrolledCourseView = (props: NonEnrolledCourseViewProps) => {
+  const {
+    courseDoc: c,
+    department: d,
+    handout,
+    hasHandout,
+    isComingSoon,
+    courseStats,
+    isSubscribed,
+    isNotificationPending,
+    handleNotificationToggle,
+    getNotificationIcon,
+  } = useCourseMeta(props);
+
+  const { courseFeatures } = useCourseFeatures();
+
+  const {
+    isAdmissionDialogOpen,
+    selectedModule,
+    handleModuleUnlockClick,
+    handleAdmissionDialogOpenChange,
+  } = useAdmissionDialogState();
+
+  const { course, isEnrolled, courseId, modules } = props;
 
   return (
     <div className="space-y-6">
@@ -278,12 +363,25 @@ export const NonEnrolledCourseView = ({
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Star className="size-4 text-yellow-500" />
-                <span className="font-bold text-lg">
-                  {courseStats.averageRating}
-                </span>
+                {courseStats.averageRating !== null ? (
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-bold text-lg">
+                      {courseStats.averageRating.toFixed(1)}
+                    </span>
+                    <span className="text-muted-foreground text-xs">/5</span>
+                    <span className="text-muted-foreground text-xs">
+                      ({courseStats.totalReviews} review
+                      {courseStats.totalReviews === 1 ? "" : "s"})
+                    </span>
+                  </div>
+                ) : (
+                  <span className="font-bold text-lg">No ratings yet</span>
+                )}
               </div>
               <p className="text-muted-foreground text-sm">
-                Average Rating (dummy data)
+                {courseStats.averageRating !== null
+                  ? "Average course rating from student reviews"
+                  : "This course has not been rated yet"}
               </p>
             </CardContent>
           </Card>
@@ -295,20 +393,6 @@ export const NonEnrolledCourseView = ({
                 <span className="font-bold text-lg">{course.modulesCount}</span>
               </div>
               <p className="text-muted-foreground text-sm">Modules</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Clock className="size-4 text-purple-500" />
-                <span className="font-bold text-lg">
-                  ~{courseStats.estimatedTimeHours}h
-                </span>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                Duration (dummy data)
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -362,52 +446,54 @@ export const NonEnrolledCourseView = ({
 
             {modules.length > 0 ? (
               <div className="space-y-3">
-                {modules.slice(0, MAX_PREVIEW_MODULES).map((m) => {
-                  const itemsCount = m.lessonCount ?? m.content?.length ?? 0;
-                  return (
-                    <div
-                      className="flex flex-col gap-4 rounded-lg border p-4"
-                      key={m._id}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-xs">
-                          {m.position}
+                {modules
+                  .slice(0, MAX_PREVIEW_MODULES)
+                  .map((m: CourseContentItem) => {
+                    const itemsCount = m.lessonCount ?? m.content?.length ?? 0;
+                    return (
+                      <div
+                        className="flex flex-col gap-4 rounded-lg border p-4"
+                        key={m._id}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-xs">
+                            {m.position}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm">{m.title}</p>
+                            {m.description && (
+                              <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
+                                {m.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm">{m.title}</p>
-                          {m.description && (
-                            <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
-                              {m.description}
-                            </p>
-                          )}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
+                              {itemsCount} lesson{itemsCount === 1 ? "" : "s"}
+                            </span>
+                            <Badge className="text-xs" variant="outline">
+                              Preview
+                            </Badge>
+                            <span className="text-muted-foreground text-xs">
+                              {m.priceShillings > 0
+                                ? modulePriceFormatter.format(m.priceShillings)
+                                : "Free Module"}
+                            </span>
+                          </div>
+                          <Button
+                            aria-label={`Unlock module ${m.title}`}
+                            onClick={() => handleModuleUnlockClick(m)}
+                            type="button"
+                            variant="default"
+                          >
+                            Unlock Module
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground text-xs">
-                            {itemsCount} lesson{itemsCount === 1 ? "" : "s"}
-                          </span>
-                          <Badge className="text-xs" variant="outline">
-                            Preview
-                          </Badge>
-                          <span className="text-muted-foreground text-xs">
-                            {m.priceShillings > 0
-                              ? modulePriceFormatter.format(m.priceShillings)
-                              : "Free Module"}
-                          </span>
-                        </div>
-                        <Button
-                          aria-label={`Unlock module ${m.title}`}
-                          onClick={() => handleModuleUnlockClick(m)}
-                          type="button"
-                          variant="default"
-                        >
-                          Unlock Module
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
 
                 {modules.length > MAX_PREVIEW_MODULES && (
                   <div className="py-4 text-center">
@@ -454,7 +540,13 @@ export const NonEnrolledCourseView = ({
             <div className="flex items-center gap-2">
               <Star className="size-4 text-yellow-500" />
               <span className="font-medium text-sm">
-                {courseStats.averageRating}/5 rating (dummy data)
+                {courseStats.averageRating !== null
+                  ? `${courseStats.averageRating.toFixed(
+                      1
+                    )}/5 rating (${courseStats.totalReviews} review${
+                      courseStats.totalReviews === 1 ? "" : "s"
+                    })`
+                  : "No ratings yet"}
               </span>
             </div>
           </div>
